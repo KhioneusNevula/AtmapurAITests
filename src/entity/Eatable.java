@@ -1,9 +1,7 @@
 package entity;
 
 import sim.World;
-import sociology.Sociocon;
-import sociology.Sociocontype;
-import sociology.Sociocontype.SocioconArgument;
+import sociology.sociocon.Sociocat;
 
 public class Eatable extends Actor {
 
@@ -19,13 +17,12 @@ public class Eatable extends Actor {
 	 * @param startY
 	 * @param nourishment
 	 */
-	public Eatable(World world, String foodName, int startX, int startY, Integer nourishment) {
-		super(world, foodName, startX, startY);
+	public Eatable(World world, String foodName, int startX, int startY, int radius, Integer nourishment) {
+		super(world, foodName, startX, startY, radius);
 
-		this.getProfile().addSociocon(world.getSocioconMap(Sociocontype.FOOD).computeIfAbsent(foodName,
-				(n) -> new Sociocon(foodName, Sociocontype.FOOD)));
+		this.getProfile().addSociocon(world.getOrCreateSociocon(Sociocat.FOOD, foodName));
 		if (nourishment != null)
-			this.getProfile().getSociocon(Sociocontype.FOOD).setValue(SocioconArgument.FOOD_NOURISHMENT, nourishment);
+			this.getProfile().setValue(Sociocat.FOOD.getProperty("nourishment"), nourishment);
 
 	}
 

@@ -1,16 +1,20 @@
 package entity;
 
+import processing.core.PApplet;
+import psych.Mind;
+import psych.Need;
 import sim.World;
 import sociology.Profile;
+import sociology.sociocon.IHasProfile;
 
-public abstract class Actor {
+public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExistence {
 
 	public static enum PossessState {
 		NONE, HOLD, WEAR
 	}
 
 	public final static int STEP = 5;
-	public final static int REACH = 2;
+	public final static int REACH = 50;
 
 	private int x;
 	private int y;
@@ -21,17 +25,50 @@ public abstract class Actor {
 	private Actor clothing;
 	private Actor held;
 
+	/**
+	 * Probably gonna become unnecessary
+	 */
 	private String name;
 
 	private World world;
 
 	private Profile profile;
 
-	public Actor(World world, String name, int startX, int startY) {
-		this.profile = new Profile(this);
+	private int radius;
+
+	private Integer optionalColor = null;
+
+	/**
+	 * A characteristic of actors who can think
+	 */
+	protected Mind mind = null;
+
+	public Actor(World world, String name, int startX, int startY, int radius) {
+		this.profile = new Profile(this, name);
 		this.world = world;
 		this.name = name;
+		this.radius = radius;
+		this.x = startX;
+		this.y = startY;
 
+	}
+
+	public Actor setOptionalColor(int optionalColor) {
+		this.optionalColor = optionalColor;
+		return this;
+	}
+
+	public int getOptionalColor() {
+		return optionalColor;
+	}
+
+	/**
+	 * Creates a mind for this object and returns the created mind
+	 * 
+	 * @return
+	 */
+	public Mind createMind(Need... needs) {
+		return this.mind = new Mind(this, needs);
 	}
 
 	public String getName() {
@@ -46,12 +83,38 @@ public abstract class Actor {
 		return profile;
 	}
 
-	public void baseTick() {
+	public void movementTick() {
 		if (this.possessor != null) {
 			this.setX(possessor.x);
 			this.setY(possessor.y);
 		}
-		tick();
+	}
+
+	public void senseTick() {
+		if (hasMind())
+			mind.observe();
+	}
+
+	public void actionTick() {
+		if (hasMind())
+			mind.act();
+	}
+
+	public boolean hasMind() {
+		return this.mind != null;
+	}
+
+	/**
+	 * May be null
+	 * 
+	 * @return
+	 */
+	public Mind getMind() {
+		return this.mind;
+	}
+
+	public void setMind(Mind mind) {
+		this.mind = mind;
 	}
 
 	public void tick() {
@@ -82,23 +145,19 @@ public abstract class Actor {
 	}
 
 	public void moveLeft() {
-		move(-5, 0);
+		move(-STEP, 0);
 	}
 
 	public void moveRight() {
-		move(5, 0);
+		move(STEP, 0);
 	}
 
 	public void moveUp() {
-		move(0, 5);
+		move(0, STEP);
 	}
 
 	public void moveDown() {
-		move(0, -5);
-	}
-
-	public double distance(Actor other) {
-		return Math.sqrt(Math.pow((other.x - this.x), 2) + Math.pow((other.y - this.y), 2));
+		move(0, -STEP);
 	}
 
 	public PossessState getPossessState() {
@@ -115,15 +174,6 @@ public abstract class Actor {
 
 	public Actor getClothing() {
 		return clothing;
-	}
-
-	/**
-	 * Notification to this actor that an actor was spawned in the world
-	 * 
-	 * @param e
-	 */
-	public void notifyOfSpawn(Actor e) {
-
 	}
 
 	public void possess(Actor other, PossessState state) {
@@ -179,4 +229,43 @@ public abstract class Actor {
 	public String getStatus() {
 		return this.name + " is at " + this.x + ", " + this.y;
 	}
+
+	public void setRadius(int radius) {
+		this.radius = radius;
+	}
+
+	public int getRadius() {
+		return radius;
+	}
+
+	public final void draw() {
+		world.push();
+		render();
+		world.pop();
+	}
+
+	protected void render() {
+		world.ellipseMode(PApplet.CENTER);
+		if (optionalColor == null) {
+			world.fill(255, 255, 0, 100);
+			world.stroke(world.color(100, 100, 0));
+		} else {
+			world.fill(optionalColor, 100);
+			world.stroke(optionalColor);
+		}
+		world.strokeWeight(1.4f);
+		world.circle(x, y, radius);
+		world.textAlign(PApplet.CENTER, PApplet.CENTER);
+
+		world.fill(0);
+		world.text(this.name, x, y);
+
+	}
+
+	@Override
+	public String toString() {
+		return this.getClass().getSimpleName() + " \"" + name + "\": {" + this.profile + "} xyr=[" + x + "," + y + ","
+				+ radius + "]";
+	}
+
 }

@@ -1,39 +1,18 @@
 package psych;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+/**
+ * T can be anything; this system is so that memories can be associated with
+ * emotions and therefore sorted by importance so that they may be forgotten
+ * 
+ * @author borah
+ * @param <B>
+ * @param <T>
+ */
+public interface Memory<B, T> {
+	public static class MemoryInstance<T> {
+		private T memory;
 
-import entity.Actor;
-import psych.conditions.ProfileCondition;
-import sociology.Profile;
+		// public Emotion emotion;
 
-public class Memory {
-
-	private Brain brain;
-	private Random rand = new Random();
-	private Set<Actor> forgotten = new HashSet<>();
-
-	public Memory(Brain brain) {
-		this.brain = brain;
-	}
-
-	public void actorCreated(Actor a) {
-		if (rand.nextInt(14) < 5) {
-			forgotten.add(a);
-		}
-	}
-
-	/**
-	 * Return null if none remembered (random chance)
-	 * 
-	 * @param cond
-	 * @return
-	 */
-	public Profile findRandom(ProfileCondition<?> cond) {
-		Set<Actor> acts = brain.getOwner().getWorld().getFor(cond, brain.getOwner());
-
-		acts.removeAll(forgotten);
-		return acts.stream().map((ao) -> ao.getProfile()).findAny().orElse(null);
 	}
 }
