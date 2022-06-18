@@ -14,7 +14,7 @@ import sociology.Profile;
  *
  * @param <T>
  */
-public class Socioprop<T> implements IPurposeElement, ICheckable<T> {
+public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<Socioprop<?>> {
 
 	private Function<Profile, T> initialValue;
 	private Function<Profile, T> checkValue = (p) -> p.getValue(this);
@@ -54,7 +54,7 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T> {
 	/**
 	 * this is the sociocategory or system this property originates from; for
 	 * categories, this would be the highest parent which provides this property.
-	 * may be null
+	 * should never be null ideally but idk
 	 */
 	public IPurposeSource getOrigin() {
 		return origin;
@@ -83,7 +83,7 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof Socioprop other) {
+		if (obj instanceof Socioprop<?>other) {
 			return this.name.equals(other.name) && this.origin == other.origin;
 
 		}
@@ -112,6 +112,11 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T> {
 	@Override
 	public void setValue(Profile p, T value) {
 		p.setValue(this, value);
+	}
+
+	@Override
+	public int compareTo(Socioprop<?> o) {
+		return this.toString().compareTo(o.toString());
 	}
 
 }

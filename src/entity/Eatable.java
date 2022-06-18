@@ -23,6 +23,7 @@ public class Eatable extends Actor {
 		this.getProfile().addSociocon(world.getOrCreateSociocon(Sociocat.FOOD, foodName));
 		if (nourishment != null)
 			this.getProfile().setValue(Sociocat.FOOD.getProperty("nourishment"), nourishment);
+		this.nourishment = nourishment;
 
 	}
 

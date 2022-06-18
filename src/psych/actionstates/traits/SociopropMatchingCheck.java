@@ -16,7 +16,7 @@ public class SociopropMatchingCheck<T> extends SociopropTrait<T> {
 
 	private T value;
 
-	public SociopropMatchingCheck(Socioprop<T> checker, T value) {
+	SociopropMatchingCheck(Socioprop<T> checker, T value) {
 		super(checker);
 		this.value = value;
 	}
@@ -31,14 +31,14 @@ public class SociopropMatchingCheck<T> extends SociopropTrait<T> {
 	}
 
 	@Override
-	public boolean satisfies(Profile p) {
+	public Boolean satisfies(Profile p) {
 		return Objects.equals(value, p.getValue(getChecker())) || Objects.equals(p.getValue(getChecker()), value);
 	}
 
-	@Override
-	public boolean satisfies(TraitState<?> other) {
-		return super.satisfies(other) && this.getType() == other.getType();
-	}
+	/*
+	 * @Override public boolean satisfies(TraitState<?> other) { return
+	 * super.satisfies(other) && this.getType() == other.getType(); }
+	 */
 
 	@Override
 	public void updateToMatch(Profile p) {

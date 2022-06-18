@@ -1,12 +1,24 @@
 package psych.actionstates.traits;
 
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import sociology.Profile;
+import sociology.sociocon.Sociocat;
+import sociology.sociocon.Sociocon;
 
 public abstract class TraitState<T> {
 
 	private ConditionType type = ConditionType.EQUAL;
+
+	/**
+	 * a = absent, p = present
+	 */
+	private static Map<Sociocat, SociocatTrait> pCatTraits = new TreeMap<>();
+	private static Map<Sociocat, SociocatTrait> aCatTraits = new TreeMap<>();
+	private static Map<Sociocon, SocioconTrait> pConTraits = new TreeMap<>();
+	private static Map<Sociocon, SocioconTrait> aConTraits = new TreeMap<>();
 
 	/**
 	 * The thing to be checked--the socioprop, sociocon, etc. If there is no
@@ -15,7 +27,7 @@ public abstract class TraitState<T> {
 	private T checker;
 
 	public enum ConditionType {
-		EQUAL, GREATER, LESS, BETWEEN, CONTAINS
+		EQUAL, NOT_EQUAL, GREATER, LESS, BETWEEN, CONTAINS
 	}
 
 	public TraitState(T checker) {
@@ -60,12 +72,13 @@ public abstract class TraitState<T> {
 	}
 
 	/**
-	 * Checks whether the profile satisfies this trait's condition
+	 * Checks whether the profile satisfies this trait's condition; null if this
+	 * cannot be determined
 	 * 
 	 * @param p
 	 * @return
 	 */
-	public abstract boolean satisfies(Profile p);
+	public abstract Boolean satisfies(Profile p);
 
 	/**
 	 * Changes this trait state to match the given profile; used for ActualState
@@ -86,8 +99,42 @@ public abstract class TraitState<T> {
 	 * @param other
 	 * @return
 	 */
+
 	public boolean satisfies(TraitState<?> other) {
 		return Objects.equals(this.checker, other.checker) || Objects.equals(other.checker, this.checker);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TraitState<?>ac) {
+			return super.equals(obj)
+					|| (this.checker != null && ac.checker != null ? this.checker.equals(ac.checker) : false)
+							&& this.type == ac.type;
+		}
+		return false;
+	}
+
+	/**
+	 * Creates a location check using TraitStateAt
+	 * 
+	 * @return
+	 */
+	public static TraitStateAt createLocationCheck(Profile location) {
+		return new TraitStateAt(location);
+	}
+
+	public static SociocatTrait createSociocatTrait(Sociocat cat, boolean present) {
+		Map<Sociocat, SociocatTrait> map = present ? pCatTraits : aCatTraits;
+
+		return map.computeIfAbsent(cat, (a) -> new SociocatTrait(cat, present));
+
+	}
+
+	public static SocioconTrait createSocioconTrait(Sociocon cat, boolean present) {
+		Map<Sociocon, SocioconTrait> map = present ? pConTraits : aConTraits;
+
+		return map.computeIfAbsent(cat, (a) -> new SocioconTrait(cat, present));
+
 	}
 
 }

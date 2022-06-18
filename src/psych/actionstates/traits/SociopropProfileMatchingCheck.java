@@ -23,7 +23,7 @@ public class SociopropProfileMatchingCheck extends TraitState<Socioprop<Profile>
 	 * @param checker
 	 * @param value
 	 */
-	public SociopropProfileMatchingCheck(Socioprop<Profile> checker, IProfile profile) {
+	SociopropProfileMatchingCheck(Socioprop<Profile> checker, IProfile profile) {
 		super(checker);
 		this.profile = profile;
 	}
@@ -38,14 +38,16 @@ public class SociopropProfileMatchingCheck extends TraitState<Socioprop<Profile>
 	}
 
 	@Override
-	public boolean satisfies(Profile p) {
+	public Boolean satisfies(Profile p) {
+		if (profile.getActualProfile() == null)
+			return null;
 		return Objects.equals(profile, p.getValue(getChecker())) || Objects.equals(p.getValue(getChecker()), profile);
 	}
 
-	@Override
-	public boolean satisfies(TraitState<?> other) {
-		return super.satisfies(other) && this.getType() == other.getType();
-	}
+	/*
+	 * @Override public boolean satisfies(TraitState<?> other) { return
+	 * super.satisfies(other) && this.getType() == other.getType(); }
+	 */
 
 	@Override
 	public void updateToMatch(Profile p) {

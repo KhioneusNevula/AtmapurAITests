@@ -33,8 +33,7 @@ public class ActualState implements WorldState {
 	}
 
 	/**
-	 * Updates this observed state to match that of what is observed for the given
-	 * profile
+	 * Updates this "actual state" based on the given profile
 	 */
 	public void updateStateToMatch(Profile observed) {
 

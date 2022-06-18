@@ -1,9 +1,10 @@
 package entity;
 
 import processing.core.PApplet;
-import psych.Mind;
-import psych.Need;
+import psych.mind.Mind;
+import psych.mind.Need;
 import sim.World;
+import sociology.Location;
 import sociology.Profile;
 import sociology.sociocon.IHasProfile;
 
@@ -37,6 +38,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 	private int radius;
 
 	private Integer optionalColor = null;
+	private Location location = new Location(this, true);
 
 	/**
 	 * A characteristic of actors who can think
@@ -245,7 +247,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 	}
 
 	protected void render() {
-		world.ellipseMode(PApplet.CENTER);
+		world.ellipseMode(PApplet.RADIUS);
 		if (optionalColor == null) {
 			world.fill(255, 255, 0, 100);
 			world.stroke(world.color(100, 100, 0));
@@ -260,6 +262,13 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 		world.fill(0);
 		world.text(this.name, x, y);
 
+	}
+
+	public Location getLocation() {
+		if (this.location.getX() != this.x || this.location.getY() != this.y) {
+			this.location = new Location(this, true);
+		}
+		return location;
 	}
 
 	@Override

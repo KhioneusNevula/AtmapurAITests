@@ -1,31 +1,31 @@
 package psych.action.goal;
 
-import psych.Mind;
 import psych.action.Action;
-import sociology.Profile;
+import psych.actionstates.states.State;
+import psych.mind.Mind;
 
 public abstract class Goal {
 
-	protected boolean complete;
-	private Mind mind;
+	/**
+	 * When this is >= 99.99, the goal is complete
+	 */
+	protected float completeness;
 
-	public Goal(Mind owner) {
-		this.mind = owner;
+	public Goal() {
 	}
 
 	public boolean isComplete() {
-		return complete;
+		return completeness >= 99.99;
 	}
 
-	public Mind getMind() {
-		return mind;
+	public double getCompleteness() {
+		return completeness;
 	}
 
 	/**
-	 * Uses the mind's state to check whether complete or not; return true if
-	 * complete
+	 * Uses the mind's state to check completeness level between 0 and 100
 	 */
-	protected abstract boolean checkCompletion();
+	protected abstract double checkCompletion(Mind mind);
 
 	/**
 	 * Whether the given action would contribute to completing this goal
@@ -33,26 +33,35 @@ public abstract class Goal {
 	 * @param act
 	 * @return
 	 */
-	public boolean canContributeToGoal(Action act, Profile from) {
-		return contributionFactor(act, from) > 0;
+	public boolean canContributeToGoal(Action act, State from, Mind mind) {
+		return contributionFactor(act, from, mind) > 0;
 	}
 
 	/**
-	 * Returns to what numeric degree this action would contribute to completing
-	 * this goal; positive for
+	 * Returns whatever percent this action would contribute to completing this goal
 	 * 
 	 * @param act
 	 * @return
 	 */
-	public abstract int contributionFactor(Action act, Profile from);
+	public abstract double contributionFactor(Action act, State result, Mind mind);
 
-	public void goalUpdate() {
-		this.complete = checkCompletion();
+	public void goalUpdate(Mind mind) {
+		this.completeness = Math.min(100, Math.max(0, (float) checkCompletion(mind)));
+	}
+
+	/**
+	 * Whether this goal indicates no more actions may be added to this task (i.e.
+	 * whether this is a completetasksgoal)
+	 * 
+	 * @return
+	 */
+	public boolean isEnd() {
+		return false;
 	}
 
 	@Override
 	public String toString() {
-		return (complete ? "COMPLETE " : "INCOMPLETE ") + this.getClass().getSimpleName();
+		return this.getClass().getSimpleName() + " : " + this.completeness + "%";
 	}
 
 }

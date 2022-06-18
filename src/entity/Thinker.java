@@ -1,13 +1,15 @@
 package entity;
 
 import java.util.Random;
+import java.util.Set;
 
-import psych.Need;
+import psych.mind.Need;
 import sim.World;
 import sociology.sociocon.Sociocat;
 
 public class Thinker extends Actor {
 
+	private static int MAX_HUNGER = 100;
 	private int satiation;
 	private Random rand = new Random();
 
@@ -20,8 +22,14 @@ public class Thinker extends Actor {
 
 	@Override
 	public void tick() {
-		if (3 > rand.nextInt(6))
-			satiation = Math.max(0, satiation - 1);
+		if (3 > rand.nextInt(15))
+			setHunger(getHunger() - 1);
+		Set<Actor> colls = getWorld().getCollisions(this, (a) -> true);
+		for (Actor a : colls) {
+			if (a instanceof Eatable e && rand.nextInt(18) < 7) {
+				this.setHunger(this.getHunger() + e.getNourishment());
+			}
+		}
 
 	}
 
@@ -30,7 +38,7 @@ public class Thinker extends Actor {
 	}
 
 	public void setHunger(int hunger) {
-		this.satiation = hunger;
+		this.satiation = Math.min(Math.max(0, hunger), MAX_HUNGER);
 	}
 
 	@Override

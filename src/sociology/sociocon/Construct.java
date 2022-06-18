@@ -2,7 +2,7 @@ package sociology.sociocon;
 
 import sociology.Profile;
 
-public class Construct implements IHasProfile {
+public abstract class Construct implements IHasProfile {
 
 	private Profile profile;
 

@@ -1,6 +1,6 @@
 package entity;
 
-import psych.Mind;
+import psych.mind.Mind;
 
 public interface ICanHaveMind {
 

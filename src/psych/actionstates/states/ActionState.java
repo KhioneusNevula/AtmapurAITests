@@ -1,34 +1,51 @@
 package psych.actionstates.states;
 
-import java.util.TreeMap;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.Map;
 
 import psych.actionstates.ConditionSet;
+import sociology.ProfilePlaceholder;
 
-/**
- * A hypothetical worldstate that is required by an action or a result of an
- * action
- * 
- * @author borah
- *
- */
-public class ActionState implements WorldState {
+public class ActionState implements State {
 
-	@Override
-	public TreeMap<String, ConditionSet> getConditions() {
-		// TODO Auto-generated method stub
-		return null;
+	private EnumMap<ProfileType, ConditionSet> conditions = new EnumMap<>(ProfileType.class);
+	private EnumMap<ProfileType, ProfilePlaceholder> profiles = new EnumMap<>(ProfileType.class);
+
+	public ActionState(Map<ProfileType, ProfilePlaceholder> profiles) {
+		this();
+		this.profiles.putAll(profiles);
+	}
+
+	public ActionState() {
+		for (ProfileType type : ProfileType.values()) {
+			conditions.put(type, new ConditionSet());
+		}
+	}
+
+	public ActionState setProfilePlaceholders(Map<ProfileType, ProfilePlaceholder> values) {
+		this.profiles.putAll(values);
+		return this;
 	}
 
 	@Override
-	public ConditionSet getUser() {
-		// TODO Auto-generated method stub
-		return null;
+	public ConditionSet getFor(ProfileType key) {
+		return conditions.get(key);
 	}
 
 	@Override
-	public TreeMap<String, ConditionSet> computeUnsatisfiedConditions(WorldState result) {
-		// TODO Auto-generated method stub
-		return null;
+	public Collection<ConditionSet> getAllConditions() {
+		return conditions.values();
+	}
+
+	@Override
+	public ProfilePlaceholder getProfile(ProfileType key) {
+		return profiles.get(key);
+	}
+
+	@Override
+	public String conditionsString() {
+		return this.conditions.toString();
 	}
 
 }

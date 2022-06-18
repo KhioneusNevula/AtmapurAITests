@@ -1,13 +1,16 @@
 package psych.action;
 
-import psych.Mind;
-import psych.action.types.ActionType;
-import psych.actionstates.states.WorldState;
+import psych.action.goal.Goal;
+import psych.action.goal.RequirementWrapper;
+import psych.actionstates.states.State;
+import psych.mind.Mind;
 import sociology.sociocon.IPurposeElement;
 import sociology.sociocon.IPurposeSource;
 
 /**
- * Actions are remembered in the mind
+ * Actions are remembered in the mind and executed in stack form. Each action
+ * has a user (performer) and possibly a target and a tool. However, any other
+ * involved entities/profiles/etc need to be set up as a MentalConstruct
  * 
  * @author borah
  *
@@ -16,40 +19,30 @@ public abstract class Action implements IPurposeElement {
 
 	private IPurposeSource origin = null;
 	private String name;
-	private WorldState requirements;
-	private WorldState result;
-
-	private ActionType type;
 
 	// TODO completion state, required state
 
-	public Action(String name, ActionType type) {
+	public Action(String name) {
 		this.name = name;
-		this.type = type;
 	}
 
 	/**
-	 * TODO getCompletionState getRequiredState
+	 * Whether this action can be executed for the given being
 	 */
-
-	/**
-	 * Whether this action can be executed for the given actor and the perceived
-	 * state of the universe, whether as a result of previous actions or as it
-	 * currently is
-	 */
-	public boolean canExecute(Mind actor, WorldState universe) {
-		// TODO check conditions on profile
+	public boolean canExecute(Mind actor, State prevResult) {
 		return true;
 	}
 
 	/**
-	 * Execute this action by this mind on this target. Return true if successful
+	 * Execute this action by this mind on this target; "prevResult" is the result
+	 * of the previous action. Return the current state of all relevant parts of
+	 * this action if successful
 	 * 
 	 * @param actor
 	 * @param forTarget
 	 * @return
 	 */
-	public abstract boolean execute(Mind actor, WorldState universe);
+	public abstract State execute(Mind actor, State prevResult);
 
 	@Override
 	public IPurposeSource getOrigin() {
@@ -61,26 +54,31 @@ public abstract class Action implements IPurposeElement {
 		return this;
 	}
 
-	public ActionType getType() {
-		return type;
-	}
-
 	@Override
 	public String getName() {
 		return name;
 	}
 
-	public WorldState getRequirements(Mind forM) {
-		return requirements;
-	}
+	/**
+	 * Using the given desired goal, generate the goal(s) that need to be completed
+	 * to complete this action. Return an empty wrapper or wrapper with one empty
+	 * state if this action completes all conditions. Return null if the action is
+	 * not compatible with the previous one.
+	 * 
+	 * @param fromMind
+	 * @param usingRequirements
+	 * @return
+	 */
+	public abstract RequirementWrapper generateRequirements(Mind fromMind, Goal goal);
 
-	public WorldState getResult(Mind forM) {
-		return result;
-	}
+	/**
+	 * TODO tiredness calculation
+	 */
 
+	/****/
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + " of type " + type + ": " + this.name + " becauseof: " + this.origin;
+		return this.getClass().getSimpleName() + ": " + this.name + " becauseof: " + this.origin;
 	}
 
 }

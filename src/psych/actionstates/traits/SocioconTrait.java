@@ -5,14 +5,17 @@ import sociology.sociocon.Sociocon;
 
 public class SocioconTrait extends TraitState<Sociocon> {
 
-	private boolean ifPresent;
-
-	public SocioconTrait(Sociocon checker, boolean ifPresent) {
+	SocioconTrait(Sociocon checker, boolean ifPresent) {
 		super(checker);
+		if (ifPresent) {
+			this.setType(ConditionType.EQUAL);
+		} else {
+			this.setType(ConditionType.NOT_EQUAL);
+		}
 	}
 
 	public boolean checksIfPresent() {
-		return ifPresent;
+		return this.getType() == ConditionType.EQUAL;
 	}
 
 	@Override
@@ -21,13 +24,17 @@ public class SocioconTrait extends TraitState<Sociocon> {
 	}
 
 	@Override
-	public boolean satisfies(Profile p) {
-		return ifPresent == p.hasSociocon(getChecker());
+	public Boolean satisfies(Profile p) {
+		return (this.getType() == ConditionType.EQUAL) == p.hasSociocon(getChecker());
 	}
 
 	@Override
 	public void updateToMatch(Profile p) {
-		ifPresent = p.hasSociocon(getChecker());
+		if (p.hasSociocon(getChecker())) {
+			this.setType(ConditionType.EQUAL);
+		} else {
+			this.setType(ConditionType.NOT_EQUAL);
+		}
 	}
 
 }

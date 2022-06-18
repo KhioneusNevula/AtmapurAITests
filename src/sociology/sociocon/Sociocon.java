@@ -17,7 +17,7 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class Sociocon {
+public class Sociocon implements Comparable<Sociocon> {
 
 	private Set<Profile> members = new HashSet<>();
 	private String name;
@@ -92,6 +92,15 @@ public class Sociocon {
 			return false;
 		Sociocon other = (Sociocon) obj;
 		return this.name.equals(other.name) && this.category == other.category;
+	}
+
+	private String getCatWithName() {
+		return this.category + "." + this.name;
+	}
+
+	@Override
+	public int compareTo(Sociocon o) {
+		return this.getCatWithName().compareTo(o.getCatWithName());
 	}
 
 	public String socioconReport() {

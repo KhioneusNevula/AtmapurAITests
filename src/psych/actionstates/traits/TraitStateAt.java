@@ -1,8 +1,9 @@
 package psych.actionstates.traits;
 
 import entity.Actor;
-import entity.IPhysicalExistence;
+import entity.ILocatable;
 import psych.actionstates.traits.TraitStateAt.AtChecker;
+import sociology.IProfile;
 import sociology.Profile;
 
 /**
@@ -19,22 +20,20 @@ public class TraitStateAt extends TraitState<AtChecker> {
 		AT
 	}
 
-	private int x;
-	private int y;
+	private IProfile parameter;
 
-	public TraitStateAt(int x, int y) {
+	public TraitStateAt(IProfile parameter) {
 		super(AT);
+		this.parameter = parameter;
 
-		this.x = x;
-		this.y = y;
 	}
 
-	public int getX() {
-		return x;
+	public IProfile getParameter() {
+		return parameter;
 	}
 
-	public int getY() {
-		return y;
+	public ILocatable getLocation() {
+		return this.parameter.getOwner() instanceof ILocatable ? (ILocatable) this.parameter.getOwner() : null;
 	}
 
 	@Override
@@ -42,29 +41,35 @@ public class TraitStateAt extends TraitState<AtChecker> {
 		return "at.fundamental";
 	}
 
-	protected double distanceTo(TraitStateAt other) {
-		return Math.sqrt(Math.pow(this.getX() - other.getX(), 2) + Math.pow(this.getY() - other.getY(), 2));
-	}
+	/*
+	 * protected double distanceTo(TraitStateAt other) { return
+	 * Math.sqrt(Math.pow(this.getX() - other.getX(), 2) + Math.pow(this.getY() -
+	 * other.getY(), 2)); }
+	 */
 
 	@Override
-	public boolean satisfies(Profile p) {
-		if (p.getOwner() instanceof Actor a) {
-			return a.getWorld().getAt(x, y).contains(a);
+	public Boolean satisfies(Profile p) {
+		if (p.getOwner() instanceof ILocatable l) {
+			if (this.parameter.getOwner() instanceof ILocatable l2) {
+				return l2.distance(l) <= Actor.REACH; // TODO obviously make this make more sense
+			} else {
+				return null;
+			}
 		}
 		return false;
 	}
 
 	@Override
 	public void updateToMatch(Profile p) {
-		if (p.getOwner() instanceof IPhysicalExistence ipe) {
-			this.x = ipe.getX();
-			this.y = ipe.getY();
-		}
+		if (!(p.getOwner() instanceof ILocatable))
+			throw new IllegalArgumentException("Profile " + p + " must be locatable");
+		this.parameter = ((ILocatable) p.getOwner()).getLocation().getProfile();
 	}
 
-	@Override
-	public boolean satisfies(TraitState<?> other) {
-		return other instanceof TraitStateAt && ((TraitStateAt) other).distanceTo(this) <= Actor.REACH;
-	}
+	/*
+	 * @Override public boolean satisfies(TraitState<?> other) { return other
+	 * instanceof TraitStateAt && ((TraitStateAt) other).distanceTo(this) <=
+	 * Actor.REACH; }
+	 */
 
 }

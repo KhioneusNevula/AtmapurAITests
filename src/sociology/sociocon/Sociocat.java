@@ -9,9 +9,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 
 import entity.Actor;
-import psych.Need;
 import psych.action.Action;
-import psych.action.types.NeedAction;
 import sim.World;
 import sociology.Profile;
 
@@ -24,9 +22,8 @@ import sociology.Profile;
  *
  */
 public enum Sociocat implements IPurposeSource {
-	FOOD("food", p("nourishment", int.class, 0), new NeedAction("eat", Need.SATIATION)),
-	DRINK("drink", p("quenching", int.class, 0)), DANGER("danger", p("level", int.class, 0)),
-	SHELTER("shelter", p("level", int.class, 0)), CLOTHING("clothing"),
+	FOOD("food", p("nourishment", int.class, 0)), DRINK("drink", p("quenching", int.class, 0)),
+	DANGER("danger", p("level", int.class, 0)), SHELTER("shelter", p("level", int.class, 0)), CLOTHING("clothing"),
 	PERSON("person",
 			p("held", Profile.class, (Profile) null).getValueFunction((p) -> p.getOwner() instanceof Actor
 					? (((Actor) p.getOwner()).getHeld() != null ? ((Actor) p.getOwner()).getHeld().getProfile() : null)

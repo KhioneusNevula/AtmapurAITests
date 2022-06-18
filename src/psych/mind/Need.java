@@ -1,4 +1,4 @@
-package psych;
+package psych.mind;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -7,12 +7,11 @@ import java.util.function.Predicate;
 import entity.Eatable;
 import entity.ICanHaveMind;
 import entity.Thinker;
-import psych.action.types.ActionType;
 import psych.actionstates.traits.ICheckable;
 import sociology.Profile;
 
 public enum Need implements ICheckable<Integer> {
-	SATIATION("satiation", ActionType.EAT, (a) -> a.getOwner() instanceof Thinker,
+	SATIATION("satiation", (a) -> a.getOwner() instanceof Thinker,
 			(a) -> a.getOwner() instanceof Thinker ? ((Thinker) a.getOwner()).getHunger() : null,
 			(a, i) -> ((Thinker) a.getOwner()).setHunger(i), (a) -> a.getOwner() instanceof Eatable,
 			(a) -> a.getOwner() instanceof Eatable ? ((Eatable) a.getOwner()).getNourishment() : null);
@@ -23,7 +22,6 @@ public enum Need implements ICheckable<Integer> {
 	private Predicate<Mind> hasNeed;
 	private Predicate<Profile> canFulfill;
 	private BiConsumer<Mind, Integer> setNeed;
-	private ActionType actionType;
 
 	/**
 	 * function returns null if actor is invalid ; getNeed gets the official value
@@ -37,7 +35,7 @@ public enum Need implements ICheckable<Integer> {
 	 * @param name
 	 * @param getNeed
 	 */
-	private Need(String name, ActionType type, Predicate<Mind> hasNeed, Function<Mind, Integer> getNeed,
+	private Need(String name, Predicate<Mind> hasNeed, Function<Mind, Integer> getNeed,
 			BiConsumer<Mind, Integer> setNeed, Predicate<Profile> canFulfill,
 			Function<Profile, Integer> getFulfillmentValue) {
 		this.name = name;
@@ -45,12 +43,7 @@ public enum Need implements ICheckable<Integer> {
 		this.setNeed = setNeed;
 		this.hasNeed = hasNeed;
 		this.canFulfill = canFulfill;
-		this.actionType = type;
 		this.getFulfillmentValue = getFulfillmentValue;
-	}
-
-	public ActionType getActionType() {
-		return actionType;
 	}
 
 	public String getName() {

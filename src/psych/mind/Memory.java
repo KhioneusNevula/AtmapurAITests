@@ -1,4 +1,4 @@
-package psych;
+package psych.mind;
 
 /**
  * T can be anything; this system is so that memories can be associated with

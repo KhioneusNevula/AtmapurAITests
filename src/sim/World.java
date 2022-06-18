@@ -6,13 +6,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import entity.Actor;
 import entity.Eatable;
 import entity.Thinker;
 import processing.core.PApplet;
-import psych.actionstates.states.ActualState;
 import sociology.sociocon.IPurposeSource;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
@@ -26,7 +26,6 @@ public class World extends PApplet {
 	private final float fps;
 	private Actor testActor;
 	private Random rand = new Random();
-	private ActualState worldState = new ActualState(this);
 
 	public World(int width, int height, float fps) {
 		this.width = width;
@@ -36,7 +35,6 @@ public class World extends PApplet {
 
 	public void spawnActor(Actor a) {
 		this.actors.add(a);
-		this.worldState.recognizeProfile(a.getProfile());
 		System.out.println("Spawned " + a);
 	}
 
@@ -107,15 +105,20 @@ public class World extends PApplet {
 			e.tick();
 			e.senseTick();
 		}
-		int r = rand.nextInt();
 		// world phenomena idk
 		for (Actor e : actors) {
 			e.actionTick();
 			e.draw();
-			if (r < 50) {
-				System.out.println(e.getProfile() + e.getProfile().profileReport());
-			}
 		}
+	}
+
+	public boolean isColliding(Actor a, Actor other) {
+		return a.distance(other) <= (a.getRadius() + other.getRadius());
+	}
+
+	public Set<Actor> getCollisions(Actor for_, Predicate<Actor> pred) {
+		return actors.stream().filter(pred).filter((a) -> a != for_ && isColliding(for_, a))
+				.collect(Collectors.toSet());
 	}
 
 	public Set<Actor> getAt(int x, int y) {

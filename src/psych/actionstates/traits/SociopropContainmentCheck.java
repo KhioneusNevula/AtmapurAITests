@@ -17,7 +17,7 @@ public class SociopropContainmentCheck<T> extends SociopropTrait<T> {
 
 	private T value;
 
-	public SociopropContainmentCheck(Socioprop<T> checker, T value) {
+	SociopropContainmentCheck(Socioprop<T> checker, T value) {
 		super(checker);
 		this.value = value;
 		this.setType(ConditionType.CONTAINS);
@@ -33,14 +33,14 @@ public class SociopropContainmentCheck<T> extends SociopropTrait<T> {
 	}
 
 	@Override
-	public boolean satisfies(Profile p) {
+	public Boolean satisfies(Profile p) {
 		return ((Collection) p.getValue(this.getChecker())).contains(value);
 	}
 
-	@Override
-	public boolean satisfies(TraitState<?> other) {
-		return super.satisfies(other) && this.getType() == other.getType();
-	}
+	/*
+	 * public boolean satisfies(TraitState<?> other) { return super.satisfies(other)
+	 * && this.getType() == other.getType(); }
+	 */
 
 	@Override
 	public void updateToMatch(Profile p) {

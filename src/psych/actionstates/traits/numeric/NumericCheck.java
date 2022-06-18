@@ -63,7 +63,7 @@ public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> ex
 	protected abstract T getMinValue();
 
 	@Override
-	public boolean satisfies(Profile p) {
+	public Boolean satisfies(Profile p) {
 		double value = getChecker().getValue(p).doubleValue();
 		/*
 		 * switch (this.getType()) { case BETWEEN: return value <=
@@ -77,9 +77,9 @@ public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> ex
 	}
 
 	// satisfies if the two ranges have a space of intersection
-	@Override
+
 	public boolean satisfies(TraitState<?> other2) {
-		if (!super.satisfies(other2) || !(other2 instanceof NumericCheck))
+		if (!(other2 instanceof NumericCheck))
 			return false;
 		NumericCheck<M, ?> other = (NumericCheck<M, ?>) other2;
 
