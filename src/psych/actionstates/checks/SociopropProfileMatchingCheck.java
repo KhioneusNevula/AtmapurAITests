@@ -1,9 +1,10 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import java.util.Objects;
 
 import sociology.IProfile;
 import sociology.Profile;
+import sociology.ProfilePlaceholder;
 import sociology.sociocon.Socioprop;
 
 /**
@@ -13,7 +14,7 @@ import sociology.sociocon.Socioprop;
  *
  * @param <T>
  */
-public class SociopropProfileMatchingCheck extends TraitState<Socioprop<Profile>> {
+public class SociopropProfileMatchingCheck extends Check<Socioprop<Profile>> implements IProfileDependentCheck {
 
 	private IProfile profile;
 
@@ -37,11 +38,43 @@ public class SociopropProfileMatchingCheck extends TraitState<Socioprop<Profile>
 		return profile;
 	}
 
+	public IProfile getProfile() {
+		return profile;
+	}
+
+	/**
+	 * Whether the profile in this is a placeholder
+	 * 
+	 * @return
+	 */
+	public boolean isProfilePlaceholder() {
+		return profile instanceof ProfilePlaceholder;
+	}
+
+	/**
+	 * returns the contained profile as a placeholder
+	 * 
+	 * @return
+	 */
+	public ProfilePlaceholder getProfilePlaceholder() {
+		return (ProfilePlaceholder) profile;
+	}
+
+	/**
+	 * The actual profile to be checked
+	 * 
+	 * @return
+	 */
+	public Profile getActualProfile() {
+		return profile.getActualProfile();
+	}
+
 	@Override
 	public Boolean satisfies(Profile p) {
 		if (profile.getActualProfile() == null)
 			return null;
-		return Objects.equals(profile, p.getValue(getChecker())) || Objects.equals(p.getValue(getChecker()), profile);
+		return Objects.equals(profile.getActualProfile(), p.getValue(getChecker()))
+				|| Objects.equals(p.getValue(getChecker()), profile.getActualProfile());
 	}
 
 	/*
@@ -57,6 +90,11 @@ public class SociopropProfileMatchingCheck extends TraitState<Socioprop<Profile>
 	@Override
 	protected String idString() {
 		return "profilematch." + this.getChecker().getOrigin() + "." + this.getChecker().getName();
+	}
+
+	@Override
+	public String report() {
+		return this.getChecker().toString() + " matches " + this.profile;
 	}
 
 }

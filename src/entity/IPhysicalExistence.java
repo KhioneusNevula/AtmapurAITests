@@ -1,5 +1,7 @@
 package entity;
 
+import sim.ILocatable;
+
 /**
  * Things which have a physical position
  * 
@@ -12,6 +14,10 @@ public interface IPhysicalExistence extends ILocatable {
 
 	public void setY(int y);
 
-	public void move(int xplus, int yplus);
+	public default void move(int xplus, int yplus) {
+
+		setX(getX() + xplus);
+		setY(getY() + yplus);
+	}
 
 }

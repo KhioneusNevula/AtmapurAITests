@@ -1,23 +1,24 @@
-package sociology;
+package sim;
 
-import entity.ILocatable;
-import sociology.sociocon.IHasProfile;
+import sociology.Profile;
 
 public class Location implements IHasProfile, ILocatable {
 
 	private Profile profile;
 	private int x;
 	private int y;
+	private World world;
 
-	public Location(int x, int y, boolean makeProfile) {
+	public Location(int x, int y, World world, boolean makeProfile) {
 		this.x = x;
 		this.y = y;
 		if (makeProfile)
 			makeProfile();
+		this.world = world;
 	}
 
-	public Location(ILocatable l, boolean makeProfile) {
-		this(l.getX(), l.getY(), makeProfile);
+	public Location(ILocatable l, World world, boolean makeProfile) {
+		this(l.getX(), l.getY(), world, makeProfile);
 	}
 
 	public Location makeProfile() {
@@ -49,6 +50,11 @@ public class Location implements IHasProfile, ILocatable {
 	@Override
 	public Location getLocation() {
 		return this;
+	}
+
+	@Override
+	public World getWorld() {
+		return world;
 	}
 
 }

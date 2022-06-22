@@ -1,4 +1,4 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import java.util.Collection;
 
@@ -6,14 +6,15 @@ import sociology.Profile;
 import sociology.sociocon.Socioprop;
 
 /**
- * Checks if the given value is in a multiple-value property of a profile TODO
- * for later
+ * TODO for later Checks if the given value is in a multiple-value property of a
+ * profile
+ * 
  * 
  * @author borah
  *
  * @param <T>
  */
-public class SociopropContainmentCheck<T> extends SociopropTrait<T> {
+public class SociopropContainmentCheck<T> extends SociopropCheck<T> {
 
 	private T value;
 
@@ -47,4 +48,8 @@ public class SociopropContainmentCheck<T> extends SociopropTrait<T> {
 
 	}
 
+	@Override
+	public String report() {
+		return "";
+	}
 }

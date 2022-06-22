@@ -1,7 +1,7 @@
-package psych.actionstates.traits.numeric;
+package psych.actionstates.checks.numeric;
 
-import psych.actionstates.traits.ICheckable;
-import psych.actionstates.traits.TraitState;
+import psych.actionstates.checks.Check;
+import psych.actionstates.checks.ICheckable;
 import sociology.Profile;
 
 /**
@@ -11,7 +11,7 @@ import sociology.Profile;
  *
  * @param <T>
  */
-public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> extends TraitState<M> {
+public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> extends Check<M> {
 
 	private T upper = getMaxValue();
 	private T lower = getMinValue();
@@ -78,7 +78,7 @@ public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> ex
 
 	// satisfies if the two ranges have a space of intersection
 
-	public boolean satisfies(TraitState<?> other2) {
+	public boolean satisfies(Check<?> other2) {
 		if (!(other2 instanceof NumericCheck))
 			return false;
 		NumericCheck<M, ?> other = (NumericCheck<M, ?>) other2;
@@ -105,6 +105,29 @@ public abstract class NumericCheck<M extends ICheckable<T>, T extends Number> ex
 	public void updateToMatch(Profile p) {
 		T vala = getChecker().getValue(p);
 		this.setValues(vala, vala);
+	}
+
+	@Override
+	public String report() {
+		String end = "";
+		switch (this.getType()) {
+		case EQUAL:
+			end = "equals " + this.upper;
+			break;
+		case GREATER:
+			end = "greater than " + this.lower;
+			break;
+		case LESS:
+			end = "less than " + this.upper;
+			break;
+		case BETWEEN:
+			end = "between " + lower + "," + upper;
+			break;
+		default:
+			throw new IllegalStateException("type of check cannot be " + this.getType());
+		}
+
+		return "value of " + this.getChecker() + " " + end;
 	}
 
 }

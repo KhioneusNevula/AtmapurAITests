@@ -8,8 +8,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import entity.Actor;
-import psych.action.Action;
+import psych.action.types.Action;
 import sim.World;
 import sociology.Profile;
 
@@ -22,16 +21,9 @@ import sociology.Profile;
  *
  */
 public enum Sociocat implements IPurposeSource {
-	FOOD("food", p("nourishment", int.class, 0)), DRINK("drink", p("quenching", int.class, 0)),
-	DANGER("danger", p("level", int.class, 0)), SHELTER("shelter", p("level", int.class, 0)), CLOTHING("clothing"),
-	PERSON("person",
-			p("held", Profile.class, (Profile) null).getValueFunction((p) -> p.getOwner() instanceof Actor
-					? (((Actor) p.getOwner()).getHeld() != null ? ((Actor) p.getOwner()).getHeld().getProfile() : null)
-					: null),
-			p("worn", Profile.class, (Profile) null).getValueFunction((p) -> p.getOwner() instanceof Actor
-					? (((Actor) p.getOwner()).getClothing() != null ? ((Actor) p.getOwner()).getClothing().getProfile()
-							: null)
-					: null));
+	FOOD("food", Socioprops.FOOD_NOURISHMENT), DRINK("drink", Socioprops.DRINK_QUENCHING),
+	DANGER("danger", Socioprops.DANGER_LEVEL), SHELTER("shelter", Socioprops.SHELTER_LEVEL), CLOTHING("clothing"),
+	PERSON("person", Socioprops.ACTOR_HELD, Socioprops.ACTOR_WORN);
 
 	private Map<String, Socioprop<?>> properties = new TreeMap<>();
 	private Set<Action> actions = new HashSet<>();
@@ -117,9 +109,6 @@ public enum Sociocat implements IPurposeSource {
 		return new Socioprop<>(name, type, (a) -> defaultValue);
 	}
 
-	/**
-	 * TODO this
-	 */
 	@Override
 	public Collection<Action> getActionsFor(Sociocon socio) {
 		return this.actions;

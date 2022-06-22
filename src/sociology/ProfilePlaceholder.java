@@ -1,7 +1,11 @@
 package sociology;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import psych.actionstates.ConditionSet;
 import psych.actionstates.states.State.ProfileType;
-import sociology.sociocon.IHasProfile;
+import sim.IHasProfile;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
 import sociology.sociocon.Socioprop;
@@ -17,6 +21,25 @@ public class ProfilePlaceholder implements IProfile {
 
 	public ProfileType getType() {
 		return type;
+	}
+
+	/**
+	 * Tries to resolve this profile using the given conditions and set of possible
+	 * profiles, null if it cannot TODO currently just choosing profile with least
+	 * unfulfilled conditions
+	 */
+	public static Profile tryFindResolution(ConditionSet conditions, Iterable<Profile> known) {
+		List<Profile> complete = new ArrayList<>();
+		// List<Profile> incomplete = new ArrayList<>();
+		for (Profile profile : known) {
+			ConditionSet oth = conditions.conditionsUnfulfilledBy(profile);
+			if (oth.isEmpty())
+				complete.add(profile);
+			// else if (!oth.equals(conditions)) incomplete.add(profile);
+		}
+
+		return complete.stream().findAny().orElse(null);
+
 	}
 
 	public ProfilePlaceholder resolve(Profile resolved) {
@@ -36,6 +59,19 @@ public class ProfilePlaceholder implements IProfile {
 		Profile resolved = this.resolved;
 		this.resolved = null;
 		return resolved;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof ProfilePlaceholder pp) {
+			return this.resolved != null ? this.resolved.equals(pp.resolved) : (this.type == pp.type);
+		}
+		return super.equals(obj);
+	}
+
+	@Override
+	public String toString() {
+		return "|" + getName() + (resolved == null ? "" : ": " + resolved) + "|";
 	}
 
 	@Override

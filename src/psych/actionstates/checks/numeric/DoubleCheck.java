@@ -1,6 +1,6 @@
-package psych.actionstates.traits.numeric;
+package psych.actionstates.checks.numeric;
 
-import psych.actionstates.traits.ICheckable;
+import psych.actionstates.checks.ICheckable;
 
 public class DoubleCheck<M extends ICheckable<Double>> extends NumericCheck<M, Double> {
 

@@ -1,5 +1,6 @@
 package sociology.sociocon;
 
+import sim.IHasProfile;
 import sociology.Profile;
 
 public abstract class Construct implements IHasProfile {

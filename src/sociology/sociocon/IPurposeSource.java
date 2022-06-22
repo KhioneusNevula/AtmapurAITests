@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.function.Function;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import sociology.Profile;
 
 public interface IPurposeSource {

@@ -1,4 +1,4 @@
-package psych;
+package main;
 
 /**
  * @Immutable

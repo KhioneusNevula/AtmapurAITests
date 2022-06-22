@@ -1,3 +1,4 @@
+package main;
 import processing.core.PApplet;
 import sim.World;
 

@@ -1,6 +1,6 @@
 package psych.action.goal;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import psych.actionstates.states.State;
 import psych.mind.Mind;
 
@@ -39,6 +39,16 @@ public class EmptyGoal extends Goal {
 	@Override
 	public String toString() {
 		return "EMPTY GOAL";
+	}
+
+	@Override
+	public Priority getPriority() {
+		return Priority.NO_PRIORITY;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return true;
 	}
 
 }

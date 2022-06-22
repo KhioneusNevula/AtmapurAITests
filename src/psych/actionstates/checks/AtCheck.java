@@ -1,8 +1,9 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import entity.Actor;
-import entity.ILocatable;
-import psych.actionstates.traits.TraitStateAt.AtChecker;
+import psych.actionstates.ConditionSet;
+import psych.actionstates.checks.Check.Fundamental;
+import sim.ILocatable;
 import sociology.IProfile;
 import sociology.Profile;
 
@@ -12,23 +13,23 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class TraitStateAt extends TraitState<AtChecker> {
+public class AtCheck extends Check<Fundamental> implements IProfileDependentCheck {
 
-	public static final AtChecker AT = AtChecker.AT;
-
-	public static enum AtChecker {
-		AT
-	}
+	public static final Fundamental AT = Fundamental.AT;
 
 	private IProfile parameter;
 
-	public TraitStateAt(IProfile parameter) {
+	public static AtCheck get(ConditionSet from) {
+		return (AtCheck) from.getCondition(AT);
+	}
+
+	public AtCheck(IProfile parameter) {
 		super(AT);
 		this.parameter = parameter;
 
 	}
 
-	public IProfile getParameter() {
+	public IProfile getProfile() {
 		return parameter;
 	}
 
@@ -71,5 +72,10 @@ public class TraitStateAt extends TraitState<AtChecker> {
 	 * instanceof TraitStateAt && ((TraitStateAt) other).distanceTo(this) <=
 	 * Actor.REACH; }
 	 */
+
+	@Override
+	public String report() {
+		return "at " + this.parameter;
+	}
 
 }

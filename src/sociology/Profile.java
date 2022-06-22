@@ -7,8 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import psych.action.Action;
-import sociology.sociocon.IHasProfile;
+import psych.action.types.Action;
+import sim.IHasProfile;
 import sociology.sociocon.PropertyHolder;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
@@ -135,11 +135,14 @@ public class Profile implements IProfile {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + ": name-" + this.name;
+		return this.getClass().getSimpleName() + ":\"" + this.name + "\"";
+
 	}
 
 	@Override
 	public boolean equals(Object obj) {
+		if (!(obj instanceof Profile))
+			return false;
 		return this.owner == ((Profile) obj).owner;
 	}
 

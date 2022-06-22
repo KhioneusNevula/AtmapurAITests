@@ -1,5 +1,6 @@
 package psych.action.goal;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,12 +14,17 @@ public class RequirementWrapper implements Iterable<RequirementGoal> {
 	public static RequirementWrapper create(RequirementGoal... reqs) {
 		if (reqs.length == 0)
 			return EMPTY;
+		else if (reqs.length == 1 && reqs[0].isEmpty())
+			return EMPTY;
 		return new RequirementWrapper(reqs);
 	}
 
 	private RequirementWrapper(RequirementGoal... requirements) {
-		if (requirements.length != 0)
+		if (requirements.length != 0) {
 			this.requirements = new HashSet<>();
+		} else {
+			this.requirements = Collections.EMPTY_SET;
+		}
 		for (RequirementGoal goal : requirements) {
 			this.requirements.add(goal);
 		}
@@ -70,6 +76,10 @@ public class RequirementWrapper implements Iterable<RequirementGoal> {
 	 */
 	public boolean isSingle() {
 		return requirements.size() == 1;
+	}
+
+	public boolean contains(RequirementGoal req) {
+		return requirements.contains(req);
 	}
 
 	/**

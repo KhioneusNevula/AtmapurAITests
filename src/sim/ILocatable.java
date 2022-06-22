@@ -1,6 +1,4 @@
-package entity;
-
-import sociology.Location;
+package sim;
 
 public interface ILocatable {
 	public int getX();

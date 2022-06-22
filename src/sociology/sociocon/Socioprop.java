@@ -2,7 +2,7 @@ package sociology.sociocon;
 
 import java.util.function.Function;
 
-import psych.actionstates.traits.ICheckable;
+import psych.actionstates.checks.ICheckable;
 import sociology.Profile;
 
 /**
@@ -97,7 +97,7 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<
 
 	@Override
 	public String toString() {
-		return "{socioprop-\"" + this.name + "\"," + this.type + ".class"
+		return "{socioprop-\"" + this.name + "\""
 				+ (this.origin == null ? ""
 						: ",becauseof:" + (this.origin instanceof Sociocat ? ((Sociocat) this.origin).name()
 								: (this.origin.getClass().getSimpleName())))

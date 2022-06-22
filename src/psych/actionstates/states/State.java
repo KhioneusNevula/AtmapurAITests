@@ -1,18 +1,97 @@
 package psych.actionstates.states;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
 
 import psych.actionstates.ConditionSet;
-import psych.actionstates.traits.TraitState;
+import psych.actionstates.checks.Check;
 import sociology.Profile;
 import sociology.ProfilePlaceholder;
 
-public interface State {
+public interface State extends Cloneable {
 
-	public static enum ProfileType {
-		USER, TARGET
+	public abstract static class ProfileType implements Comparable<ProfileType> {
+
+		public static final InstanceProfileType USER = new InstanceProfileType("USER");
+		public static final InstanceProfileType TARGET = new InstanceProfileType("TARGET");
+		public static final InstanceProfileType TOOL = new InstanceProfileType("TOOL");
+		private static final Map<String, ProfileType> profiles = new TreeMap<>();
+
+		public final String id;
+
+		private ProfileType(String id) {
+			this.id = id;
+			profiles.put(id, this);
+
+		}
+
+		public abstract TypeProfileType typeVersion();
+
+		public abstract InstanceProfileType instanceVersion();
+
+		public static Collection<ProfileType> values() {
+			return profiles.values();
+		}
+
+		public static ProfileType valueOf(String id) {
+			return profiles.get(id);
+		}
+
+		@Override
+		public int compareTo(ProfileType o) {
+			return this.id.compareTo(o.id);
+		}
+
+		public static class TypeProfileType extends ProfileType {
+			public final InstanceProfileType instanceVersion;
+
+			private TypeProfileType(String outerID, InstanceProfileType instanceVersion) {
+				super(outerID + "_TYPE");
+				this.instanceVersion = instanceVersion;
+			}
+
+			@Override
+			public InstanceProfileType instanceVersion() {
+				return instanceVersion;
+			}
+
+			@Override
+			public TypeProfileType typeVersion() {
+				throw new UnsupportedOperationException("TypeProfile " + this.id + " has no typeVersion");
+			}
+		}
+
+		public static class InstanceProfileType extends ProfileType {
+			public final TypeProfileType typeVersion;
+
+			private InstanceProfileType(String id) {
+				super(id);
+				this.typeVersion = new TypeProfileType(id, this);
+
+			}
+
+			@Override
+			public InstanceProfileType instanceVersion() {
+				throw new UnsupportedOperationException("InstanceProfile " + this.id + " has no instanceVersion");
+
+			}
+
+			@Override
+			public TypeProfileType typeVersion() {
+				return typeVersion;
+			}
+		}
+
 	}
 
+	/**
+	 * Gets the placeholder for this profile; null if this state doesn't use that
+	 * specific profile
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public ProfilePlaceholder getProfile(ProfileType key);
 
 	/**
@@ -61,8 +140,8 @@ public interface State {
 				continue;
 
 			for (Object checker : thisCons.getCheckers()) {
-				TraitState<?> thisT = thisCons.getCondition(checker);
-				TraitState<?> otherT = otherCons.getCondition(checker);
+				Check<?> thisT = thisCons.getCondition(checker);
+				Check<?> otherT = otherCons.getCondition(checker);
 				if (otherT == null || !otherT.satisfies(thisT)) {
 					state.getFor(type).addConditions(thisT);
 				}
@@ -85,18 +164,24 @@ public interface State {
 			if (thisCons == null)
 				continue;
 
-			for (Object checker : thisCons.getCheckers()) {
-				TraitState<?> thisT = thisCons.getCondition(checker);
-				if (thisT.satisfies(param) != true) {
-					state.getFor(type).addConditions(thisT);
-				}
-			}
+			state.getFor(type).addConditions(thisCons.conditionsUnfulfilledBy(param));
 
 		}
 		return state;
 
 	}
 
-	public abstract String conditionsString();
+	/**
+	 * elimintates conditions resolved by the given RESOLVED profile placeholder
+	 */
+	public void eliminateResolvedConditions(ProfilePlaceholder pp);
+
+	public String conditionsString();
+
+	ActionState putProfilePlaceholder(ProfileType type, ProfilePlaceholder pp);
+
+	ActionState setProfilePlaceholders(Map<ProfileType, ProfilePlaceholder> values);
+
+	public State clone() throws CloneNotSupportedException;
 
 }

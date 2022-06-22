@@ -1,148 +1,133 @@
 package psych.mind;
 
-import java.util.EnumMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.Random;
+import java.util.function.Consumer;
 
 import entity.Actor;
-import psych.action.Action;
-import psych.action.goal.Goal;
-import psych.action.goal.NeedGoal;
+import psych.action.types.Action;
+import psych.mind.Memory.MemorySection;
+import psych.mind.Memory.MemoryType;
+import sim.IHasProfile;
 import sociology.Profile;
 
 public class Mind {
 
-	private Actor owner;
-	private static int SIGHT = 200;
-	private Set<Profile> rememberedProfiles = new HashSet<>();
-	private TreeMap<Need, Integer> needs = new TreeMap<>();
-	private Set<Action> possibleActions = new HashSet<>();
-	private Set<Goal> goals = new HashSet<>();
-	private EnumMap<Need, NeedGoal> needGoals = new EnumMap<>(Need.class);
-	private int ticks = 0;
-	private Will personalWill = new Will(this);
+	private IHasProfile owner;
+	private static final int SIGHT = 200;
+	private NeedManager needs;
+	private int ticks = 0; // mostly just to allow for a periodic internal clock
+	private Will personalWill;
+	private Memory memory;
+	private Random rand = new Random();
 
-	public Mind(Actor owner, Need... needs) {
+	public Mind(IHasProfile owner, Need... needs) {
 		this.owner = owner;
-		for (Need n : needs) {
-			this.needs.put(n, 0);
-		}
+		this.memory = new Memory(this);
+		this.needs = new NeedManager(this, needs);
+		this.personalWill = new Will(this);
+		// TODO make this more generalized
+		memory.initializeSections(MemoryType.PROFILE, MemoryType.POSSIBLE_ACTIONS);
+		this.rememberFundamentalActions();
 
+	}
+
+	/** TODO make this more generalized, culture, etc */
+	private void rememberFundamentalActions() {
+		atm(Action.COOK);
+		atm(Action.EAT);
+		atm(Action.MOVE);
+		atm(Action.PICKUP);
+		atm(Action.SEARCH);
+	}
+
+	/**
+	 * adds the action to memory
+	 * 
+	 * @param act
+	 */
+	private void atm(Action act) {
+		this.getPossibleActions().add(act);
+		this.getPossibleActions().makeEternalFor(act);
 	}
 
 	public Will getPersonalWill() {
 		return personalWill;
 	}
 
-	public void addNeedGoal(Need need, int level) {
-		NeedGoal existing = needGoals.get(need); // TODO probably universalize this;
-													// currently checks which goal has the
-													// higher need level and keeps that one
-		if (existing == null) {
-			NeedGoal g = new NeedGoal(need, level);
-			needGoals.put(need, g);
-			goals.add(g);
-			return;
-		}
-		existing.setLevel(Math.max(existing.getLevel(), level));
-	}
-
-	/**
-	 * Adds this goal to the set of goals
-	 * 
-	 * @param goal
-	 */
-	public void chooseGoal(Goal goal) {
-		if (goal instanceof NeedGoal) {
-			if (needGoals.containsKey(((NeedGoal) goal).getFocus())) {
-
-				addNeedGoal(((NeedGoal) goal).getFocus(), ((NeedGoal) goal).getLevel());
-			} else {
-				needGoals.put(((NeedGoal) goal).getFocus(), (NeedGoal) goal);
-				this.goals.add(goal);
-			}
-		} else
-			this.goals.add(goal);
-		System.out.println("added new goal " + goal);
-	}
-
-	public void giveUp(Goal goal) {
-		this.goals.remove(goal);
-		if (this.needGoals.containsValue(goal)) {
-			this.needGoals.remove(((NeedGoal) goal).getFocus());
-		}
-		System.out.println("removed goal " + goal);
-	}
-
 	public void observe() {
-		boolean nO = false;
-		boolean pO = false;
 
 		// observe needs
-		for (Need n : this.needs.keySet()) {
-			Integer nV = n.getNeedValue(this);
+		this.needs.update(ticks);
 
-			if (nV != null && !nV.equals(needs.get(n))) {
-				nO = true;
-				needs.put(n, nV);
-
-			}
-			if (needs.get(n) < 10 && needGoals.get(n) == null) { // TODO obviously figure this out and make it more
-																	// specific
-				this.addNeedGoal(n, 10);
-			}
-		}
-		// observe profiles
-		for (Actor a : this.owner.getWorld().getActors()) {
-			if (a == this.owner)
-				continue;
-			if (a.distance(this.owner) <= SIGHT && (!rememberedProfiles.contains(a.getProfile())
-					|| !possibleActions.containsAll(a.getProfile().getAllActions()))) {
-				pO = true;
-				rememberedProfiles.add(a.getProfile());
-				possibleActions.addAll(a.getProfile().getAllActions());
-			}
-		}
+		updateRememberedProfiles();
 
 		if (ticks % 100 == 0) {
-			System.out.println(this.toString() + mindReport());
+			// System.out.println(this.toString() + this.memory.report());
 		}
 		ticks++;
 
 	}
 
-	public void act() {
+	/**
+	 * TODO maybe use this for when parts of the mind try to make other parts of the
+	 * mind do things so we can intercept such communications; return true if
+	 * successful
+	 */
+	public <F extends IMindPart, T extends IMindPart> boolean communicate(F from, T to, Consumer<T> request) {
+		request.accept(to);
+		return true;
+	}
 
-		// update goal state
-		for (Goal goal : new HashSet<>(this.goals)) {
-			goal.goalUpdate(this);
-			if (goal.isComplete())
-				this.giveUp(goal);
+	public void think() {
+		this.memory.update(ticks);
+		this.personalWill.update(ticks);
+	}
+
+	public void updateRememberedProfiles() {
+		// observe profiles TODO only actor update is currently implemented lol
+		if (this.owner instanceof Actor owner) {
+			for (Actor a : owner.getWorld().getActors()) {
+				if (a == owner)
+					continue;
+				if (a.distance(owner) <= SIGHT) {
+					if (getRememberedProfiles().getRefreshesFor(a.getProfile()) <= 1)
+						getRememberedProfiles().refreshFor(a.getProfile());
+					if (!this.getPossibleActions().getAllMemories().containsAll(a.getProfile().getAllActions()))
+						this.getPossibleActions().addAll(a.getProfile().getAllActions());
+				}
+			}
 		}
 	}
 
-	public Actor getOwner() {
+	public MemorySection<Profile> getRememberedProfiles() {
+		return memory.getMemories(MemoryType.PROFILE);
+	}
+
+	public void act() {
+
+		// TODO update goal state
+
+	}
+
+	public Random rand() {
+		return rand;
+	}
+
+	public IHasProfile getOwner() {
 		return owner;
 	}
 
-	public Set<Action> getPossibleActions() {
-		return possibleActions;
-	}
-
-	public boolean hasNeed(Need n) {
-		return needs.get(n) != null;
-	}
-
-	public Integer getNeed(Need n) {
-		return needs.get(n);
+	public MemorySection<Action> getPossibleActions() {
+		return memory.getMemories(MemoryType.POSSIBLE_ACTIONS);
 	}
 
 	public String mindReport() {
-		return "{observations=" + this.rememberedProfiles.stream().map((a) -> a.getName()).collect(Collectors.toSet())
-				+ ",needs" + this.needs + ",\n\tpossible actions=" + this.possibleActions + ",\n\t\tgoals=" + this.goals
-				+ "}";
+		return "{memories=" + this.memory.report() + ",needs" + this.needs.report() + "\n\twill="
+				+ this.personalWill.report() + "}";
+	}
+
+	public NeedManager getNeeds() {
+		return needs;
 	}
 
 	@Override

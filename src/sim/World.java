@@ -13,6 +13,7 @@ import entity.Actor;
 import entity.Eatable;
 import entity.Thinker;
 import processing.core.PApplet;
+import processing.event.MouseEvent;
 import sociology.sociocon.IPurposeSource;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
@@ -83,10 +84,33 @@ public class World extends PApplet {
 		frameRate(fps);
 		testActor = new Thinker(this, "Stacy", 0, 0, 60);
 		testActor.setOptionalColor(color(255, 50, 50));
+		for (int i = 0; i < 70; i++) {
+			this.spawnActor(new Thinker(this, "Stacy" + (i + 1), i, i, 50));
+		}
 		this.spawnActor(testActor);
+		for (int i = 0; i < 200; i++) {
+			this.spawnActor(new Eatable(this, "banana" + (this.width - i), this.width - i, this.height - i, 50, 4));
+		}
 		this.spawnActor(new Eatable(this, "apple", 500, 500, 40, 5));
 		this.spawnActor(new Eatable(this, "khwabostu", 400, 400, 50, 2));
 
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent event) {
+		super.mouseClicked(event);
+		if (event.getButton() == RIGHT) {
+			long time = System.currentTimeMillis();
+			int c = 0;
+			for (Actor a : actors) {
+				if (a instanceof Thinker t) {
+					t.getMind().getPersonalWill().debugGenerateActionPlan(3);
+					c++;
+				}
+			}
+			System.out.println("generating " + c + " action plans took "
+					+ ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
+		}
 	}
 
 	@Override
@@ -104,6 +128,7 @@ public class World extends PApplet {
 			e.movementTick();
 			e.tick();
 			e.senseTick();
+			e.thinkTick();
 		}
 		// world phenomena idk
 		for (Actor e : actors) {

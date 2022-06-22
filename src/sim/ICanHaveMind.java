@@ -1,4 +1,4 @@
-package entity;
+package sim;
 
 import psych.mind.Mind;
 

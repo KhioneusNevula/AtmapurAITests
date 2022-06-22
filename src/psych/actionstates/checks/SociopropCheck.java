@@ -1,10 +1,10 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import sociology.sociocon.Socioprop;
 
-public abstract class SociopropTrait<T> extends TraitState<Socioprop<T>> {
+public abstract class SociopropCheck<T> extends Check<Socioprop<T>> {
 
-	public SociopropTrait(Socioprop<T> checker) {
+	public SociopropCheck(Socioprop<T> checker) {
 		super(checker);
 	}
 

@@ -3,12 +3,13 @@ package entity;
 import processing.core.PApplet;
 import psych.mind.Mind;
 import psych.mind.Need;
+import sim.ICanHaveMind;
+import sim.IHasProfile;
+import sim.Location;
 import sim.World;
-import sociology.Location;
 import sociology.Profile;
-import sociology.sociocon.IHasProfile;
 
-public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExistence {
+public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExistence {
 
 	public static enum PossessState {
 		NONE, HOLD, WEAR
@@ -38,7 +39,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 	private int radius;
 
 	private Integer optionalColor = null;
-	private Location location = new Location(this, true);
+	private Location location;
 
 	/**
 	 * A characteristic of actors who can think
@@ -52,7 +53,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 		this.radius = radius;
 		this.x = startX;
 		this.y = startY;
-
+		location = new Location(this, world, true);
 	}
 
 	public Actor setOptionalColor(int optionalColor) {
@@ -95,6 +96,12 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 	public void senseTick() {
 		if (hasMind())
 			mind.observe();
+	}
+
+	public void thinkTick() {
+		if (hasMind()) {
+			mind.think();
+		}
 	}
 
 	public void actionTick() {
@@ -142,8 +149,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 		if (this.possessor != null) {
 			return;
 		}
-		setX(x + xplus);
-		setY(y + yplus);
+		IPhysicalExistence.super.move(xplus, yplus);
 	}
 
 	public void moveLeft() {
@@ -266,7 +272,7 @@ public abstract class Actor implements IHasProfile, ICanHaveMind, IPhysicalExist
 
 	public Location getLocation() {
 		if (this.location.getX() != this.x || this.location.getY() != this.y) {
-			this.location = new Location(this, true);
+			this.location = new Location(this, world, true);
 		}
 		return location;
 	}

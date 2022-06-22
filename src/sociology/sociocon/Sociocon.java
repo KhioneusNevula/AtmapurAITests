@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import sociology.Profile;
 
 /**

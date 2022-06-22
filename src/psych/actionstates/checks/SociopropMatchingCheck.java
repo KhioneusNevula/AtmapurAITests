@@ -1,4 +1,4 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import java.util.Objects;
 
@@ -12,7 +12,7 @@ import sociology.sociocon.Socioprop;
  *
  * @param <T>
  */
-public class SociopropMatchingCheck<T> extends SociopropTrait<T> {
+public class SociopropMatchingCheck<T> extends SociopropCheck<T> {
 
 	private T value;
 
@@ -43,6 +43,11 @@ public class SociopropMatchingCheck<T> extends SociopropTrait<T> {
 	@Override
 	public void updateToMatch(Profile p) {
 		this.value = p.getValue(getChecker());
+	}
+
+	@Override
+	public String report() {
+		return "value of " + this.getChecker() + " equals " + this.value;
 	}
 
 }

@@ -1,10 +1,21 @@
 package psych.action.goal;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import psych.actionstates.states.State;
 import psych.mind.Mind;
 
 public abstract class Goal {
+
+	public static enum Priority {
+		/** a goal which is fundamental to survival **/
+		NECESSITY,
+		/** a goal which isn't fundamental but helps with fundamentals **/
+		IMPORTANT,
+		/** a goal which is a quality of life goal **/
+		INESSENTIAL,
+		/** Goals with no meaningful priority because they're not used to form tasks **/
+		NO_PRIORITY
+	}
 
 	/**
 	 * When this is >= 99.99, the goal is complete
@@ -14,6 +25,11 @@ public abstract class Goal {
 	public Goal() {
 	}
 
+	/**
+	 * Checks completion of this goal; use goalUpdate to update the completeness
+	 * 
+	 * @return
+	 */
 	public boolean isComplete() {
 		return completeness >= 99.99;
 	}
@@ -26,6 +42,8 @@ public abstract class Goal {
 	 * Uses the mind's state to check completeness level between 0 and 100
 	 */
 	protected abstract double checkCompletion(Mind mind);
+
+	public abstract Priority getPriority();
 
 	/**
 	 * Whether the given action would contribute to completing this goal
@@ -59,9 +77,30 @@ public abstract class Goal {
 		return false;
 	}
 
+	/**
+	 * Returns whether this goal is a complete tasks goal, i.e. whether it branches
+	 * into other tasks
+	 * 
+	 * @return
+	 */
+	public boolean isCompleteTasksGoal() {
+		return false;
+	}
+
+	/**
+	 * Whether this goal is empty of conditions or whatever
+	 * 
+	 * @return
+	 */
+	public abstract boolean isEmpty();
+
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + " : " + this.completeness + "%";
+		return this.getPriority() + " " + this.getClass().getSimpleName() + ": " + this.completeness + "%";
+	}
+
+	public String goalReport() {
+		return this.toString();
 	}
 
 }

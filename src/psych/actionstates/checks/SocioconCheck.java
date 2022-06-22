@@ -1,11 +1,11 @@
-package psych.actionstates.traits;
+package psych.actionstates.checks;
 
 import sociology.Profile;
-import sociology.sociocon.Sociocat;
+import sociology.sociocon.Sociocon;
 
-public class SociocatTrait extends TraitState<Sociocat> {
+public class SocioconCheck extends Check<Sociocon> {
 
-	SociocatTrait(Sociocat checker, boolean ifPresent) {
+	SocioconCheck(Sociocon checker, boolean ifPresent) {
 		super(checker);
 		if (ifPresent) {
 			this.setType(ConditionType.EQUAL);
@@ -25,16 +25,21 @@ public class SociocatTrait extends TraitState<Sociocat> {
 
 	@Override
 	public Boolean satisfies(Profile p) {
-		return (this.getType() == ConditionType.EQUAL) == p.hasSociocat(getChecker());
+		return (this.getType() == ConditionType.EQUAL) == p.hasSociocon(getChecker());
 	}
 
 	@Override
 	public void updateToMatch(Profile p) {
-		if (p.hasSociocat(getChecker())) {
+		if (p.hasSociocon(getChecker())) {
 			this.setType(ConditionType.EQUAL);
 		} else {
 			this.setType(ConditionType.NOT_EQUAL);
 		}
+	}
+
+	@Override
+	public String report() {
+		return (checksIfPresent() ? "has" : "does not have") + " sociocon " + this.getChecker();
 	}
 
 }

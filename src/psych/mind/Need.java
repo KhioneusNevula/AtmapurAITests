@@ -5,13 +5,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import entity.Eatable;
-import entity.ICanHaveMind;
 import entity.Thinker;
-import psych.actionstates.traits.ICheckable;
+import psych.action.goal.Goal.Priority;
+import psych.actionstates.checks.ICheckable;
+import sim.ICanHaveMind;
 import sociology.Profile;
 
 public enum Need implements ICheckable<Integer> {
-	SATIATION("satiation", (a) -> a.getOwner() instanceof Thinker,
+	SATIATION("satiation", Priority.NECESSITY, (a) -> a.getOwner() instanceof Thinker,
 			(a) -> a.getOwner() instanceof Thinker ? ((Thinker) a.getOwner()).getHunger() : null,
 			(a, i) -> ((Thinker) a.getOwner()).setHunger(i), (a) -> a.getOwner() instanceof Eatable,
 			(a) -> a.getOwner() instanceof Eatable ? ((Eatable) a.getOwner()).getNourishment() : null);
@@ -22,6 +23,7 @@ public enum Need implements ICheckable<Integer> {
 	private Predicate<Mind> hasNeed;
 	private Predicate<Profile> canFulfill;
 	private BiConsumer<Mind, Integer> setNeed;
+	private Priority priority;
 
 	/**
 	 * function returns null if actor is invalid ; getNeed gets the official value
@@ -35,7 +37,7 @@ public enum Need implements ICheckable<Integer> {
 	 * @param name
 	 * @param getNeed
 	 */
-	private Need(String name, Predicate<Mind> hasNeed, Function<Mind, Integer> getNeed,
+	private Need(String name, Priority priority, Predicate<Mind> hasNeed, Function<Mind, Integer> getNeed,
 			BiConsumer<Mind, Integer> setNeed, Predicate<Profile> canFulfill,
 			Function<Profile, Integer> getFulfillmentValue) {
 		this.name = name;
@@ -43,7 +45,12 @@ public enum Need implements ICheckable<Integer> {
 		this.setNeed = setNeed;
 		this.hasNeed = hasNeed;
 		this.canFulfill = canFulfill;
+		this.priority = priority;
 		this.getFulfillmentValue = getFulfillmentValue;
+	}
+
+	public Priority getPriority() {
+		return priority;
 	}
 
 	public String getName() {
@@ -75,10 +82,9 @@ public enum Need implements ICheckable<Integer> {
 
 	@Override
 	public Integer getValue(Profile p) {
-		return p.getOwner() instanceof ICanHaveMind
-				? (((ICanHaveMind) p.getOwner()).hasMind() ? ((ICanHaveMind) p.getOwner()).getMind().getNeed(this)
-						: null)
-				: null;
+		return p.getOwner() instanceof ICanHaveMind ? (((ICanHaveMind) p.getOwner()).hasMind()
+				? ((ICanHaveMind) p.getOwner()).getMind().getNeeds().getNeed(this)
+				: null) : null;
 	}
 
 	@Override

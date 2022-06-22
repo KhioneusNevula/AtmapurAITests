@@ -1,6 +1,6 @@
 package psych.action.goal;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import psych.actionstates.states.State;
 import psych.mind.Mind;
 
@@ -46,6 +46,21 @@ public class CompleteTasksGoal extends Goal {
 	@Override
 	public String toString() {
 		return super.toString() + " for " + this.goals.numStates() + " other goals";
+	}
+
+	@Override
+	public Priority getPriority() {
+		return Priority.NO_PRIORITY;
+	}
+
+	@Override
+	public boolean isCompleteTasksGoal() {
+		return true;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return goals.isEmpty();
 	}
 
 }

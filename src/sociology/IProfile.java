@@ -1,6 +1,6 @@
 package sociology;
 
-import sociology.sociocon.IHasProfile;
+import sim.IHasProfile;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
 import sociology.sociocon.Socioprop;

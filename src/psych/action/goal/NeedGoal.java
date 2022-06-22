@@ -1,6 +1,6 @@
 package psych.action.goal;
 
-import psych.action.Action;
+import psych.action.types.Action;
 import psych.actionstates.states.State;
 import psych.mind.Mind;
 import psych.mind.Need;
@@ -18,7 +18,7 @@ public class NeedGoal extends Goal {
 
 	@Override
 	protected double checkCompletion(Mind for_) {
-		return (for_.getNeed(focus) / (double) level) * 100;
+		return (for_.getNeeds().getNeed(focus) / (double) level) * 100;
 	}
 
 	@Override
@@ -42,6 +42,16 @@ public class NeedGoal extends Goal {
 	public double contributionFactor(Action act, State result, Mind mind) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public Priority getPriority() {
+		return focus.getPriority();
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
 	}
 
 }
