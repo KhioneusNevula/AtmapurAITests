@@ -1,6 +1,8 @@
 package sim;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -9,24 +11,25 @@ import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import culture.Culture;
 import entity.Actor;
 import entity.Eatable;
 import entity.Thinker;
 import processing.core.PApplet;
 import processing.event.MouseEvent;
-import sociology.sociocon.IPurposeSource;
-import sociology.sociocon.Sociocat;
-import sociology.sociocon.Sociocon;
+import sociology.TypeProfile;
 
 public class World extends PApplet {
 
 	private List<Actor> actors = new ArrayList<>();
 
-	private TreeMap<Sociocat, Map<String, Sociocon>> sociocons = new TreeMap<>();
+	private HashMap<String, Culture> cultures = new HashMap<>();
 	private final int width, height;
 	private final float fps;
 	private Actor testActor;
 	private Random rand = new Random();
+	private long ticks = 0;
+	private Map<String, TypeProfile> typeProfiles = new TreeMap<>();
 
 	public World(int width, int height, float fps) {
 		this.width = width;
@@ -43,33 +46,41 @@ public class World extends PApplet {
 		return new ArrayList<>(actors);
 	}
 
-	public Map<String, Sociocon> getSocioconMap(Sociocat type) {
-		return sociocons.computeIfAbsent(type, (a) -> new TreeMap<>());
+	public Map<String, TypeProfile> getTypeProfiles() {
+		return typeProfiles;
 	}
 
-	/**
-	 * Either gets an existing sociocon with the given type and name, or creates a
-	 * new one using the type, name, and the sources given
-	 * 
-	 * @param type
-	 * @param name
-	 * @param sys
-	 * @return
-	 */
-	public Sociocon getOrCreateSociocon(Sociocat type, String name, IPurposeSource... sys) {
-		Sociocon existing = getSociocon(type, name);
+	public Culture getCulture(String name) {
+		return this.cultures.get(name);
+	}
+
+	public Collection<Culture> getCultures() {
+		return this.cultures.values();
+	}
+
+	public void addCulture(Culture c) {
+		this.cultures.put(c.getName(), c);
+	}
+
+	public TypeProfile getTypeProfile(String name) {
+		return this.typeProfiles.get(name);
+	}
+
+	public Collection<TypeProfile> getAllTypeProfiles() {
+		return this.typeProfiles.values();
+	}
+
+	public TypeProfile getOrCreateTypeProfile(String name) {
+		TypeProfile existing = getTypeProfile(name);
 		if (existing == null) {
-			existing = type.createSociocon(this, name, sys);
+			existing = new TypeProfile(name, this);
+			this.addTypeProfile(existing);
 		}
 		return existing;
 	}
 
-	public void addSociocon(Sociocon con) {
-		this.getSocioconMap(con.getCategory()).put(con.getName(), con);
-	}
-
-	public Sociocon getSociocon(Sociocat type, String name) {
-		return getSocioconMap(type).get(name);
+	public void addTypeProfile(TypeProfile type) {
+		this.typeProfiles.put(type.getName(), type);
 	}
 
 	@Override
@@ -81,15 +92,16 @@ public class World extends PApplet {
 	@Override
 	public void setup() {
 		super.setup();
+		Culture.genEssentialCultures(this);
 		frameRate(fps);
 		testActor = new Thinker(this, "Stacy", 0, 0, 60);
 		testActor.setOptionalColor(color(255, 50, 50));
 		for (int i = 0; i < 70; i++) {
-			this.spawnActor(new Thinker(this, "Stacy" + (i + 1), i, i, 50));
+			this.spawnActor(new Thinker(this, "Stacy" + (i + 1), i, i * 3, 50));
 		}
 		this.spawnActor(testActor);
 		for (int i = 0; i < 200; i++) {
-			this.spawnActor(new Eatable(this, "banana" + (this.width - i), this.width - i, this.height - i, 50, 4));
+			this.spawnActor(new Eatable(this, "banana" + i, this.width - 4 * i, this.height - i, 50, 4));
 		}
 		this.spawnActor(new Eatable(this, "apple", 500, 500, 40, 5));
 		this.spawnActor(new Eatable(this, "khwabostu", 400, 400, 50, 2));
@@ -103,13 +115,19 @@ public class World extends PApplet {
 			long time = System.currentTimeMillis();
 			int c = 0;
 			for (Actor a : actors) {
-				if (a instanceof Thinker t) {
+				if (a instanceof ICanHaveMind t && t.hasMind()) {
 					t.getMind().getPersonalWill().debugGenerateActionPlan(3);
 					c++;
 				}
 			}
 			System.out.println("generating " + c + " action plans took "
 					+ ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
+		} else {
+			for (Actor a : actors) {
+				if (a instanceof ICanHaveMind t && t.hasMind()) {
+					t.getMind().getPersonalWill().debugExecuteActionPlans();
+				}
+			}
 		}
 	}
 
@@ -118,23 +136,34 @@ public class World extends PApplet {
 		background(color(255, 255, 255));
 		this.stroke(color(255, 255, 255));
 		if (testActor != null) {
-			testActor.move((mouseX - testActor.getX()) / 2, (mouseY - testActor.getY()) / 2);
+			testActor.moveToward(mouseX, mouseY, testActor.STEP);
 		}
 		this.worldTick();
 	}
 
 	public void worldTick() {
+
 		for (Actor e : actors) {
 			e.movementTick();
 			e.tick();
 			e.senseTick();
 			e.thinkTick();
+			if (rand.nextInt(70000) < 19 && e instanceof ICanHaveMind mm && mm.hasMind()) {
+				System.out.println(e.getMind() + " " + e.getSystemsReport());
+			}
+
 		}
 		// world phenomena idk
 		for (Actor e : actors) {
 			e.actionTick();
 			e.draw();
+
 		}
+		ticks++;
+	}
+
+	public long getTicks() {
+		return ticks;
 	}
 
 	public boolean isColliding(Actor a, Actor other) {
@@ -148,6 +177,10 @@ public class World extends PApplet {
 
 	public Set<Actor> getAt(int x, int y) {
 		return actors.stream().filter((a) -> a.distance(x, y) <= a.getRadius()).collect(Collectors.toSet());
+	}
+
+	public Random rand() {
+		return rand;
 	}
 
 }

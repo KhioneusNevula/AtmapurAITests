@@ -10,7 +10,7 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class WorldPhenomenon implements IHasProfile {
+public abstract class WorldPhenomenon implements IHasProfile {
 
 	public WorldPhenomenon() {
 		// TODO world phenomenon constructor stub

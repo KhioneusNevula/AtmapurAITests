@@ -1,15 +1,24 @@
 package entity;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
+
+import abilities.EntitySystem;
+import abilities.types.LifeSystem;
+import abilities.types.SystemType;
+import culture.Culture;
 import processing.core.PApplet;
-import psych.mind.Mind;
-import psych.mind.Need;
+import psych_first.mind.Mind;
 import sim.ICanHaveMind;
-import sim.IHasProfile;
 import sim.Location;
 import sim.World;
+import sociology.InstanceProfile;
 import sociology.Profile;
+import sociology.TypeProfile;
 
-public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExistence {
+public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 
 	public static enum PossessState {
 		NONE, HOLD, WEAR
@@ -17,6 +26,8 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 
 	public final static int STEP = 5;
 	public final static int REACH = 50;
+
+	private Map<SystemType<?>, EntitySystem> systems = new TreeMap<>();
 
 	private int x;
 	private int y;
@@ -26,6 +37,8 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 
 	private Actor clothing;
 	private Actor held;
+
+	protected Random rand = new Random();
 
 	/**
 	 * Probably gonna become unnecessary
@@ -46,14 +59,45 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 	 */
 	protected Mind mind = null;
 
-	public Actor(World world, String name, int startX, int startY, int radius) {
-		this.profile = new Profile(this, name);
+	public Actor(World world, TypeProfile tp, String name, int startX, int startY, int radius) {
+		this.profile = new InstanceProfile(this, tp, name);
 		this.world = world;
 		this.name = name;
 		this.radius = radius;
 		this.x = startX;
 		this.y = startY;
 		location = new Location(this, world, true);
+	}
+
+	protected void addSystems(SystemType<?>... t) {
+		for (SystemType<?> tt : t) {
+			this.systems.put(tt, tt.instantiate(this));
+		}
+	}
+
+	protected void addSystems(EntitySystem... sys) {
+		for (EntitySystem s : sys) {
+			this.systems.put(s.getType(), s);
+		}
+
+	}
+
+	@Override
+	public Collection<EntitySystem> getSystems() {
+		return systems.values();
+	}
+
+	@Override
+	public TypeProfile getType() {
+		return this.profile.getTypeProfile();
+	}
+
+	@Override
+	public boolean hasSystem(String name) {
+		for (SystemType<?> t : this.systems.keySet())
+			if (t.getId().equals(name))
+				return true;
+		return false;
 	}
 
 	public Actor setOptionalColor(int optionalColor) {
@@ -70,7 +114,7 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 	 * 
 	 * @return
 	 */
-	public Mind createMind(Need... needs) {
+	public Mind createMind(Culture... needs) {
 		return this.mind = new Mind(this, needs);
 	}
 
@@ -127,6 +171,11 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 	}
 
 	public void tick() {
+		for (EntitySystem sys : this.getSystems()) {
+			if (sys.isConstantUpdate()) {
+				sys._update(world.getTicks());
+			}
+		}
 	}
 
 	public int getX() {
@@ -264,8 +313,24 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 		world.strokeWeight(1.4f);
 		world.circle(x, y, radius);
 		world.textAlign(PApplet.CENTER, PApplet.CENTER);
+		boolean danger = false; // TODO make this more logical and have more effects
+		boolean dead = false; // lol definitely this too...
 
-		world.fill(0);
+		if (this.hasSystem(SystemType.LIFE)) {
+			LifeSystem ensys = this.getSystem(SystemType.LIFE);
+			if (ensys.isSevere())
+				danger = true;
+			if (ensys.isDead())
+				dead = true;
+		}
+		if (dead) {
+			world.fill(world.color(255, 255, 0));
+		} else if (danger) {
+			world.fill(world.color(255, 0, 0));
+		} else {
+			world.fill(0);
+
+		}
 		world.text(this.name, x, y);
 
 	}
@@ -281,6 +346,21 @@ public abstract class Actor implements ICanHaveMind, IHasProfile, IPhysicalExist
 	public String toString() {
 		return this.getClass().getSimpleName() + " \"" + name + "\": {" + this.profile + "} xyr=[" + x + "," + y + ","
 				+ radius + "]";
+	}
+
+	@Override
+	public Random rand() {
+		return rand;
+	}
+
+	@Override
+	public <T extends EntitySystem> T getSystem(SystemType<T> system) {
+		return (T) this.systems.get(system);
+	}
+
+	@Override
+	public Collection<SystemType<?>> getSystemTokens() {
+		return this.systems.keySet();
 	}
 
 }

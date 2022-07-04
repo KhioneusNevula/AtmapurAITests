@@ -5,7 +5,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry excluding="_nonsense/Action.java|_nonsense/ActionCondition.java|_nonsense/ActionNode.java|_nonsense/ActionQueue.java|_nonsense/ActionSearch.java|_nonsense/ActionState.java|_nonsense/Brain.java|_nonsense/CheckCondition.java|_nonsense/ConditionType.java|_nonsense/Goal.java|_nonsense/Memory.java|_nonsense/Profile.java|_nonsense/ProfileCondition.java|_nonsense/ProfileSlot.java|_nonsense/RelationalCondition.java|_nonsense/Sociocon.java|_nonsense/Sociocontype.java|_nonsense/StateCondition.java|_nonsense/Task.java" kind="src" path="src"/>
+	<classpathentry excluding="_nonsense/Action.java|_nonsense/ActionCondition.java|_nonsense/ActionNode.java|_nonsense/ActionQueue.java|_nonsense/ActionSearch.java|_nonsense/ActionState.java|_nonsense/Brain.java|_nonsense/CheckCondition.java|_nonsense/ConditionType.java|_nonsense/Goal.java|_nonsense/Memory.java|_nonsense/Profile.java|_nonsense/ProfileCondition.java|_nonsense/ProfileSlot.java|_nonsense/RelationalCondition.java|_nonsense/Sociocon.java|_nonsense/Sociocontype.java|_nonsense/StateCondition.java|_nonsense/Task.java|psych_first/mind/WillRedo.java" kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/core.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

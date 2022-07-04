@@ -1,7 +1,9 @@
 package entity;
 
+import abilities.ISystemHolder;
 import sim.World;
 import sociology.sociocon.Sociocat;
+import sociology.sociocon.Socioprops;
 
 public class Eatable extends Actor {
 
@@ -18,17 +20,28 @@ public class Eatable extends Actor {
 	 * @param nourishment
 	 */
 	public Eatable(World world, String foodName, int startX, int startY, int radius, Integer nourishment) {
-		super(world, foodName, startX, startY, radius);
+		super(world, world.getOrCreateTypeProfile(foodName), foodName, startX, startY, radius);
 
-		this.getProfile().addSociocon(world.getOrCreateSociocon(Sociocat.FOOD, foodName));
+		this.getProfile().addSociocon(Sociocat.FOOD.getSingleSociocon(world));
 		if (nourishment != null)
-			this.getProfile().setValue(Sociocat.FOOD.getProperty("nourishment"), nourishment);
+			this.getProfile().setValue(Socioprops.FOOD_NOURISHMENT, nourishment);
 		this.nourishment = nourishment;
 
 	}
 
 	public int getNourishment() {
 		return nourishment;
+	}
+
+	public void getEaten(ISystemHolder byActor) {
+		this.nourishment = 0;
+		this.setRadius((int) (this.getRadius() / 4.0));
+	}
+
+	@Override
+	protected void render() {
+		this.getWorld().alpha(50);
+		super.render();
 	}
 
 }

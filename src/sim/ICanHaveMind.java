@@ -1,8 +1,9 @@
 package sim;
 
-import psych.mind.Mind;
+import abilities.ISystemHolder;
+import psych_first.mind.Mind;
 
-public interface ICanHaveMind {
+public interface ICanHaveMind extends IHasProfile, ISystemHolder {
 
 	public boolean hasMind();
 

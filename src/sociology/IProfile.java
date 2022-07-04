@@ -1,6 +1,11 @@
 package sociology;
 
+import java.util.Collection;
+
+import culture.CulturalContext;
+import culture.Culture;
 import sim.IHasProfile;
+import sim.World;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
 import sociology.sociocon.Socioprop;
@@ -15,7 +20,7 @@ public interface IProfile {
 
 	public boolean hasSociocon(Sociocon con);
 
-	public boolean hasSociocat(Sociocat cat);
+	public boolean hasSociocat(Sociocat cat, CulturalContext context);
 
 	/**
 	 * Changes the value of the given property and returns the old one
@@ -33,7 +38,7 @@ public interface IProfile {
 	 * @param prop
 	 * @return
 	 */
-	public <T> T getValue(Socioprop<T> prop);
+	public <T> T getValue(Socioprop<T> prop, CulturalContext context);
 
 	public Sociocon getSociocon(Sociocat cat, String name);
 
@@ -49,4 +54,20 @@ public interface IProfile {
 	 * @return
 	 */
 	public Profile getActualProfile();
+
+	public boolean isTypeProfile();
+
+	public TypeProfile getTypeProfile();
+
+	public boolean hasValue(Socioprop<?> checker, CulturalContext context);
+
+	public World getWorld();
+
+	/**
+	 * returns all sociocons for the culture
+	 * 
+	 * @param cul
+	 * @return
+	 */
+	public Collection<Sociocon> getSocioconsFor(Culture cul);
 }

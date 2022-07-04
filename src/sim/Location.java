@@ -1,6 +1,8 @@
 package sim;
 
+import sociology.InstanceProfile;
 import sociology.Profile;
+import sociology.TypeProfile;
 
 public class Location implements IHasProfile, ILocatable {
 
@@ -8,13 +10,14 @@ public class Location implements IHasProfile, ILocatable {
 	private int x;
 	private int y;
 	private World world;
+	public static final String TYPE_STRING = "_location";
 
 	public Location(int x, int y, World world, boolean makeProfile) {
 		this.x = x;
 		this.y = y;
+		this.world = world;
 		if (makeProfile)
 			makeProfile();
-		this.world = world;
 	}
 
 	public Location(ILocatable l, World world, boolean makeProfile) {
@@ -22,9 +25,17 @@ public class Location implements IHasProfile, ILocatable {
 	}
 
 	public Location makeProfile() {
-		if (this.profile == null)
-			this.profile = new Profile(this, "Location(" + x + "," + y + ")");
+		if (this.profile == null) {
+			TypeProfile locPr = this.world.getOrCreateTypeProfile(TYPE_STRING);
+			this.profile = new InstanceProfile(this, locPr, "Location(" + x + "," + y + ")");
+		}
 		return this;
+	}
+
+	@Override
+	public TypeProfile getType() {
+		return this.getProfile() != null ? this.getProfile().getTypeProfile()
+				: this.world.getOrCreateTypeProfile(TYPE_STRING);
 	}
 
 	public Location setProfile(Profile p) {
@@ -55,6 +66,11 @@ public class Location implements IHasProfile, ILocatable {
 	@Override
 	public World getWorld() {
 		return world;
+	}
+
+	@Override
+	public String toString() {
+		return "L(" + x + "," + y + ")";
 	}
 
 }

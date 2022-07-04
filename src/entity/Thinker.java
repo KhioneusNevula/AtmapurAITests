@@ -1,44 +1,27 @@
 package entity;
 
-import java.util.Random;
-import java.util.Set;
-
-import psych.mind.Need;
+import abilities.types.HungerSystem;
+import abilities.types.LifeSystem;
+import abilities.types.SystemType;
+import culture.Culture;
+import psych_first.mind.Need;
 import sim.World;
-import sociology.sociocon.Sociocat;
 
 public class Thinker extends Actor {
 
-	private static int MAX_HUNGER = 100;
-	private int satiation;
-	private Random rand = new Random();
-
 	public Thinker(World world, String name, int startX, int startY, int radius) {
-		super(world, name, startX, startY, radius);
-		this.getProfile().addSociocon(world.getOrCreateSociocon(Sociocat.PERSON, "people"));
-		this.createMind(Need.SATIATION);
-		this.satiation = 50;
+		super(world, world.getOrCreateTypeProfile("people"), name, startX, startY, radius);
+		this.createMind(world.getCulture(Culture.ORGANIC), world.getCulture(Culture.TOOL_USER),
+				world.getCulture(Culture.SENTIENT)).initNeeds(Need.SATIATION);
+		this.addSystems(new LifeSystem(this, 100), new HungerSystem(this, 100, 1));
 	}
 
-	@Override
-	public void tick() {
-		if (3 > rand.nextInt(15))
-			setHunger(getHunger() - 1);
-		Set<Actor> colls = getWorld().getCollisions(this, (a) -> true);
-		for (Actor a : colls) {
-			if (a instanceof Eatable e && rand.nextInt(18) < 7) {
-				this.setHunger(this.getHunger() + e.getNourishment());
-			}
-		}
-
-	}
-
-	public int getHunger() {
-		return satiation;
-	}
-
-	public void setHunger(int hunger) {
-		this.satiation = Math.min(Math.max(0, hunger), MAX_HUNGER);
+	/**
+	 * eat the thing; fail to eat if it can't be swallowed whole or provides no
+	 * nourishment TODO make this more of a continuum
+	 */
+	public int eat(Eatable edible) {
+		return this.getSystem(SystemType.HUNGER).eat(edible);
 	}
 
 	@Override

@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import psych.action.types.Action;
+import culture.Culture;
+import psych_first.action.types.Action;
+import sim.IHasCulture;
+import sim.World;
 import sociology.Profile;
 
 /**
@@ -17,22 +20,33 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class Sociocon implements Comparable<Sociocon> {
+public class Sociocon implements Comparable<Sociocon>, IHasCulture {
 
 	private Set<Profile> members = new HashSet<>();
 	private String name;
 	private Sociocat category;
 	private Map<String, Socioprop<?>> properties = new TreeMap<>();
 	private Set<Action> actions = new HashSet<>();
+	private Culture culture;
 
-	Sociocon(Sociocat category, String name, IPurposeSource... sociosource) {
+	Sociocon(Sociocat category, String name, Culture culture, IPurposeSource... sociosource) {
 		this.category = category;
 		this.name = name;
 		this.addPropertiesAndActions(category);
 		for (IPurposeSource p : sociosource) {
 			this.addPropertiesAndActions(p);
 		}
-		System.out.println("Created sociocon " + this + this.socioconReport());
+		System.out.println("Created sociocon " + this + this.socioconReport() + " for culture " + culture);
+		this.culture = culture;
+	}
+
+	public Culture getCulture() {
+		return culture;
+	}
+
+	@Override
+	public Culture getCulture(World world) {
+		return culture;
 	}
 
 	public void addPropertiesAndActions(IPurposeSource source) {

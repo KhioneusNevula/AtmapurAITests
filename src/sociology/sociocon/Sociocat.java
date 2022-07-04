@@ -8,7 +8,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import psych.action.types.Action;
+import culture.Culture;
+import psych_first.action.types.Action;
+import sim.IHasCulture;
 import sim.World;
 import sociology.Profile;
 
@@ -20,25 +22,69 @@ import sociology.Profile;
  * @author borah
  *
  */
-public enum Sociocat implements IPurposeSource {
-	FOOD("food", Socioprops.FOOD_NOURISHMENT), DRINK("drink", Socioprops.DRINK_QUENCHING),
-	DANGER("danger", Socioprops.DANGER_LEVEL), SHELTER("shelter", Socioprops.SHELTER_LEVEL), CLOTHING("clothing"),
-	PERSON("person", Socioprops.ACTOR_HELD, Socioprops.ACTOR_WORN);
+public enum Sociocat implements IPurposeSource, IHasCulture {
+	WORLD("world", Culture.SPACEBOUND), EVENT("event", Culture.TIMEBOUND, true),
+	FOOD("food", Culture.ORGANIC, true, Socioprops.FOOD_NOURISHMENT),
+	DRINK("drink", Culture.ORGANIC, true, Socioprops.DRINK_QUENCHING),
+	DANGER("danger", Culture.MORTAL, Socioprops.DANGER_LEVEL),
+	SHELTER("shelter", Culture.EMBODIED, Socioprops.SHELTER_LEVEL), CLOTHING("clothing", Culture.TOOL_USER),
+	PERSON("person", Culture.SOCIAL, Socioprops.ACTOR_HELD, Socioprops.ACTOR_WORN);
 
 	private Map<String, Socioprop<?>> properties = new TreeMap<>();
 	private Set<Action> actions = new HashSet<>();
 	private String name;
 	private Sociocat parent = null;
+	private String cultureID;
+	private boolean singleton = false;
 
-	private Sociocat(String name, IPurposeElement... props) {
+	private Sociocat(String name, String cultureID, IPurposeElement... props) {
 		this.name = name;
 		this.addelements(Arrays.asList(props));
+		this.cultureID = cultureID;
 	}
 
-	public Sociocon createSociocon(World world, String name, IPurposeSource... sources) {
-		Sociocon con = new Sociocon(this, name, sources);
-		world.addSociocon(con);
+	/**
+	 * 
+	 * @param name
+	 * @param cultureID
+	 * @param props
+	 */
+	private Sociocat(String name, String cultureID, boolean singleton, IPurposeElement... props) {
+		this(name, cultureID, props);
+		this.singleton = singleton;
+	}
+
+	public Sociocon createSociocon(String name, Culture forCulture, IPurposeSource... sources) {
+		if (!isSingleton() && name.startsWith("_"))
+			throw new UnsupportedOperationException(
+					"invalid name '" + name + "'; underscore names are reserved for singletons");
+		Sociocon con = new Sociocon(this, isSingleton() && !name.startsWith("_") ? "_" + name : name, forCulture,
+				sources);
+		forCulture.addSociocon(con);
 		return con;
+	}
+
+	/**
+	 * whether this sociocat has only one sociocon for a given world, e.g. food is
+	 * like this
+	 */
+	public boolean isSingleton() {
+		return singleton;
+	}
+
+	public Sociocon getSingleSociocon(World world) {
+		if (!isSingleton())
+			throw new UnsupportedOperationException(this + " is not a singleton");
+
+		return world.getCulture(cultureID).getOrCreateSociocon(this, name);
+	}
+
+	public String getCultureID() {
+		return cultureID;
+	}
+
+	public Culture getCulture(World world) {
+		return world.getCulture(cultureID);
 	}
 
 	private void addelements(Collection<IPurposeElement> props) {
@@ -60,10 +106,16 @@ public enum Sociocat implements IPurposeSource {
 		return actions;
 	}
 
-	private Sociocat(String name, Sociocat parent, Socioprop<?>... props) {
-		this.name = name;
-		this.addelements(Arrays.asList(props));
+	private Sociocat(String name, Sociocat parent, String cultureID, IPurposeElement... props) {
+		this(name, cultureID, props);
 		this.properties.putAll(parent.properties);
+		this.actions.addAll(parent.actions);
+	}
+
+	private Sociocat(String name, Sociocat parent, String cultureID, boolean singleton, IPurposeElement... props) {
+		this(name, parent, cultureID, props);
+
+		this.singleton = singleton;
 	}
 
 	/**

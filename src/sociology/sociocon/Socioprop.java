@@ -2,7 +2,8 @@ package sociology.sociocon;
 
 import java.util.function.Function;
 
-import psych.actionstates.checks.ICheckable;
+import culture.CulturalContext;
+import psych_first.actionstates.checks.ICheckable;
 import sociology.Profile;
 
 /**
@@ -17,7 +18,7 @@ import sociology.Profile;
 public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<Socioprop<?>> {
 
 	private Function<Profile, T> initialValue;
-	private Function<Profile, T> checkValue = (p) -> p.getValue(this);
+	private Function<Profile, T> checkValue = (p) -> p.getValue(this, CulturalContext.getUniversal());
 	private Class<T> type;
 	private String name;
 
@@ -105,18 +106,25 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<
 	}
 
 	@Override
-	public T getValue(Profile p) {
-		return p.getValue(this);
+	public T getValue(Profile p, CulturalContext ctxt) {
+		return p.hasValue(this, ctxt) ? p.getValue(this, ctxt)
+				: (!p.isTypeProfile() ? p.getTypeProfile().getValue(this, ctxt) : null);
 	}
 
 	@Override
 	public void setValue(Profile p, T value) {
 		p.setValue(this, value);
+
 	}
 
 	@Override
 	public int compareTo(Socioprop<?> o) {
 		return this.toString().compareTo(o.toString());
+	}
+
+	@Override
+	public boolean hasValue(Profile p, CulturalContext ctxt) {
+		return p.hasValue(this, ctxt) ? true : (!p.isTypeProfile() ? p.getTypeProfile().hasValue(this, ctxt) : false);
 	}
 
 }

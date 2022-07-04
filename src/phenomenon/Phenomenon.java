@@ -12,7 +12,7 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class Phenomenon implements IPhysicalExistence, IHasProfile {
+public abstract class Phenomenon implements IPhysicalExistence, IHasProfile {
 
 	private Profile profile;
 	private int x;
