@@ -1,13 +1,12 @@
 package sim;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -15,35 +14,50 @@ import culture.Culture;
 import entity.Actor;
 import entity.Eatable;
 import entity.Thinker;
+import main.ImmutableCollection;
 import processing.core.PApplet;
 import processing.event.MouseEvent;
+import psych_first.perception.knowledge.Noosphere;
+import psych_first.perception.knowledge.events.types.DeathEvent;
 import sociology.TypeProfile;
 
 public class World extends PApplet {
 
-	private List<Actor> actors = new ArrayList<>();
+	private Map<UUID, Actor> actors = new HashMap<>();
 
-	private HashMap<String, Culture> cultures = new HashMap<>();
+	private Map<String, Culture> cultures = new HashMap<>();
 	private final int width, height;
 	private final float fps;
 	private Actor testActor;
 	private Random rand = new Random();
 	private long ticks = 0;
 	private Map<String, TypeProfile> typeProfiles = new TreeMap<>();
+	private SensoryHandler sensoryHandler = new SensoryHandler(this);
+	private Noosphere noosphere;
 
 	public World(int width, int height, float fps) {
 		this.width = width;
 		this.height = height;
 		this.fps = fps;
+		this.noosphere = new Noosphere(this);
 	}
 
-	public void spawnActor(Actor a) {
-		this.actors.add(a);
+	public Noosphere getNoosphere() {
+		return noosphere;
+	}
+
+	public <T extends Actor> T spawnActor(T a) {
+		this.actors.put(a.getUuid(), a);
 		System.out.println("Spawned " + a);
+		return a;
 	}
 
-	public List<Actor> getActors() {
-		return new ArrayList<>(actors);
+	public SensoryHandler getSensoryHandler() {
+		return sensoryHandler;
+	}
+
+	public Collection<Actor> getActors() {
+		return new ImmutableCollection<>(actors.values());
 	}
 
 	public Map<String, TypeProfile> getTypeProfiles() {
@@ -73,7 +87,7 @@ public class World extends PApplet {
 	public TypeProfile getOrCreateTypeProfile(String name) {
 		TypeProfile existing = getTypeProfile(name);
 		if (existing == null) {
-			existing = new TypeProfile(name, this);
+			existing = new TypeProfile(name);
 			this.addTypeProfile(existing);
 		}
 		return existing;
@@ -96,15 +110,17 @@ public class World extends PApplet {
 		frameRate(fps);
 		testActor = new Thinker(this, "Stacy", 0, 0, 60);
 		testActor.setOptionalColor(color(255, 50, 50));
+		Actor ra = null;
 		for (int i = 0; i < 70; i++) {
-			this.spawnActor(new Thinker(this, "Stacy" + (i + 1), i, i * 3, 50));
+			ra = this.spawnActor(new Thinker(this, "Stacy" + (i + 1), i, i * 3, 50));
 		}
 		this.spawnActor(testActor);
 		for (int i = 0; i < 200; i++) {
 			this.spawnActor(new Eatable(this, "banana" + i, this.width - 4 * i, this.height - i, 50, 4));
 		}
-		this.spawnActor(new Eatable(this, "apple", 500, 500, 40, 5));
-		this.spawnActor(new Eatable(this, "khwabostu", 400, 400, 50, 2));
+		System.out.println(new DeathEvent(this, this.ticks, ra, testActor, true)
+				.addAccomplice(this.spawnActor(new Eatable(this, "apple", 500, 500, 40, 5)), true)
+				.addTool(this.spawnActor(new Eatable(this, "khwabostu", 400, 400, 50, 2)), testActor, true).report());
 
 	}
 
@@ -114,7 +130,7 @@ public class World extends PApplet {
 		if (event.getButton() == RIGHT) {
 			long time = System.currentTimeMillis();
 			int c = 0;
-			for (Actor a : actors) {
+			for (Actor a : actors.values()) {
 				if (a instanceof ICanHaveMind t && t.hasMind()) {
 					t.getMind().getPersonalWill().debugGenerateActionPlan(3);
 					c++;
@@ -123,7 +139,7 @@ public class World extends PApplet {
 			System.out.println("generating " + c + " action plans took "
 					+ ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
 		} else {
-			for (Actor a : actors) {
+			for (Actor a : actors.values()) {
 				if (a instanceof ICanHaveMind t && t.hasMind()) {
 					t.getMind().getPersonalWill().debugExecuteActionPlans();
 				}
@@ -143,7 +159,7 @@ public class World extends PApplet {
 
 	public void worldTick() {
 
-		for (Actor e : actors) {
+		for (Actor e : actors.values()) {
 			e.movementTick();
 			e.tick();
 			e.senseTick();
@@ -154,8 +170,9 @@ public class World extends PApplet {
 
 		}
 		// world phenomena idk
-		for (Actor e : actors) {
+		for (Actor e : actors.values()) {
 			e.actionTick();
+			e.finalTick();
 			e.draw();
 
 		}
@@ -171,12 +188,12 @@ public class World extends PApplet {
 	}
 
 	public Set<Actor> getCollisions(Actor for_, Predicate<Actor> pred) {
-		return actors.stream().filter(pred).filter((a) -> a != for_ && isColliding(for_, a))
+		return actors.values().stream().filter(pred).filter((a) -> a != for_ && isColliding(for_, a))
 				.collect(Collectors.toSet());
 	}
 
 	public Set<Actor> getAt(int x, int y) {
-		return actors.stream().filter((a) -> a.distance(x, y) <= a.getRadius()).collect(Collectors.toSet());
+		return actors.values().stream().filter((a) -> a.distance(x, y) <= a.getRadius()).collect(Collectors.toSet());
 	}
 
 	public Random rand() {

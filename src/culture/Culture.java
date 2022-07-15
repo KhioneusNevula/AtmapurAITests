@@ -1,11 +1,16 @@
 package culture;
 
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
+import main.ImmutableCollection;
+import psych_first.perception.knowledge.IKnowledgeType;
+import psych_first.perception.knowledge.Identity;
+import psych_first.perception.knowledge.Noosphere;
+import sim.IHasProfile;
 import sim.World;
 import sociology.sociocon.IPurposeSource;
 import sociology.sociocon.Sociocat;
@@ -21,73 +26,65 @@ public class Culture {
 	 * the string id for the cultures of all entities bound in time (entities which
 	 * record the past rather than living in the moment)
 	 */
-	public static final String TIMEBOUND = "_timebound";
+	private static final String TIMEBOUND = "_timebound";
 	/**
 	 * the string id for the cultures of all entities bound in space (entities which
 	 * recognize location)
 	 */
-	public static final String SPACEBOUND = "_spacebound";
+	private static final String SPACEBOUND = "_spacebound";
 	/**
 	 * the string id for cultures of all entities that can die (entities which
 	 * recognize danger and death)
 	 */
-	public static final String MORTAL = "_mortal";
+	private static final String MORTAL = "_mortal";
 	/**
 	 * the string id for cultures of all entities that are sentient (can feel
 	 * emotions; must be mortal)
 	 */
-	public static final String SENTIENT = "_sentient";
+	private static final String SENTIENT = "_sentient";
 	/**
 	 * the string id for cultures of all entities that are social (can form
 	 * relationships and hierarchies)
 	 */
-	public static final String SOCIAL = "_social";
+	private static final String SOCIAL = "_social";
 
 	/**
 	 * the string id for cultures of all entities that can use language (must be
 	 * social)
 	 */
-	public static final String LINGUISTIC = "_linguistic";
+	private static final String LINGUISTIC = "_linguistic";
 
 	/**
 	 * the string id for cultures of all entities that can learn things (must be
 	 * linguistic)
 	 */
-	public static final String LEARNING = "_learning";
+	private static final String LEARNING = "_learning";
 
 	/**
 	 * the string id for cultures of entities that can use tools (must be learning)
 	 */
-	public static final String TOOL_USER = "_tool_user";
+	private static final String TOOL_USER = "_tool_user";
 
 	/**
 	 * the string id for cultures of all entities that have bodies; must be
 	 * spacebound and mortal
 	 */
-	public static final String EMBODIED = "_embodied";
+	private static final String EMBODIED = "_embodied";
 
 	/**
 	 * the string id for cultures of all entities that are organic and have hunger
 	 * needs and the like
 	 */
-	public static final String ORGANIC = "_organic";
+	private static final String ORGANIC = "_organic";
 
-	private Set<Culture> parents = new HashSet<>();
-
-	private Set<Culture> children = new HashSet<>();
-
-	private Set<Culture> ancestors = new HashSet<>();
+	private Culture surrounding = null;
 
 	private String name;
-	private boolean isEssential;
 	private World world;
-	private BasicIterable iter = new BasicIterable(children);
-
-	private BasicIterable iterp = new BasicIterable(parents);
-
-	private BasicIterable itera = new BasicIterable(ancestors);
-
-	private TreeMap<Sociocat, Map<String, Sociocon>> sociocons = new TreeMap<>();
+	private Map<Sociocat, Map<String, Sociocon>> sociocons = new HashMap<>();
+	private Map<IKnowledgeType<?>, UUID> information = new HashMap<>();
+	private Map<IHasProfile, Identity> identities = new HashMap<>();
+	private Noosphere noosphere;
 
 	/**
 	 * TODO make this more generalizable
@@ -97,43 +94,24 @@ public class Culture {
 	public static void genEssentialCultures(World forWorld) {
 		Culture root = new Culture(forWorld);
 		forWorld.addCulture(root);
-		Culture timebound = new Culture(TIMEBOUND, forWorld, true);
-		forWorld.addCulture(timebound);
-		Culture spacebound = new Culture(SPACEBOUND, forWorld, true);
-		forWorld.addCulture(spacebound);
-		Culture mortal = new Culture(MORTAL, forWorld, true);
-		forWorld.addCulture(mortal);
-		Culture sentient = new Culture(SENTIENT, forWorld, true);
-		forWorld.addCulture(sentient.setParents(mortal));
-		Culture social = new Culture(SOCIAL, forWorld, true);
-		forWorld.addCulture(social);
-		Culture linguistic = new Culture(LINGUISTIC, forWorld, true);
-		forWorld.addCulture(linguistic.setParents(social));
-		Culture learning = new Culture(LEARNING, forWorld, true);
-		forWorld.addCulture(learning.setParents(linguistic));
-		Culture tool_user = new Culture(TOOL_USER, forWorld, true);
-		forWorld.addCulture(tool_user.setParents(learning));
-		Culture embodied = new Culture(EMBODIED, forWorld, true);
-		forWorld.addCulture(embodied.setParents(spacebound, mortal));
-		Culture organic = new Culture(ORGANIC, forWorld, true);
-		forWorld.addCulture(organic.setParents(organic));
+
 	}
 
 	public Culture(String name, World world) {
-		this(name, world, false);
+		this(name, world, world.getCulture(ROOT));
 	}
 
-	private Culture(String name, World world, boolean isEssential) {
-		this.isEssential = isEssential;
-		if (!isEssential && name.startsWith("_"))
+	public Culture(String name, World world, Culture surrounding) {
+
+		if (name.startsWith("_"))
 			throw new IllegalArgumentException(
 					name + " is an invalid name; underscore names are only for essential cultures");
-		this.name = (isEssential ? (name.startsWith("_") ? name : "_" + name) : name);
 		if (world.getCulture(name) != null) {
 			throw new UnsupportedOperationException("a culture of this name already exists");
 		}
 		this.world = world;
-		this.parents.add(world.getCulture(ROOT));
+		this.surrounding = surrounding;
+		this.noosphere = world.getNoosphere();
 	}
 
 	/**
@@ -145,7 +123,6 @@ public class Culture {
 		if (world.getCulture(ROOT) != null)
 			throw new UnsupportedOperationException("Cannot create root culture in world where one exists");
 		this.name = ROOT;
-		this.isEssential = true;
 		this.world = world;
 	}
 
@@ -153,12 +130,28 @@ public class Culture {
 		return getSocioconMap(type).get(name);
 	}
 
+	public Collection<Sociocat> getSociocats() {
+		return new ImmutableCollection<>(this.sociocons.keySet());
+	}
+
 	public void addSociocon(Sociocon con) {
 		this.getSocioconMap(con.getCategory()).put(con.getName(), con);
 	}
 
+	public boolean hasSociocon(Sociocon con) {
+		return sociocons.containsKey(con.getCategory()) ? sociocons.get(con.getCategory()).containsValue(con) : false;
+	}
+
 	public Map<String, Sociocon> getSocioconMap(Sociocat type) {
 		return sociocons.computeIfAbsent(type, (a) -> new TreeMap<>());
+	}
+
+	public Identity getIdentity(IHasProfile f) {
+		return this.identities.get(f);
+	}
+
+	public boolean knowsIdentity(IHasProfile e) {
+		return this.identities.containsKey(e);
 	}
 
 	/**
@@ -179,87 +172,28 @@ public class Culture {
 		return existing;
 	}
 
-	public Culture setParents(Culture... parents) {
-		this.parents.clear();
-
-		for (Culture c : parents) {
-
-			this.parents.add(c);
+	public <T> T getInfo(IKnowledgeType<T> info) {
+		if (info instanceof Sociocon con) {
+			return (T) Boolean.valueOf(this.hasSociocon(con));
+		} else if (info instanceof Sociocat cat) {
+			return (T) Boolean.valueOf(this.sociocons.containsKey(cat));
+		} else {
+			return (T) this.noosphere.getInfo(this.information.get(info), info);
 		}
-		if (this.parents.isEmpty()) {
-			Culture root = world.getCulture(ROOT);
-			this.parents.add(root);
+	}
+
+	public boolean hasInfo(IKnowledgeType<?> info) {
+		if (info instanceof Sociocon con) {
+			return this.getInfo(con);
+		} else if (info instanceof Sociocat cat) {
+			return this.getInfo(cat);
+		} else {
+			return this.information.containsKey(info);
 		}
-		initAncestorsAndChildren();
-		return this;
-	}
-
-	public Culture setParents(Set<Culture> parents) {
-		this.parents.clear();
-		this.parents.addAll(parents);
-		if (parents.isEmpty())
-			parents.add(world.getCulture(ROOT));
-		initAncestorsAndChildren();
-		return this;
-	}
-
-	private void initAncestorsAndChildren() {
-		for (Culture c : this.parents) {
-			c.children.add(this);
-		}
-		this.ancestors.clear();
-		for (Culture c : this.parents) {
-			ancestors.addAll(c.parents);
-			ancestors.addAll(c.ancestors);
-		}
-
-	}
-
-	/**
-	 * gets an iterable of all this culture's children
-	 * 
-	 * @return
-	 */
-	public Iterable<Culture> getChildren() {
-		return this.iter;
-	}
-
-	/**
-	 * gets an iterable of this culture's parents
-	 * 
-	 * @return
-	 */
-	public Iterable<Culture> getParents() {
-		return this.iterp;
-	}
-
-	/**
-	 * gets an iterable of this culture's ancestors
-	 * 
-	 * @return
-	 */
-	public Iterable<Culture> getAncestors() {
-		return this.itera;
-	}
-
-	/**
-	 * whether the given culture is a child of this culture
-	 */
-	public boolean hasChild(Culture child) {
-		return children.contains(child);
 	}
 
 	public World getWorld() {
 		return world;
-	}
-
-	/**
-	 * If this culture is an essential culture
-	 * 
-	 * @return
-	 */
-	public boolean isEssential() {
-		return isEssential;
 	}
 
 	public String getName() {
@@ -267,83 +201,11 @@ public class Culture {
 	}
 
 	public boolean isRootCulture() {
-		return this.parents.isEmpty();
+		return this.name == ROOT;
 	}
 
-	/**
-	 * if the given culture is an immediate parent of this one
-	 */
-	public boolean isParent(Culture cul) {
-		return this.parents.contains(cul);
-	}
-
-	/**
-	 * if the given culture is higher in the hierarchy than parent for this culture
-	 */
-	public boolean isAncestor(Culture cul) {
-		return this.ancestors.contains(cul);
-	}
-
-	/**
-	 * whether this culture is ancestor, parent, or equivalent to any in the context;
-	 * return true if the context is universal
-	 * 
-	 * @param ctxt
-	 * @return
-	 */
-	public boolean isSuperiorToAny(CulturalContext ctxt) {
-		if (ctxt.isUniversal()) return true;
-		for (Culture c : ctxt) {
-			if (this == c || c.isParent(this) || c.isAncestor(this)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * whether this culture is the ancestor of any in this context; return true if universal
-	 * 
-	 * @param ctxt
-	 * @return
-	 */
-	public boolean isAncestorOfAny(CulturalContext ctxt) {
-		if (ctxt.isUniversal()) return true;
-		for (Culture c : ctxt) {
-			if (c.isAncestor(this)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * if this culture is a child, descendant, or equivalent to any of these; true if universal
-	 */
-	public boolean isSubordinateToAny(CulturalContext ctxt) {
-		if (ctxt.isUniversal()) return true;
-		for (Culture c : ctxt) {
-			if (this == c || this.isParent(c) || this.isAncestor(c)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * whether any culture in the context is an ancestor of this one; true if universal
-	 * 
-	 * @param ctxt
-	 * @return
-	 */
-	public boolean isDescendantOfAny(CulturalContext ctxt) {
-		if (ctxt.isUniversal()) return true;
-		for (Culture c : ctxt) {
-			if (this.isAncestor(c)) {
-				return true;
-			}
-		}
-		return false;
+	public Culture getSurrounding() {
+		return surrounding;
 	}
 
 	@Override
@@ -351,38 +213,4 @@ public class Culture {
 		return this.name;
 	}
 
-	private class BasicIterable implements Iterable<Culture> {
-
-		Set<Culture> de;
-
-		private BasicIterable(Set<Culture> de) {
-			this.de = de;
-		}
-
-		@Override
-		public Iterator<Culture> iterator() {
-			return new BasicIterator(de.iterator());
-		}
-
-	}
-
-	private class BasicIterator implements Iterator<Culture> {
-
-		final Iterator<Culture> iter;
-
-		private BasicIterator(Iterator<Culture> it) {
-			this.iter = it;
-		}
-
-		@Override
-		public boolean hasNext() {
-			return iter.hasNext();
-		}
-
-		@Override
-		public Culture next() {
-			return iter.next();
-		}
-
-	}
 }

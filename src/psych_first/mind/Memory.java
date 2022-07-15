@@ -8,6 +8,8 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 import psych_first.action.types.Action;
+import psych_first.mind.Memory.MemoryType.MapMemoryType;
+import psych_first.perception.knowledge.Identity;
 import sociology.Profile;
 
 /**
@@ -100,6 +102,24 @@ public class Memory implements IMindPart {
 	 */
 	public <T> MemorySection<T> getMemories(MemoryType<T> type) {
 		return (MemorySection<T>) memories.get(type);
+	}
+
+	public static class MapMemorySection<K, L> extends MemorySection<L> {
+
+		private Map<K, UUID> keyMap = new HashMap<>();
+
+		public MapMemorySection(MapMemoryType<K, L> type, Memory owner) {
+			super(type, owner);
+		}
+
+		public L getMemory(K key) {
+			return getMemory(keyMap.get(key));
+		}
+
+		public boolean contains(Object o) {
+			return super.contains(o) || this.keyMap.containsKey(o);
+		}
+
 	}
 
 	/**
@@ -395,12 +415,17 @@ public class Memory implements IMindPart {
 
 		public static final MemoryType<Profile> PROFILE = type("profile", Profile.class);
 		public static final MemoryType<Action> POSSIBLE_ACTIONS = type("possible_actions", Action.class);
+		public static final MemoryType<Identity> IDENTITIES = type("identity", Identity.class);
 
 		private Class<L> memoryClass;
 		private String id;
 
 		public static <T> MemoryType<T> type(String id, Class<T> memoryClass) {
 			return new MemoryType<>(id, memoryClass);
+		}
+
+		public static <K, L> MapMemoryType<K, L> type(String id, Class<K> keyClass, Class<L> memoryClass) {
+			return new MapMemoryType<>(id, keyClass, memoryClass);
 		}
 
 		// private TODO something about instantiating memories and whatnot idk
@@ -425,6 +450,19 @@ public class Memory implements IMindPart {
 		@Override
 		public String toString() {
 			return this.id + " memory ";
+		}
+
+		public static class MapMemoryType<K, L> extends MemoryType<L> {
+			private Class<K> keyClass;
+
+			protected MapMemoryType(String id, Class<K> keyClass, Class<L> memoryClass) {
+				super(id, memoryClass);
+				this.keyClass = keyClass;
+			}
+
+			public Class<K> getKeyClass() {
+				return keyClass;
+			}
 		}
 	}
 

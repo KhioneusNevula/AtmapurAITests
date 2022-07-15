@@ -1,7 +1,6 @@
 package psych_first.action.types;
 
 import culture.CulturalContext;
-import culture.Culture;
 import psych_first.action.ActionType;
 import psych_first.action.goal.Goal;
 import psych_first.action.goal.RequirementGoal;
@@ -45,15 +44,13 @@ public class CookAction extends Action {
 
 	@Override
 	public RequirementWrapper generateRequirements(Mind fromMind, Goal goal, StateBuilder builder) {
-		if (!fromMind.getCulture().containsInHierarchy(Culture.TOOL_USER)) {
-			return null;
-		}
+
 		if (goal instanceof RequirementGoal res) {
 			SociopropProfileMatchingCheck check = (SociopropProfileMatchingCheck) res.getState()
 					.getFor(ProfileType.USER).getCondition(Socioprops.ACTOR_HELD);
 
 			if (check != null && check.isProfilePlaceholder() && !check.getProfilePlaceholder().isResolved()) {
-				if (res.getState().getFor(check.getProfilePlaceholder().getType())
+				if (res.getState().getFor(check.getProfilePlaceholder().getProfileType())
 						.hasCondition(Check.createSociocatCheck(Sociocat.FOOD, true))) {
 
 					// TODO create proper conditions for cooking; for now, returns empty

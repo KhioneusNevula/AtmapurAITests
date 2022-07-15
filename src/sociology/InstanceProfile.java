@@ -1,7 +1,6 @@
 package sociology;
 
 import sim.IHasProfile;
-import sim.World;
 
 public class InstanceProfile extends Profile {
 
@@ -30,11 +29,6 @@ public class InstanceProfile extends Profile {
 
 	public void setOwner(IHasProfile owner) {
 		this.owner = owner;
-	}
-
-	@Override
-	public World getWorld() {
-		return owner.getWorld();
 	}
 
 }

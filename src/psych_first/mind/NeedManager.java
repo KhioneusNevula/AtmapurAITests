@@ -44,7 +44,7 @@ public class NeedManager implements IMindPart {
 			}
 
 			// TODO change this from an arbitrary value to a properly dynamic one
-			if (needs.get(n) < 20) {
+			if (needs.get(n) < 50) {
 				if (!mind.getPersonalWill().hasTaskFor(n)) {
 					mind.communicate(this, mind.getPersonalWill(), (w) -> {
 						w.chooseGoal(new NeedGoal(n, 20), false);

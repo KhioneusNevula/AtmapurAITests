@@ -4,10 +4,10 @@ import culture.CulturalContext;
 import entity.IPhysicalExistence;
 import psych_first.action.ActionType;
 import psych_first.action.goal.Goal;
+import psych_first.action.goal.Goal.Priority;
 import psych_first.action.goal.RequirementGoal;
 import psych_first.action.goal.RequirementWrapper;
 import psych_first.action.goal.Task;
-import psych_first.action.goal.Goal.Priority;
 import psych_first.actionstates.checks.AtCheck;
 import psych_first.actionstates.checks.Check;
 import psych_first.actionstates.states.StateBuilder;
@@ -56,11 +56,11 @@ public class SearchAction extends Action {
 		int maxSearch = 400; // TODO make this more general
 		if (actor instanceof IPhysicalExistence entity) {
 			Location or = entity.getLocation();
-			int dx = (actor.getWorld().rand().nextBoolean() ? -1 : 1) * actor.getWorld().rand().nextInt(searchRadius);
-			int dy = (actor.getWorld().rand().nextBoolean() ? -1 : 1) * actor.getWorld().rand().nextInt(searchRadius);
+			int dx = (entity.getWorld().rand().nextBoolean() ? -1 : 1) * entity.getWorld().rand().nextInt(searchRadius);
+			int dy = (entity.getWorld().rand().nextBoolean() ? -1 : 1) * entity.getWorld().rand().nextInt(searchRadius);
 			dx = Math.min(or.getX() + maxSearch, Math.max(or.getX() - maxSearch, dx));
 			dy = Math.min(or.getY() + maxSearch, Math.max(or.getY() - maxSearch, dy));
-			Location loc = new Location(or.getX() + dx, or.getY() + dy, actor.getWorld(), false);
+			Location loc = new Location(or.getX() + dx, or.getY() + dy, entity.getWorld());
 			SearchData dat = new SearchData();
 			dat.origin = or;
 			dat.target = loc;
@@ -85,8 +85,8 @@ public class SearchAction extends Action {
 
 			if (!pp.isResolved()) {
 				return builder.removeConditionForChecker(ProfileType.USER, Check.Fundamental.AT)
-						.removeAllConditions(atCheck.getProfilePlaceholder().getType())
-						.requireUnResolved(atCheck.getProfilePlaceholder().getType()).buildWrapper(Priority.IMPORTANT);
+						.removeAllConditions(atCheck.getProfilePlaceholder().getProfileType())
+						.requireUnResolved(atCheck.getProfilePlaceholder().getProfileType()).buildWrapper(Priority.IMPORTANT);
 			}
 		}
 		return null;

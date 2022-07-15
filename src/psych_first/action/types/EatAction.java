@@ -2,16 +2,15 @@ package psych_first.action.types;
 
 import abilities.types.SystemType;
 import culture.CulturalContext;
-import culture.Culture;
 import entity.Actor;
 import entity.Eatable;
 import psych_first.action.ActionType;
 import psych_first.action.goal.Goal;
+import psych_first.action.goal.Goal.Priority;
 import psych_first.action.goal.NeedGoal;
 import psych_first.action.goal.RequirementGoal;
 import psych_first.action.goal.RequirementWrapper;
 import psych_first.action.goal.Task;
-import psych_first.action.goal.Goal.Priority;
 import psych_first.actionstates.checks.Check;
 import psych_first.actionstates.checks.numeric.IntCheck;
 import psych_first.actionstates.states.StateBuilder;
@@ -70,9 +69,6 @@ public class EatAction extends Action {
 
 	@Override
 	public RequirementWrapper generateRequirements(Mind fromMind, Goal goal, StateBuilder builder) {
-		if (!fromMind.getCulture().containsInHierarchy(Culture.ORGANIC)) {
-			return null;
-		}
 
 		if (goal instanceof NeedGoal && ((NeedGoal) goal).getFocus() == Need.SATIATION) {
 

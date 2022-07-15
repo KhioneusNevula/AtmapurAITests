@@ -4,17 +4,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import culture.CulturalContext;
 import culture.Culture;
 import psych_first.actionstates.ConditionSet;
+import psych_first.perception.knowledge.IKnowledgeType;
 import sim.IHasProfile;
-import sim.World;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
 import sociology.sociocon.Socioprop;
 
-public class ProfilePlaceholder implements IProfile {
+public class ProfilePlaceholder implements IProfile, IHasProfile {
 
 	private ProfileType type;
 	private Profile resolved;
@@ -23,7 +24,7 @@ public class ProfilePlaceholder implements IProfile {
 		this.type = type;
 	}
 
-	public ProfileType getType() {
+	public ProfileType getProfileType() {
 		return type;
 	}
 
@@ -167,8 +168,42 @@ public class ProfilePlaceholder implements IProfile {
 	}
 
 	@Override
-	public World getWorld() {
-		return resolved == null ? null : resolved.getWorld();
+	public <T> T getInfo(IKnowledgeType<T> info, CulturalContext ctxt) {
+		return resolved == null ? null : resolved.getInfo(info, ctxt);
 	}
 
+	@Override
+	public boolean hasInfo(IKnowledgeType<?> info, CulturalContext ctxt) {
+		return resolved == null ? null : resolved.hasInfo(info, ctxt);
+	}
+
+	@Override
+	public Profile getProfile() {
+		return this.resolved;
+	}
+
+	@Override
+	public TypeProfile getType() {
+		return resolved == null ? null : resolved.getTypeProfile();
+	}
+
+	@Override
+	public UUID getUuid() {
+		return resolved == null ? null : resolved.getOwner().getUuid();
+	}
+
+	@Override
+	public boolean canBeAlive() {
+		return resolved == null ? null : resolved.getOwner().canBeAlive();
+	}
+
+	@Override
+	public boolean canBeSensed() {
+		return resolved == null ? null : resolved.getOwner().canBeSensed();
+	}
+
+	@Override
+	public boolean canThink() {
+		return resolved == null ? null : resolved.getOwner().canThink();
+	}
 }

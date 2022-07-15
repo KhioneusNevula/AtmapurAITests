@@ -27,9 +27,6 @@ public class SocioconCheck extends Check<Sociocon> {
 	@Override
 	public Boolean satisfies(IProfile p, CulturalContext ctxt) {
 
-		if (!this.getChecker().getCulture().isSuperiorToAny(ctxt)) {
-			return null;
-		}
 		return p.getActualProfile() == null ? null
 				: (this.getType() == ConditionType.EQUAL) == (p.hasSociocon(getChecker())
 						|| (!p.isTypeProfile() && p.getTypeProfile().hasSociocon(getChecker())));

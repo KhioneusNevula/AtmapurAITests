@@ -41,7 +41,7 @@ public class StateBuilder {
 	}
 
 	public StateBuilder initProfile(ProfilePlaceholder placeholder) {
-		state.putProfilePlaceholder(placeholder.getType(), placeholder);
+		state.putProfilePlaceholder(placeholder.getProfileType(), placeholder);
 		return this;
 	}
 
@@ -116,8 +116,8 @@ public class StateBuilder {
 	}
 
 	public StateBuilder addConditions(ProfilePlaceholder placeholder, Check<?>... conditions) {
-		state.putProfilePlaceholder(placeholder.getType(), placeholder);
-		state.getFor(placeholder.getType()).addConditions(conditions);
+		state.putProfilePlaceholder(placeholder.getProfileType(), placeholder);
+		state.getFor(placeholder.getProfileType()).addConditions(conditions);
 		return this;
 	}
 

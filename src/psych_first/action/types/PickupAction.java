@@ -1,13 +1,12 @@
 package psych_first.action.types;
 
 import culture.CulturalContext;
-import culture.Culture;
 import psych_first.action.ActionType;
 import psych_first.action.goal.Goal;
+import psych_first.action.goal.Goal.Priority;
 import psych_first.action.goal.RequirementGoal;
 import psych_first.action.goal.RequirementWrapper;
 import psych_first.action.goal.Task;
-import psych_first.action.goal.Goal.Priority;
 import psych_first.actionstates.checks.Check;
 import psych_first.actionstates.checks.SociopropProfileMatchingCheck;
 import psych_first.actionstates.states.StateBuilder;
@@ -38,8 +37,6 @@ public class PickupAction extends Action {
 
 	@Override
 	public RequirementWrapper generateRequirements(Mind fromMind, Goal goal, StateBuilder builder) {
-		if (!fromMind.getCulture().containsInHierarchy(Culture.EMBODIED))
-			return null;
 
 		if (goal instanceof RequirementGoal res) {
 			SociopropProfileMatchingCheck check = (SociopropProfileMatchingCheck) res.getState()
@@ -47,8 +44,8 @@ public class PickupAction extends Action {
 
 			if (check != null && check.isProfilePlaceholder()) {
 				return builder.removeConditionForChecker(ProfileType.USER, Socioprops.ACTOR_HELD)
-						.addLocationCondition(ProfileType.USER, check.getProfilePlaceholder().getType())
-						.requireResolved(check.getProfilePlaceholder().getType()).buildWrapper(Priority.IMPORTANT);
+						.addLocationCondition(ProfileType.USER, check.getProfilePlaceholder().getProfileType())
+						.requireResolved(check.getProfilePlaceholder().getProfileType()).buildWrapper(Priority.IMPORTANT);
 			}
 		}
 		return null;

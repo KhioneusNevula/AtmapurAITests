@@ -4,8 +4,9 @@ import java.util.Collection;
 
 import culture.CulturalContext;
 import culture.Culture;
+import psych_first.perception.knowledge.IKnowledgeType;
+import psych_first.perception.knowledge.events.IEvent;
 import sim.IHasProfile;
-import sim.World;
 import sociology.sociocon.Sociocat;
 import sociology.sociocon.Sociocon;
 import sociology.sociocon.Socioprop;
@@ -61,8 +62,6 @@ public interface IProfile {
 
 	public boolean hasValue(Socioprop<?> checker, CulturalContext context);
 
-	public World getWorld();
-
 	/**
 	 * returns all sociocons for the culture
 	 * 
@@ -70,4 +69,12 @@ public interface IProfile {
 	 * @return
 	 */
 	public Collection<Sociocon> getSocioconsFor(Culture cul);
+
+	public boolean hasInfo(IKnowledgeType<?> info, CulturalContext ctxt);
+
+	public <T> T getInfo(IKnowledgeType<T> info, CulturalContext ctxt);
+
+	public default boolean isEvent() {
+		return this.getOwner() instanceof IEvent;
+	}
 }

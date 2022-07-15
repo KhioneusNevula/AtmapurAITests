@@ -14,36 +14,22 @@ public class CulturalContext implements Iterable<Culture> {
 	private World world;
 
 	public static CulturalContext of(World worldOf, Culture... cultures) {
-		if (cultures.length == 0)
+		if (cultures.length == 0 && worldOf == null)
 			return universal;
+
 		CulturalContext c = new CulturalContext(cultures);
 		c.world = worldOf;
+		if (cultures.length == 0 && worldOf != null)
+			c.add(worldOf.getCulture(Culture.ROOT));
 		return c;
+	}
+
+	public static CulturalContext of(Culture... cultures) {
+		return of(null, cultures);
 	}
 
 	public World getWorld() {
 		return world;
-	}
-
-	/**
-	 * whether this context contains a culture of the given name in its hierarchy
-	 * 
-	 * @param culture
-	 * @return
-	 */
-	public boolean containsInHierarchy(String culture) {
-		Culture m;
-		return (m = world.getCulture(culture)) == null ? false : m.isSuperiorToAny(this);
-	}
-
-	/**
-	 * whether this context contains the given culture somewhere in its hierarchy
-	 * 
-	 * @param culture
-	 * @return
-	 */
-	public boolean containsInHierarchy(Culture culture) {
-		return culture.isSuperiorToAny(this);
 	}
 
 	public static CulturalContext getUniversal() {

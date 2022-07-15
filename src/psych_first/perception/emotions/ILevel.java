@@ -1,4 +1,4 @@
-package psych_first.mind;
+package psych_first.perception.emotions;
 
 import java.util.Collection;
 import java.util.Map;
@@ -6,7 +6,70 @@ import java.util.TreeMap;
 
 import main.ImmutableCollection;
 
+/**
+ * Levels remain between 0 and 100 although they can be negative (though
+ * negativity doesn't change their effects as negativity is treated as 0)
+ * 
+ * @author borah
+ *
+ */
 public interface ILevel {
+
+	public static final int MAX = 100;
+	public static final int MIN = 0;
+
+	public static enum Degree {
+		VERY_LOW(1 / 5d), LOW(2 / 5d), MEDIUM(3 / 5d), HIGH(4 / 5d), VERY_HIGH(1);
+
+		public final double factor;
+
+		private Degree(double factor) {
+			this.factor = factor;
+		}
+	}
+
+	public static class LevelIndicator {
+
+		public final ILevel type;
+		public final Degree deg;
+		private boolean inc = true;
+
+		private LevelIndicator(ILevel lev, Degree deg) {
+			this.type = lev;
+			this.deg = deg;
+		}
+
+		public boolean increases() {
+			return inc;
+		}
+
+		public boolean decreases() {
+			return !inc;
+		}
+
+		public LevelIndicator inc() {
+			this.inc = true;
+			return this;
+		}
+
+		public LevelIndicator dec() {
+			this.inc = false;
+			return this;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return obj instanceof LevelIndicator l && l.type == this.type
+
+					&& l.deg == this.deg && this.inc == l.inc;
+		}
+
+	}
+
+	public default LevelIndicator deg(Degree degree) {
+		return new LevelIndicator(this, degree);
+	}
+
 	public static enum Fundamental implements ILevel {
 		REWARD(), PUNISHMENT();
 
@@ -33,7 +96,7 @@ public interface ILevel {
 
 		public static final ELevel LETHARGY = new ELevel("lethargy", -1, 0);
 		public static final ELevel AGGRESSION = new ELevel("aggression", 1, 1);
-		public static final ELevel STRESS = new ELevel("stress", 2, 0);
+		public static final ELevel STRESS = new ELevel("stress", -1, 0);
 		public static final ELevel FOCUS = new ELevel("focus", 0, 0);
 		public static final ELevel MORALITY = new ELevel("morality", 1, 1);
 		public static final ELevel DUTIFULNESS = new ELevel("dutifulness", 1, 1);

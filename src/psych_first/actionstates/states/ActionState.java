@@ -86,7 +86,7 @@ public class ActionState implements State {
 	public void eliminateResolvedConditions(ProfilePlaceholder pp, CulturalContext ctxt) {
 		if (!pp.isResolved())
 			throw new IllegalArgumentException("Placeholder " + pp + " must be RESOLVED");
-		ConditionSet set = this.conditions.get(pp.getType());
+		ConditionSet set = this.conditions.get(pp.getProfileType());
 		ConditionSet new_ = set.conditionsUnfulfilledBy(pp.getActualProfile(), ctxt);
 		set.clear();
 		set.addConditions(new_);

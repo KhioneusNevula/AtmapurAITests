@@ -1,7 +1,6 @@
 package psych_first.actionstates.checks;
 
 import culture.CulturalContext;
-import culture.Culture;
 import entity.Actor;
 import psych_first.actionstates.ConditionSet;
 import psych_first.actionstates.checks.Check.Fundamental;
@@ -54,12 +53,6 @@ public class AtCheck extends Check<Fundamental> implements IProfileDependentChec
 
 	@Override
 	public Boolean satisfies(IProfile p, CulturalContext ctxt) {
-
-		if (!ctxt.isUniversal()) {
-			if (!ctxt.getWorld().getCulture(Culture.SPACEBOUND).isSuperiorToAny(ctxt)) {
-				return null;
-			}
-		}
 
 		if (p.getOwner() instanceof ILocatable l) {
 			if (this.parameter.getOwner() instanceof ILocatable l2) {

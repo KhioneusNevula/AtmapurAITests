@@ -1,6 +1,7 @@
 package phenomenon;
 
 import entity.IPhysicalExistence;
+import entity.ISensable;
 import sim.IHasProfile;
 import sim.Location;
 import sim.World;
@@ -12,7 +13,7 @@ import sociology.Profile;
  * @author borah
  *
  */
-public abstract class Phenomenon implements IPhysicalExistence, IHasProfile {
+public abstract class Phenomenon implements IPhysicalExistence, IHasProfile, ISensable {
 
 	private Profile profile;
 	private int x;

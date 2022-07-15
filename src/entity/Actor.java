@@ -1,16 +1,21 @@
 package entity;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import abilities.EntitySystem;
 import abilities.types.LifeSystem;
 import abilities.types.SystemType;
-import culture.Culture;
+import culture.CulturalContext;
 import processing.core.PApplet;
 import psych_first.mind.Mind;
+import psych_first.perception.knowledge.IKnowledgeType;
+import psych_first.perception.senses.SensoryAttribute;
+import psych_first.perception.senses.SensoryOutput;
 import sim.ICanHaveMind;
 import sim.Location;
 import sim.World;
@@ -18,7 +23,7 @@ import sociology.InstanceProfile;
 import sociology.Profile;
 import sociology.TypeProfile;
 
-public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
+public abstract class Actor implements ICanHaveMind, IPhysicalExistence, ISensable {
 
 	public static enum PossessState {
 		NONE, HOLD, WEAR
@@ -38,6 +43,8 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 	private Actor clothing;
 	private Actor held;
 
+	private SensoryOutput sensory = new SensoryOutput(this);
+
 	protected Random rand = new Random();
 
 	/**
@@ -53,11 +60,17 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 
 	private Integer optionalColor = null;
 	private Location location;
+	/**
+	 * TODO determine what info an entity would constitute
+	 */
+	private Map<IKnowledgeType<?>, Object> information = new HashMap<>();
 
 	/**
 	 * A characteristic of actors who can think
 	 */
 	protected Mind mind = null;
+
+	private UUID uuid = UUID.randomUUID();
 
 	public Actor(World world, TypeProfile tp, String name, int startX, int startY, int radius) {
 		this.profile = new InstanceProfile(this, tp, name);
@@ -66,7 +79,7 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 		this.radius = radius;
 		this.x = startX;
 		this.y = startY;
-		location = new Location(this, world, true);
+		location = new Location(this, world);
 	}
 
 	protected void addSystems(SystemType<?>... t) {
@@ -114,8 +127,8 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 	 * 
 	 * @return
 	 */
-	public Mind createMind(Culture... needs) {
-		return this.mind = new Mind(this, needs);
+	public Mind createMind() {
+		return this.mind = new Mind(this);
 	}
 
 	public String getName() {
@@ -176,6 +189,17 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 				sys._update(world.getTicks());
 			}
 		}
+	}
+
+	public void finalTick() {
+		if (world.getTicks() % 5 == 0) {
+			this.world.getSensoryHandler().postSensory(sensory);
+		}
+	}
+
+	protected Actor addInfo(IKnowledgeType<?> t, Object val) {
+		this.information.put(t, val);
+		return this;
 	}
 
 	public int getX() {
@@ -337,15 +361,15 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 
 	public Location getLocation() {
 		if (this.location.getX() != this.x || this.location.getY() != this.y) {
-			this.location = new Location(this, world, true);
+			this.location = new Location(this, world);
 		}
 		return location;
 	}
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + " \"" + name + "\": {" + this.profile + "} xyr=[" + x + "," + y + ","
-				+ radius + "]";
+		return this.getClass().getSimpleName() + ":\"" + name + "\":" + this.uuid + ":{" + this.profile + "}:[x=" + x
+				+ ",y=" + y + ",r=" + radius + "]";
 	}
 
 	@Override
@@ -361,6 +385,54 @@ public abstract class Actor implements ICanHaveMind, IPhysicalExistence {
 	@Override
 	public Collection<SystemType<?>> getSystemTokens() {
 		return this.systems.keySet();
+	}
+
+	@Override
+	public SensoryOutput getSensory() {
+		return this.sensory;
+	}
+
+	@Override
+	public <T> T getInfo(IKnowledgeType<T> type, CulturalContext ctxt) {
+		if (type.isSocialKnowledge()) {
+			return this.profile.getInfo(type, ctxt);
+		} else if (type == Location.Fundamental.LOCATION) {
+			return (T) this.location;
+		} else if (type instanceof SensoryAttribute<?>att) {
+			return (T) this.sensory.getAttribute(att);
+		} else {
+			return (T) this.information.get(type);
+		}
+	}
+
+	@Override
+	public boolean hasInfo(IKnowledgeType<?> type, CulturalContext ctxt) {
+		if (type.isSocialKnowledge()) {
+			return this.profile.hasInfo(type, ctxt);
+		} else if (type == Location.Fundamental.LOCATION) {
+			return true;
+		} else if (type instanceof SensoryAttribute<?>att) {
+			return this.sensory.hasAttribute(att);
+		} else
+			return this.information.containsKey(type);
+	}
+
+	@Override
+	public int hashCode() {
+		return uuid.hashCode();
+	}
+
+	public UUID getUuid() {
+		return uuid;
+	}
+
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Actor a && a.uuid.equals(this.uuid);
 	}
 
 }

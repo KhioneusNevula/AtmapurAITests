@@ -3,16 +3,21 @@ package entity;
 import abilities.types.HungerSystem;
 import abilities.types.LifeSystem;
 import abilities.types.SystemType;
-import culture.Culture;
 import psych_first.mind.Need;
+import psych_first.perception.emotions.EmotionType;
+import psych_first.perception.emotions.ILevel;
+import psych_first.perception.senses.Sense;
 import sim.World;
 
 public class Thinker extends Actor {
 
 	public Thinker(World world, String name, int startX, int startY, int radius) {
 		super(world, world.getOrCreateTypeProfile("people"), name, startX, startY, radius);
-		this.createMind(world.getCulture(Culture.ORGANIC), world.getCulture(Culture.TOOL_USER),
-				world.getCulture(Culture.SENTIENT)).initNeeds(Need.SATIATION);
+		this.addInfo(Sense.SOUND.DISTANCE, 100).addInfo(Sense.SMELL.DISTANCE, 50).addInfo(Sense.SIGHT.DISTANCE, 100)
+				.addInfo(Sense.SIGHT.ANGLE, 180); // TODO generalize
+		this.createMind().initNeeds(Need.SATIATION).initEmotions(ILevel.ELevel.getAll(), EmotionType.getAll())
+				.initSenses(Sense.SOUND, Sense.SMELL, Sense.SIGHT, Sense.TOUCH);
+
 		this.addSystems(new LifeSystem(this, 100), new HungerSystem(this, 100, 1));
 	}
 

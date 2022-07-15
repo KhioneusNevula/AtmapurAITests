@@ -4,6 +4,7 @@ import java.util.function.Function;
 
 import culture.CulturalContext;
 import psych_first.actionstates.checks.ICheckable;
+import psych_first.perception.knowledge.IKnowledgeType;
 import sociology.Profile;
 
 /**
@@ -15,7 +16,7 @@ import sociology.Profile;
  *
  * @param <T>
  */
-public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<Socioprop<?>> {
+public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<Socioprop<?>>, IKnowledgeType<T> {
 
 	private Function<Profile, T> initialValue;
 	private Function<Profile, T> checkValue = (p) -> p.getValue(this, CulturalContext.getUniversal());
@@ -125,6 +126,22 @@ public class Socioprop<T> implements IPurposeElement, ICheckable<T>, Comparable<
 	@Override
 	public boolean hasValue(Profile p, CulturalContext ctxt) {
 		return p.hasValue(this, ctxt) ? true : (!p.isTypeProfile() ? p.getTypeProfile().hasValue(this, ctxt) : false);
+	}
+
+	@Override
+	public Class<T> getValueClass() {
+		return this.type;
+	}
+
+	@Override
+	public boolean isSocialKnowledge() {
+
+		return true;
+	}
+
+	@Override
+	public boolean isIdentitySpecific() {
+		return true;
 	}
 
 }

@@ -1,24 +1,16 @@
 package sociology;
 
 import sim.IHasProfile;
-import sim.World;
 
 public class TypeProfile extends Profile {
 
-	private World world;
-
-	public TypeProfile(String name, World of) {
+	public TypeProfile(String name) {
 		super(name);
-		this.world = of;
-	}
-
-	public World getWorld() {
-		return world;
 	}
 
 	@Override
 	public IHasProfile getOwner() {
-		throw new UnsupportedOperationException("Cannot access owner of type profile");
+		return null;
 	}
 
 	@Override
@@ -29,7 +21,7 @@ public class TypeProfile extends Profile {
 
 	@Override
 	public TypeProfile getTypeProfile() {
-		throw new UnsupportedOperationException("Type profile has no type of its own");
+		return null;
 	}
 
 	@Override
@@ -41,5 +33,10 @@ public class TypeProfile extends Profile {
 	public String toString() {
 		// TODO Auto-generated method stub
 		return "t;" + "\"" + this.getName() + "\"";
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof TypeProfile tp && tp.getName().equals(this.getName());
 	}
 }

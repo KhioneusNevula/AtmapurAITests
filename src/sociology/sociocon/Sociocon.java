@@ -7,7 +7,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import culture.Culture;
+import main.ImmutableCollection;
 import psych_first.action.types.Action;
+import psych_first.perception.knowledge.Association;
+import psych_first.perception.knowledge.IKnowledgeType.IBooleanKnowledge;
 import sim.IHasCulture;
 import sim.World;
 import sociology.Profile;
@@ -20,7 +23,7 @@ import sociology.Profile;
  * @author borah
  *
  */
-public class Sociocon implements Comparable<Sociocon>, IHasCulture {
+public class Sociocon implements Comparable<Sociocon>, IHasCulture, IBooleanKnowledge {
 
 	private Set<Profile> members = new HashSet<>();
 	private String name;
@@ -28,6 +31,7 @@ public class Sociocon implements Comparable<Sociocon>, IHasCulture {
 	private Map<String, Socioprop<?>> properties = new TreeMap<>();
 	private Set<Action> actions = new HashSet<>();
 	private Culture culture;
+	private Set<Association> associations = new HashSet<>();
 
 	Sociocon(Sociocat category, String name, Culture culture, IPurposeSource... sociosource) {
 		this.category = category;
@@ -42,6 +46,20 @@ public class Sociocon implements Comparable<Sociocon>, IHasCulture {
 
 	public Culture getCulture() {
 		return culture;
+	}
+
+	public Collection<Association> getAssociations() {
+		return new ImmutableCollection<>(associations);
+	}
+
+	public void addAssociation(Association a) {
+		if (a.getSociocon() != this)
+			throw new IllegalArgumentException("association has sociocon " + a.getSociocon() + " instead of " + this);
+		this.associations.add(a);
+	}
+
+	public void removeAssociation(Association a) {
+		this.associations.remove(a);
 	}
 
 	@Override
@@ -125,4 +143,15 @@ public class Sociocon implements Comparable<Sociocon>, IHasCulture {
 	public String toString() {
 		return "Sociocon: " + this.name + ", category: " + this.category + " ";
 	}
+
+	@Override
+	public boolean isSocialKnowledge() {
+		return true;
+	}
+
+	@Override
+	public boolean isIdentitySpecific() {
+		return true;
+	}
+
 }

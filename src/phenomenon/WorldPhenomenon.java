@@ -22,7 +22,6 @@ public abstract class WorldPhenomenon implements IHasProfile {
 		return null;
 	}
 
-	@Override
 	public World getWorld() {
 		// TODO Auto-generated method stub
 		return null;

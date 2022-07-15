@@ -1,5 +1,6 @@
 package psych_first.mind;
 
+import java.util.Collection;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -9,6 +10,11 @@ import entity.Actor;
 import psych_first.action.types.Action;
 import psych_first.mind.Memory.MemorySection;
 import psych_first.mind.Memory.MemoryType;
+import psych_first.perception.emotions.EmotionManager;
+import psych_first.perception.emotions.EmotionType;
+import psych_first.perception.emotions.ILevel;
+import psych_first.perception.senses.Sense;
+import psych_first.perception.senses.SensorSystem;
 import sim.ICanHaveMind;
 import sociology.Profile;
 
@@ -22,18 +28,37 @@ public class Mind {
 	private Memory memory;
 	private Random rand = new Random();
 	private CulturalContext culture;
+	private EmotionManager emotions;
+	private SensorSystem senses;
 
-	public Mind(ICanHaveMind owner, Culture... cultures) {
+	public Mind(ICanHaveMind owner) {
 		this.owner = owner;
 		this.memory = new Memory(this);
 		this.needs = new NeedManager(this);
 		this.personalWill = new Will(this);
+		this.culture = CulturalContext.of(owner.getWorld());
 		// TODO make this more generalized
 		memory.initializeSections(MemoryType.PROFILE, MemoryType.POSSIBLE_ACTIONS);
 		this.rememberFundamentalActions();
-		this.culture = CulturalContext.of(owner.getWorld(), cultures);
+
+	}
+
+	public Mind initCultures(Culture... culs) {
+
+		this.culture = CulturalContext.of(owner.getWorld(), culs);
 		if (culture.isUniversal())
 			culture = culture.add(owner.getWorld().getCulture(Culture.ROOT));
+		return this;
+	}
+
+	public Mind initEmotions(Collection<? extends ILevel> possibleLevels, Collection<EmotionType> possibleEmotions) {
+		this.emotions = new EmotionManager(this, possibleLevels, possibleEmotions);
+		return this;
+	}
+
+	public Mind initSenses(Sense... senses) {
+		this.senses = new SensorSystem(this, senses);
+		return this;
 	}
 
 	public Mind initNeeds(Need... needs) {
@@ -66,6 +91,15 @@ public class Mind {
 
 	public Memory getMemory() {
 		return memory;
+
+	}
+
+	public SensorSystem getSenses() {
+		return senses;
+	}
+
+	public EmotionManager getEmotions() {
+		return emotions;
 	}
 
 	public void observe() {

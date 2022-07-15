@@ -8,7 +8,6 @@ import sociology.Profile;
 public class Socioprops {
 
 	public static final Socioprop<Integer> FOOD_NOURISHMENT = p("nourishment", int.class, 0);
-	public static final Socioprop<Integer> DRINK_QUENCHING = p("quenching", int.class, 0);
 	public static final Socioprop<Integer> DANGER_LEVEL = p("danger_level", int.class, 0);
 	public static final Socioprop<Integer> SHELTER_LEVEL = p("shelter_level", int.class, 0);
 	public static final Socioprop<Profile> ACTOR_HELD = p("held", Profile.class, (Profile) null)

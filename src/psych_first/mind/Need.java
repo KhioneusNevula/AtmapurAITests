@@ -5,23 +5,19 @@ import java.util.function.Predicate;
 
 import abilities.types.SystemType;
 import culture.CulturalContext;
-import culture.Culture;
 import psych_first.action.goal.Goal.Priority;
 import psych_first.actionstates.checks.ICheckable;
 import sim.ICanHaveMind;
-import sim.IHasCulture;
-import sim.World;
 import sociology.Profile;
 
-public enum Need implements ICheckable<Integer>, IHasCulture {
-	SATIATION("satiation", Culture.ORGANIC, Priority.NECESSITY, (m) -> m.getOwner().hasSystem(SystemType.HUNGER),
+public enum Need implements ICheckable<Integer> {
+	SATIATION("satiation", Priority.NECESSITY, (m) -> m.getOwner().hasSystem(SystemType.HUNGER),
 			(m) -> (int) m.getOwner().getSystem(SystemType.HUNGER).getHunger());
 
 	private String name;
 	private Function<Mind, Integer> getNeed;
 	private Predicate<Mind> hasNeed;
 	private Priority priority;
-	private String culture;
 
 	/**
 	 * function returns null if actor is invalid ; getNeed gets the official value
@@ -35,21 +31,11 @@ public enum Need implements ICheckable<Integer>, IHasCulture {
 	 * @param name
 	 * @param getNeed
 	 */
-	private Need(String name, String culture, Priority priority, Predicate<Mind> hasNeed,
-			Function<Mind, Integer> getNeed) {
+	private Need(String name, Priority priority, Predicate<Mind> hasNeed, Function<Mind, Integer> getNeed) {
 		this.name = name;
 		this.getNeed = getNeed;
 		this.hasNeed = hasNeed;
 		this.priority = priority;
-		this.culture = culture;
-	}
-
-	public String getCultureString() {
-		return culture;
-	}
-
-	public Culture getCulture(World world) {
-		return world.getCulture(culture);
 	}
 
 	public Priority getPriority() {
@@ -72,11 +58,7 @@ public enum Need implements ICheckable<Integer>, IHasCulture {
 
 	@Override
 	public Integer getValue(Profile p, CulturalContext ctxt) {
-		if (!ctxt.isUniversal()) {
-			if (!this.getCulture(ctxt.getWorld()).isSuperiorToAny(ctxt)) {
-				return null;
-			}
-		}
+
 		return p.getOwner() instanceof ICanHaveMind ? (((ICanHaveMind) p.getOwner()).hasMind()
 				? ((ICanHaveMind) p.getOwner()).getMind().getNeeds().getNeed(this)
 				: null) : null;
@@ -84,11 +66,7 @@ public enum Need implements ICheckable<Integer>, IHasCulture {
 
 	@Override
 	public boolean hasValue(Profile p, CulturalContext ctxt) {
-		if (!ctxt.isUniversal()) {
-			if (!this.getCulture(ctxt.getWorld()).isSuperiorToAny(ctxt)) {
-				return false;
-			}
-		}
+
 		return p.getOwner() instanceof ICanHaveMind ? (((ICanHaveMind) p.getOwner()).hasMind()
 				? ((ICanHaveMind) p.getOwner()).getMind().getNeeds().hasNeed(this)
 				: false) : false;

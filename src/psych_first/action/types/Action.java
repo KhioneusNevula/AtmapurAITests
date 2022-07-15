@@ -135,7 +135,7 @@ public abstract class Action implements IPurposeElement {
 	}
 
 	protected boolean isPlaceholderResolved(IProfileDependentCheck c, Goal g) {
-		return this.isPlaceholderResolved(c.getProfilePlaceholder().getType(), g);
+		return this.isPlaceholderResolved(c.getProfilePlaceholder().getProfileType(), g);
 	}
 
 	protected boolean isPlaceholderResolved(ProfileType type, Goal g) {
