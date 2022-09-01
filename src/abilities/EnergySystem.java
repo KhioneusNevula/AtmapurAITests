@@ -1,11 +1,10 @@
 package abilities;
 
-import abilities.types.SystemType;
 import energy.EnergyStorage;
 import energy.IEnergyStorage;
 import energy.IEnergyUnit;
 
-public class EnergySystem extends EntitySystem implements IEnergyStorage {
+public class EnergySystem extends ESystem implements IEnergyStorage {
 
 	private EnergyStorage storage;
 
@@ -36,8 +35,8 @@ public class EnergySystem extends EntitySystem implements IEnergyStorage {
 	}
 
 	@Override
-	public double getMaxEnergy() {
-		return storage.getMaxEnergy();
+	public double getMaxCapacity() {
+		return storage.getMaxCapacity();
 	}
 
 	@Override

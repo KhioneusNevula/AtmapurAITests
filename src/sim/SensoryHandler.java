@@ -1,14 +1,14 @@
 package sim;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import psych_first.perception.senses.SensorSystem;
-import psych_first.perception.senses.SensoryOutput;
-
+/**
+ * TODO complete sensory handler
+ * 
+ * @author borah
+ *
+ */
 public class SensoryHandler {
 
-	private Set<SensorSystem> sensors = new HashSet<>();
+	// private Set<SensorSystem> sensors = new HashSet<>();
 	private World world;
 
 	public SensoryHandler(World world) {
@@ -17,21 +17,6 @@ public class SensoryHandler {
 
 	public World getWorld() {
 		return world;
-	}
-
-	public void register(SensorSystem sen) {
-		this.sensors.add(sen);
-	}
-
-	public void deregister(SensorSystem sen) {
-		this.sensors.remove(sen);
-	}
-
-	public void postSensory(SensoryOutput sen) {
-		for (SensorSystem s : sensors) {
-
-			s.process(sen);
-		}
 	}
 
 }

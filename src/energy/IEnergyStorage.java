@@ -2,9 +2,19 @@ package energy;
 
 public interface IEnergyStorage extends IEnergyHandler {
 
+	/**
+	 * current amount of energy
+	 * 
+	 * @return
+	 */
 	public double getEnergy();
 
-	public double getMaxEnergy();
+	/**
+	 * max amount of energy storable
+	 * 
+	 * @return
+	 */
+	public double getMaxCapacity();
 
 	/**
 	 * max amount of energy that can be directly supplied
@@ -26,7 +36,16 @@ public interface IEnergyStorage extends IEnergyHandler {
 	 * @return
 	 */
 	public default boolean isFull() {
-		return getEnergy() >= getMaxEnergy();
+		return getEnergy() >= getMaxCapacity();
+	}
+
+	/**
+	 * a double representing the decimal percentage of how much is stored
+	 * 
+	 * @return
+	 */
+	public default double getPercent() {
+		return this.getEnergy() / this.getMaxCapacity();
 	}
 
 	/**
@@ -44,7 +63,7 @@ public interface IEnergyStorage extends IEnergyHandler {
 	 * @return
 	 */
 	public default boolean isBottomless() {
-		return getMaxEnergy() == Double.POSITIVE_INFINITY;
+		return getMaxCapacity() == Double.POSITIVE_INFINITY;
 	}
 
 	/**
@@ -63,7 +82,7 @@ public interface IEnergyStorage extends IEnergyHandler {
 	 * @param amount
 	 * @return
 	 */
-	public default double addEnergy(double amount) {
+	public default double supplyEnergy(double amount) {
 		return this.supplyEnergy(amount, false);
 	}
 
@@ -99,10 +118,10 @@ public interface IEnergyStorage extends IEnergyHandler {
 		boolean flag = to.getEnergyUnits() != this.getEnergyUnits();
 		if (flag)
 			moving = Energy.convert(getEnergyUnits(), moving, to.getEnergyUnits());
-		double overflow = to.addEnergy(moving);
+		double overflow = to.supplyEnergy(moving);
 		if (flag)
 			overflow = Energy.convert(to.getEnergyUnits(), overflow, getEnergyUnits());
-		this.addEnergy(overflow);
+		this.supplyEnergy(overflow);
 	}
 
 	public default void drainEnergy(IEnergyStorage from, double maxDrain) {

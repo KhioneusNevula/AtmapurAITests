@@ -3,7 +3,7 @@ package energy;
 public class EnergyStorage implements IEnergyStorage {
 
 	private double energy;
-	private double maxEnergy;
+	private double maxCapacity;
 	private IEnergyUnit unit;
 	private double maxSupply;
 	private double maxDrain;
@@ -14,7 +14,7 @@ public class EnergyStorage implements IEnergyStorage {
 		this.maxSupply = maxSupply;
 		this.maxDrain = maxDrain;
 
-		this.maxEnergy = maxEnergy;
+		this.maxCapacity = maxEnergy;
 	}
 
 	public EnergyStorage(IEnergyUnit unit, double maxEnergy, double maxTransfer) {
@@ -44,13 +44,13 @@ public class EnergyStorage implements IEnergyStorage {
 	}
 
 	public void setMaxEnergy(double maxEnergy) {
-		this.maxEnergy = maxEnergy;
+		this.maxCapacity = maxEnergy;
 	}
 
 	public void changeUnits(IEnergyUnit unit) {
 		this.energy = this.unit.convertTo(unit, energy);
 		this.maxDrain = this.unit.convertTo(unit, maxDrain);
-		this.maxEnergy = this.unit.convertTo(unit, maxEnergy);
+		this.maxCapacity = this.unit.convertTo(unit, maxCapacity);
 		this.maxSupply = this.unit.convertTo(unit, maxSupply);
 		this.unit = unit;
 	}
@@ -66,13 +66,16 @@ public class EnergyStorage implements IEnergyStorage {
 		return energy;
 	}
 
+	/**
+	 * max storable energy
+	 */
 	@Override
-	public double getMaxEnergy() {
-		return maxEnergy;
+	public double getMaxCapacity() {
+		return maxCapacity;
 	}
 
 	public void setEnergy(double amount) {
-		this.energy = Math.max(0, Math.min(this.maxEnergy, amount));
+		this.energy = Math.max(0, Math.min(this.maxCapacity, amount));
 	}
 
 	@Override
@@ -80,9 +83,14 @@ public class EnergyStorage implements IEnergyStorage {
 		if (amount < 0) {
 			throw new IllegalArgumentException("Cannot add negative amount " + amount);
 		}
-		double space = Math.min(this.maxSupply, this.maxEnergy - this.energy);
-		double overflow = Math.max(0, amount - space);
+		double space = Math.min(this.maxSupply, this.maxCapacity - this.energy);
+
+		double overflow = 0;
+		if (!this.isBottomless()) {
+			overflow = Math.max(0, amount - space);
+		}
 		double add = amount - overflow;
+
 		if (!virtual) {
 			this.energy += add;
 		}

@@ -1,21 +1,67 @@
 package abilities.types;
 
+import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
+import abilities.ESystem;
 import abilities.EnergySystem;
-import abilities.EntitySystem;
 import abilities.ISystemHolder;
+import abilities.SystemType;
+import actor.Eatable;
 import energy.IEnergyUnit.EnergyUnit;
-import entity.Eatable;
+import psychology.perception.info.BruteTrait;
+import psychology.perception.info.KDataType;
 
 public class HungerSystem extends EnergySystem {
 
 	private double hungerChance;
 	private boolean canEat = true;
+	private boolean canNourish = true;
 
-	protected HungerSystem(ISystemHolder owner, Object... args) {
-		this(owner, (int) args[0], (double) args[1]);
+	public static enum HungerLevel {
+		FULL, WELL_FED, STABLE, HUNGRY, MALNOURISHED, STARVING;
 
 	}
 
+	public static final KDataType<HungerLevel> HUNGER_LEVEL_DATA_TYPE = KDataType.enumType(HungerLevel.class);
+
+	public static final BruteTrait<HungerLevel> HUNGER_TRAIT = new BruteTrait<>("hunger", HUNGER_LEVEL_DATA_TYPE);
+
+	@Override
+	public Map<BruteTrait<?>, Object> initTraits() {
+		return ImmutableMap.of(HUNGER_TRAIT, HungerLevel.FULL);
+	}
+
+	@Override
+	public <T> T updateTrait(BruteTrait<T> trait, Object oldval) {
+		if (trait == HUNGER_TRAIT) {
+			double frac = getPercent();
+			if (isEmpty()) {
+				return (T) HungerLevel.STARVING;
+			} else if (frac <= 0.25) {
+				return (T) HungerLevel.MALNOURISHED;
+			} else if (frac < 0.5) {
+				return (T) HungerLevel.HUNGRY;
+			} else if (frac <= 0.75) {
+				return (T) HungerLevel.STABLE;
+			} else if (this.isFull() || frac > 0.95) {
+				return (T) HungerLevel.FULL;
+			} else {
+				return (T) HungerLevel.WELL_FED;
+			}
+		}
+
+		return super.updateTrait(trait, oldval);
+	}
+
+	/**
+	 * chance out of 20
+	 * 
+	 * @param owner
+	 * @param max
+	 * @param chance
+	 */
 	public HungerSystem(ISystemHolder owner, double max, double chance) {
 
 		super(SystemType.HUNGER, owner, EnergyUnit.LIFE, max, max);
@@ -23,17 +69,26 @@ public class HungerSystem extends EnergySystem {
 	}
 
 	@Override
-	public boolean isConstantUpdate() {
-		return true;
+	public boolean canUpdate() {
+		return canNourish;
 	}
 
 	/**
-	 * if this entity is capable of eating TODO make this more general
+	 * if this entity is capable of eating TODO make eating more general
 	 * 
 	 * @return
 	 */
 	public boolean canEat() {
 		return canEat;
+	}
+
+	/**
+	 * if this entity can supply its life system with energy
+	 * 
+	 * @return
+	 */
+	public boolean canNourish() {
+		return canNourish;
 	}
 
 	public void disableEating() {
@@ -45,17 +100,20 @@ public class HungerSystem extends EnergySystem {
 		this.canEat = true;
 	}
 
-	@Override
-	public void update(long ticks) {
+	public void disableNourishing() {
+		this.canNourish = false;
+	}
 
+	public void enableNourishing() {
+		this.canNourish = true;
 	}
 
 	@Override
-	protected void update(SystemType<?> type, EntitySystem other) {
+	protected void update(SystemType<?> type, ESystem other) {
 
 		if (other instanceof LifeSystem life) {
-			if (canEat && hungerChance >= (getOwner().rand().nextDouble() * 20)) {
-				this.supplyEnergy(life, 1);
+			if (canNourish) {
+				this.supplyEnergy(life, life.getPowerUse() * hungerChance / 20.0 + 1);
 			}
 
 		}
@@ -80,10 +138,10 @@ public class HungerSystem extends EnergySystem {
 		}
 		if (edible.getNourishment() <= 0)
 			return 0;
-		if (this.getMaxEnergy() - (this.getEnergy() + edible.getNourishment()) < 0) {
+		if (this.getMaxCapacity() - (this.getEnergy() + edible.getNourishment()) < 0) {
 			return -1;
 		}
-		this.addEnergy(edible.getNourishment());
+		this.supplyEnergy(edible.getNourishment());
 		edible.getEaten(this.getOwner());
 		return 1;
 	}

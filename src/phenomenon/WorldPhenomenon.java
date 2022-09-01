@@ -1,30 +1,32 @@
 package phenomenon;
 
-import sim.IHasProfile;
-import sim.World;
-import sociology.Profile;
+import sim.Location;
+import sim.interfaces.IPhysicalExistence;
 
 /**
- * TODO someday do this
+ * TODO someday do worldphenomenon
  * 
  * @author borah
  *
  */
-public abstract class WorldPhenomenon implements IHasProfile {
+public abstract class WorldPhenomenon extends Phenomenon implements IPhysicalExistence {
 
-	public WorldPhenomenon() {
-		// TODO world phenomenon constructor stub
+	private int x;
+	private int y;
+	private Location location;
+
+	@Override
+	public int getX() {
+		return x;
 	}
 
 	@Override
-	public Profile getProfile() {
-		// TODO world phenomenon stub
-		return null;
+	public int getY() {
+		return y;
 	}
 
-	public World getWorld() {
-		// TODO Auto-generated method stub
-		return null;
+	@Override
+	public Location getLocation() {
+		return location;
 	}
-
 }

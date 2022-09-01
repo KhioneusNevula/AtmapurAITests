@@ -1,0 +1,14 @@
+The memory of an entity (or the corpus of knowledge in a culture) works as follows.
+> Memes are pieces of information that can be passed around. Memes are usually associated with an InfoUnit, but do not need to be. 
+>> For example, a Meme may be an association between an InfoUnit describing someone as having fangs and the opinion that they are dangerous. 
+Memory is split into these categories:
+> Meme memory is memory that associates memes with infounits, so that ideas can be linked to those infounits. Meme memory also includes the association between specific *profiles* and memes. 
+>> Memes generate a thought with a specific inclination in the mind of an individual when they observe something about a certain profile or the world in general. 
+>>> They also can generate inclinations when a specific thing is, itself, thought about.
+>>> This allows for, for example, reacting to danger with a behavior appropriate to it (i.e. seeking water when on fire). 
+>>> They also allow for recognizing things as other things, i.e. labeling a fire as *being* a danger. Labeling first occurs in the mind, and then is spread to other individuals through speech until it becomes embedded in local culture.
+>>> They can form opinions, as in the case with cultural beliefs, i.e. it can trigger a behavioral pattern of submission toward a figure recognized as being of high status
+> Procedure memory is memory associating specific ideas with procedures that achieve them, i.e. recipes or rituals.
+>> This can include for example, if a person wants food they may think of the procedure to make food and carry it out
+>> This can also include ideas such as rituals, i.e. if a person dies they can think of the procedure to properly give due to the dead
+> Skill memory is just to store numeric skill values such as skill with different procedures

@@ -2,9 +2,7 @@ package abilities;
 
 import java.util.function.Function;
 
-import abilities.types.SystemType;
-
-public class NumericSystem<T extends Number> extends EntitySystem {
+public class NumericSystem<T extends Number> extends ESystem {
 
 	protected T value;
 	private T maxValue;
@@ -55,6 +53,14 @@ public class NumericSystem<T extends Number> extends EntitySystem {
 
 	public T getMinValue() {
 		return minValue;
+	}
+
+	public boolean isMinimum() {
+		return this.value.doubleValue() <= this.minValue.doubleValue();
+	}
+
+	public boolean isMaxed() {
+		return this.value.doubleValue() >= this.maxValue.doubleValue();
 	}
 
 	@Override
