@@ -1,6 +1,6 @@
 package sim.interfaces;
 
-import main.WorldGraphics;
+import sim.WorldGraphics;
 
 public interface IRenderable {
 

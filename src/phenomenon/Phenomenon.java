@@ -1,9 +1,9 @@
 package phenomenon;
 
+import java.util.UUID;
+
+import actor.IUniqueExistence;
 import sim.World;
-import sim.interfaces.IExistsInWorld;
-import sim.interfaces.IHasProfile;
-import sim.interfaces.ISensable;
 
 /**
  * TODO someday do phenomenon
@@ -11,12 +11,18 @@ import sim.interfaces.ISensable;
  * @author borah
  *
  */
-public abstract class Phenomenon implements IHasProfile, ISensable, IExistsInWorld {
+public abstract class Phenomenon implements IUniqueExistence {
 
 	private World world;
+	private UUID id = UUID.randomUUID();
 
 	@Override
 	public World getWorld() {
 		return world;
+	}
+
+	@Override
+	public UUID getUUID() {
+		return id;
 	}
 }

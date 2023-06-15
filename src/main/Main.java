@@ -2,6 +2,7 @@ package main;
 
 import processing.core.PApplet;
 import sim.World;
+import sim.WorldGraphics;
 
 public class Main {
 

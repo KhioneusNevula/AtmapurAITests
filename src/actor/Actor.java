@@ -1,39 +1,38 @@
 package actor;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import abilities.ESystem;
-import abilities.SystemType;
-import abilities.types.LifeSystem;
-import main.ImmutableCollection;
-import main.WorldGraphics;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
+import biology.systems.ESystem;
+import biology.systems.ISystemHolder;
+import biology.systems.SystemType;
+import biology.systems.types.LifeSystem;
+import mind.concepts.type.Property;
+import mind.memory.IKnowledgeBase;
+import mind.memory.IPropertyData;
 import processing.core.PApplet;
-import psychology.Soul;
-import psychology.perception.Profile;
-import psychology.perception.info.BruteTrait;
-import psychology.social.concepts.TypeClass;
 import sim.Location;
 import sim.World;
-import sim.interfaces.ICanHaveSoul;
+import sim.WorldGraphics;
+import sim.interfaces.ILocatable;
 import sim.interfaces.IPhysicalExistence;
 import sim.interfaces.IRenderable;
-import sim.interfaces.ISensable;
 
-public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensable, IRenderable {
+public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalExistence, ISystemHolder {
 
 	public static enum PossessState {
 		NONE, HOLD, WEAR
 	}
 
 	public final static int STEP = 5;
-	public final static int REACH = 50;
+	public final static int REACH = 15;
 
 	private Map<SystemType<?>, ESystem> systems = new TreeMap<>();
 
@@ -45,9 +44,9 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 
 	private Actor clothing;
 	private Actor held;
-	protected Profile profile;
 
 	protected Random rand = new Random();
+	private boolean removed;
 
 	/**
 	 * Probably gonna become unnecessary
@@ -62,84 +61,24 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 	private Location location;
 
 	private UUID uuid = UUID.randomUUID();
-	private int maxSouls = 7;
 
-	private Soul soul;
-	private TypeClass<? extends Actor> type;
-	private Set<Soul> souls = new HashSet<>(0);
-	private ImmutableCollection<Soul> soulsImmutable = new ImmutableCollection<>(souls);
-	private Map<BruteTrait<?>, Object> traits = new HashMap<>(0);
-	private Map<BruteTrait<?>, ESystem> updaters = new HashMap<>(0);
+	private Table<IKnowledgeBase, Property, IPropertyData> socialProperties;
 
-	public Actor(World world, TypeClass<? extends Actor> type, String name, int startX, int startY, int radius) {
+	public Actor(World world, String name, int startX, int startY, int radius) {
 		this.world = world;
 		this.name = name;
 		this.radius = radius;
 		this.x = startX;
 		this.y = startY;
-		this.type = type;
-		location = new Location(this, world);
-		this.profile = new Profile(this);
-	}
-
-	@Override
-	public Profile getProfile() {
-		return profile;
-	}
-
-	@Override
-	public TypeClass<?> getTypeClass() {
-		return type;
+		location = new Location(this);
 	}
 
 	protected void addSystems(ESystem... sys) {
 		for (ESystem s : sys) {
 			this.systems.put(s.getType(), s);
-			Map<BruteTrait<?>, Object> o = s.initTraits();
-			for (Map.Entry<BruteTrait<?>, Object> bt : o.entrySet()) {
-				this.traits.put(bt.getKey(), bt.getValue());
-				this.updaters.put(bt.getKey(), s);
-			}
 
 		}
 
-	}
-
-	/**
-	 * creates a natural soul for this actor
-	 */
-	protected void createNaturalSoul() {
-		this.soul = new Soul(this);
-		this.souls.add(soul);
-	}
-
-	/**
-	 * if the soul is not contained in here, then throw exception
-	 * 
-	 * @param to
-	 */
-	public void switchSoulControl(Soul to) {
-		if (!souls.contains(to))
-			throw new IllegalArgumentException(this + " " + to);
-		this.soul = to;
-	}
-
-	/**
-	 * removes the soul that is currently controlling
-	 */
-	public Soul removeSoul() {
-		Soul s = this.soul;
-		this.souls.remove(this.soul);
-		this.soul = null;
-		return s;
-	}
-
-	public void removeSoul(Soul toR) {
-		if (!souls.contains(toR))
-			throw new IllegalArgumentException(this + " " + toR);
-		this.souls.remove(toR);
-		if (this.soul != null && this.soul.equals(toR))
-			this.soul = null;
 	}
 
 	@Override
@@ -147,28 +86,15 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 		return true;
 	}
 
-	@Override
 	public Collection<ESystem> getSystems() {
 		return systems.values();
 	}
 
-	@Override
 	public boolean hasSystem(String name) {
 		for (SystemType<?> t : this.systems.keySet())
 			if (t.getId().equals(name))
 				return true;
 		return false;
-	}
-
-	public <T> T getTrait(BruteTrait<T> trait, boolean update) {
-		if (update && this.updaters.containsKey(trait)) {
-			this.traits.put(trait, this.updaters.get(trait).updateTrait(trait, traits.get(trait)));
-		}
-		return (T) this.traits.get(trait);
-	}
-
-	public boolean hasTrait(BruteTrait<?> trait) {
-		return this.traits.containsKey(trait);
 	}
 
 	public Actor setOptionalColor(int optionalColor) {
@@ -178,6 +104,11 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 
 	public int getOptionalColor() {
 		return optionalColor;
+	}
+
+	@Override
+	public UUID getUUID() {
+		return this.uuid;
 	}
 
 	public String getName() {
@@ -196,7 +127,8 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 	}
 
 	public void senseTick() {
-		// TODO sensetick
+		// TODO sensetick may be useless with systemholder
+
 	}
 
 	public void thinkTick() {
@@ -208,14 +140,13 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 	}
 
 	public void tick() {
+		if (clothing != null && clothing.isRemoved())
+			clothing = null;
+		if (held != null && held.isRemoved())
+			held = null;
 		for (ESystem sys : this.getSystems()) {
 			if (sys.canUpdate()) {
 				sys._update(world.getTicks());
-				for (BruteTrait<?> bt : this.updaters.keySet()) {
-					if (updaters.get(bt) == sys) {
-						sys.updateTrait(bt, this.traits.get(bt));
-					}
-				}
 			}
 		}
 	}
@@ -282,6 +213,8 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 	}
 
 	public void possess(Actor other, PossessState state) {
+		if (other.isRemoved())
+			throw new IllegalArgumentException("dead " + other);
 		if (state == PossessState.HOLD) {
 			this.held = other;
 		} else {
@@ -291,12 +224,25 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 		other.possessState = state;
 	}
 
+	/**
+	 * return actors possessed by this one TODO make a better possession system
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public Collection<Actor> getPossessed() {
+
+		return clothing != null && held != null ? Set.of(this.clothing, this.held)
+				: (clothing == null && held != null ? Set.of(held)
+						: (held == null && clothing != null ? Set.of(clothing) : Set.of()));
+	}
+
 	public void wear(Actor other) {
 		possess(other, PossessState.WEAR);
 	}
 
 	public boolean pickUp(Actor other) {
-		if (this.distance(other) < REACH) {
+		if (this.distance(other) <= REACH) {
 			possess(other, PossessState.HOLD);
 			return true;
 		}
@@ -315,8 +261,8 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 		this.held.possessState = PossessState.HOLD;
 	}
 
-	public boolean reachable(Actor other) {
-		return this.at(other);
+	public boolean reachable(ILocatable other) {
+		return this.distance(other) <= this.REACH;
 	}
 
 	public boolean held(Actor other) {
@@ -385,29 +331,28 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 
 	public Location getLocation() {
 		if (this.location.getX() != this.x || this.location.getY() != this.y) {
-			this.location = new Location(this, world);
+			this.location = new Location(this);
 		}
 		return location;
 	}
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + ":\"" + name + "\":" + this.uuid + ":{"
-				+ /** TODO print actor profile */
-				"}:[x=" + x + ",y=" + y + ",r=" + radius + "]";
+		return this.getClass().getSimpleName() + ":\"" + name + "\":(" + x + "," + y + ")";
 	}
 
-	@Override
 	public Random rand() {
 		return rand;
 	}
 
-	@Override
+	public boolean hasSystem(SystemType<?> system) {
+		return this.systems.containsKey(system);
+	}
+
 	public <T extends ESystem> T getSystem(SystemType<T> system) {
 		return (T) this.systems.get(system);
 	}
 
-	@Override
 	public Collection<SystemType<?>> getSystemTokens() {
 		return this.systems.keySet();
 	}
@@ -415,10 +360,6 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 	@Override
 	public int hashCode() {
 		return uuid.hashCode();
-	}
-
-	public UUID getUuid() {
-		return uuid;
 	}
 
 	public void setUuid(UUID uuid) {
@@ -430,43 +371,45 @@ public abstract class Actor implements ICanHaveSoul, IPhysicalExistence, ISensab
 		return obj instanceof Actor a && a.uuid.equals(this.uuid);
 	}
 
-	/**
-	 * 
-	 * @param soul
-	 * @return
-	 */
-	public boolean addSoul(Soul soul) {
-		if (this.souls.size() < this.maxSouls) {
-			this.souls.add(soul);
-			soul.setOwner(this);
-			return true;
-		}
-		return false;
+	@Override
+	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
+		if (this.socialProperties == null)
+			return null;
+		return socialProperties.get(culture, property);
 	}
 
 	@Override
-	public Collection<Soul> getContainedSouls() {
-		return this.soulsImmutable;
+	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
+		(socialProperties == null ? socialProperties = HashBasedTable.create() : socialProperties).put(culture,
+				property, data);
 	}
 
-	@Override
-	public int getMaxSouls() {
-		return this.maxSouls;
+	public Map<IKnowledgeBase, Map<Property, IPropertyData>> getSocialProperties() {
+		return socialProperties == null ? Map.of() : socialProperties.rowMap();
 	}
 
-	@Override
-	public Soul getNaturalSoul() {
-
-		for (Soul s : this.souls) {
-			if (s.getNaturalOwnerID().equals(this.uuid))
-				return s;
-		}
-		return null;
+	public boolean isMultipart() {
+		return this instanceof MultipartActor;
 	}
 
-	@Override
-	public Soul getSoul() {
-		return soul;
+	public boolean isLiving() {
+		return this instanceof LivingActor;
+	}
+
+	public MultipartActor getAsMultipart() {
+		return (MultipartActor) this;
+	}
+
+	public LivingActor getAsLiving() {
+		return (LivingActor) this;
+	}
+
+	public boolean isRemoved() {
+		return removed;
+	}
+
+	public void remove() {
+		this.removed = true;
 	}
 
 }

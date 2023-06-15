@@ -1,9 +1,8 @@
 package sim.interfaces;
 
 import sim.Location;
-import sim.World;
 
-public interface ILocatable extends IExistsInWorld {
+public interface ILocatable {
 	public int getX();
 
 	public int getY();
@@ -35,7 +34,5 @@ public interface ILocatable extends IExistsInWorld {
 	public default boolean adjacentTo(ILocatable other) {
 		return adjacentTo(other.getX(), other.getY());
 	}
-
-	public World getWorld();
 
 }

@@ -6,7 +6,7 @@ package sim.interfaces;
  * @author borah
  *
  */
-public interface IPhysicalExistence extends ILocatable {
+public interface IPhysicalExistence extends ILocatable, IExistsInWorld {
 
 	public void setX(int x);
 
