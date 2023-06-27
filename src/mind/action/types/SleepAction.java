@@ -1,11 +1,13 @@
-package mind.action;
+package mind.action.types;
 
 import java.util.Collection;
 import java.util.Set;
 
+import mind.ICanAct;
 import mind.IMind;
+import mind.action.ActionType;
+import mind.action.IAction;
 import mind.goals.ITaskGoal;
-import mind.memory.IHasKnowledge;
 
 public class SleepAction implements IAction {
 
@@ -16,17 +18,17 @@ public class SleepAction implements IAction {
 	}
 
 	@Override
-	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
+	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
 		return true;
 	}
 
 	@Override
-	public void beginExecutingIndividual(IHasKnowledge forUser) {
+	public void beginExecutingIndividual(ICanAct forUser) {
 		((IMind) forUser).sleep(forUser.worldTicks());
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(IHasKnowledge user) {
+	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
 		return Set.of(); // TODO some go to bed type thing idk?
 	}
 
@@ -37,7 +39,7 @@ public class SleepAction implements IAction {
 
 	@Override
 	public String toString() {
-		return "SleepAction";
+		return "SleepA";
 	}
 
 	@Override

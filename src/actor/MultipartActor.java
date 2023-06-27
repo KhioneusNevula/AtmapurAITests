@@ -6,15 +6,12 @@ public abstract class MultipartActor extends Actor {
 
 	protected IMultipart body;
 
-	protected IBlueprintTemplate species;
-
 	public MultipartActor(World world, String name, IBlueprintTemplate template, int startX, int startY, int radius) {
-		super(world, name, startX, startY, radius);
-		this.species = template;
+		super(world, name, template, startX, startY, radius);
 	}
 
 	public IBlueprintTemplate getSpecies() {
-		return species;
+		return (IBlueprintTemplate) super.getSpecies();
 	}
 
 	protected abstract void initBody();

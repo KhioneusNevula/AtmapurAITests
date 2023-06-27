@@ -11,6 +11,7 @@ public class RoleGoal implements IRoleGoal {
 	private Set<ITaskGoal> tasks;
 	private String name;
 	private boolean complete;
+	private Priority priority = Priority.NORMAL;
 
 	public RoleGoal(ITaskGoal... tasks) {
 		this.tasks = ImmutableSet.copyOf(tasks);
@@ -18,6 +19,16 @@ public class RoleGoal implements IRoleGoal {
 
 	public RoleGoal(Iterable<? extends ITaskGoal> tasks) {
 		this.tasks = ImmutableSet.copyOf(tasks);
+	}
+
+	@Override
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public RoleGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
 	}
 
 	private void generateName() {

@@ -7,11 +7,12 @@ import com.google.common.collect.Multimap;
 
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
+import mind.linguistics.Language;
 import mind.need.INeed;
 import mind.need.INeed.INeedType;
 import sim.Location;
@@ -54,6 +55,15 @@ public interface IKnowledgeBase {
 	public boolean hasProperty(Profile prof, Property cat);
 
 	/**
+	 * Whether it is known if the given profile has the given property
+	 * 
+	 * @param prof
+	 * @param cat
+	 * @return
+	 */
+	public boolean isPropertyKnown(Profile prof, Property cat);
+
+	/**
 	 * Gets the property data of a given property of a profile; note that for
 	 * individuals this returns LOCAL, not CULTURAL info
 	 * 
@@ -71,7 +81,7 @@ public interface IKnowledgeBase {
 	 * @param concept
 	 * @return
 	 */
-	public boolean isKnown(IConcept concept);
+	public boolean isKnown(IMeme concept);
 
 	/**
 	 * Whether this unique entity is recognized in this memory with a profile
@@ -96,6 +106,11 @@ public interface IKnowledgeBase {
 	 * that for individuals this returns LOCAL not CULTURAL info
 	 */
 	public Location getLocation(Profile prof);
+
+	/**
+	 * Whether the location of this profile is known
+	 */
+	public boolean knowsLocation(Profile prof);
 
 	/**
 	 * Returns the set of profiles that are known to this memory, EXCLUDING the
@@ -158,7 +173,7 @@ public interface IKnowledgeBase {
 	 * @param concept
 	 * @return
 	 */
-	public boolean isSignificant(IConcept concept);
+	public boolean isSignificant(IMeme concept);
 
 	/**
 	 * Whether the given concept is significant enough to stay remembered over time
@@ -166,8 +181,17 @@ public interface IKnowledgeBase {
 	 * @param concept
 	 * @return
 	 */
-	public boolean isLongTerm(IConcept concept);
+	public boolean isLongTerm(IMeme concept);
 
 	void addNeed(INeed goal);
+
+	public Collection<Language> getLanguages();
+
+	/**
+	 * The language this uses typically
+	 * 
+	 * @return
+	 */
+	public Language getMajorLanguage();
 
 }

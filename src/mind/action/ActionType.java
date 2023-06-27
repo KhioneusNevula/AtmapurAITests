@@ -8,16 +8,26 @@ import java.util.function.Function;
 import actor.IMultipart;
 import actor.IPartAbility;
 import biology.anatomy.IBodyPartType.Abilities;
+import mind.action.types.EatFoodAction;
+import mind.action.types.PickUpAction;
+import mind.action.types.SearchAction;
+import mind.action.types.SleepAction;
+import mind.action.types.TalkAction;
+import mind.action.types.WalkAction;
+import mind.action.types.WanderAction;
+import mind.concepts.type.IMeme;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.goals.question.Question.QuestionType;
 import mind.memory.IHasKnowledge;
 
 public class ActionType<T extends IAction> implements IActionType<T> {
 
 	/** eating an item */
 	public static final ActionType<EatFoodAction> EAT = new ActionType<EatFoodAction>("eat", TaskHint.CONSUME)
-			.setGenerator(EatFoodAction::genAction).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP);
+			.setGenerator(EatFoodAction::genAction).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
+			.setRequiredConcepts((a) -> a.usedItem());
 	/** walking or running somewhere */
 	public static final ActionType<WalkAction> WALK = new ActionType<WalkAction>("walk", TaskHint.TRAVEL).requireBody()
 			.setGenerator(WalkAction::new).setUsedAbilities(Abilities.WALK);
@@ -30,8 +40,15 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory()).setUsedAbilities(Abilities.GRASP)
 			.setGenerator(PickUpAction::new);
 	public static final ActionType<WanderAction> WANDER = new ActionType<WanderAction>("wander", TaskHint.LEARN)
-			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory() && b.getLearnTarget() == null)
+			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory() && b.learnTarget() == null)
 			.setUsedAbilities(Abilities.WALK).setGenerator(WanderAction::new);
+
+	public static final ActionType<SearchAction> SEARCH = new ActionType<SearchAction>("search", TaskHint.LEARN)
+			.requireBody().setUsedAbilities(Abilities.WALK).setGenerator(SearchAction::new).setViabilityCondition(
+					(ihk, tg) -> tg.learnTarget() != null && tg.learnTarget().getType() == QuestionType.LOCATION);
+
+	public static final ActionType<TalkAction> TALK = new ActionType<TalkAction>("talk", TaskHint.COMMUNICATE)
+			.requireBody().setUsedAbilities(Abilities.SPEAK).setGenerator(TalkAction::new);
 	/** drinking an item */
 	public static final ActionType DRINK = new ActionType("drink", TaskHint.CONSUME).requireBody()
 			.setUsedAbilities(Abilities.EAT, Abilities.GRASP);
@@ -136,6 +153,7 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 	 * TaskHint.LEARN) .setFacilities(Facility.MANIPULATE, Facility.MIND,
 	 * Facility.MOTION);
 	 */
+
 	/** make children ig */
 	public static final ActionType PROCREATE = new ActionType("procreate", TaskHint.PROCREATE).requireBody()
 			.setUsedAbilities(Abilities.WALK, Abilities.GRASP, Abilities.FERTILIZE, Abilities.STORE_SEED,
@@ -171,10 +189,16 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 	private boolean requiresBody;
 	private BiPredicate<IHasKnowledge, ITaskGoal> viabilityCondition = (a, b) -> true;
 	private Set<? extends IPartAbility> facilities = Set.of();
+	private Function<ITaskGoal, Collection<IMeme>> requiredKnown = (a) -> Set.of();
 
 	private ActionType(String name, ITaskHint... usage) {
 		this.name = name;
 		this.usage = Set.of(usage);
+	}
+
+	private ActionType<T> setRequiredConcepts(Function<ITaskGoal, Collection<IMeme>> requiredKnown) {
+		this.requiredKnown = requiredKnown;
+		return this;
 	}
 
 	private ActionType<T> setGenerator(Function<ITaskGoal, T> gen) {
@@ -202,7 +226,7 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 	}
 
 	public boolean isGenerated() {
-		return actionGen != null;
+		return false;
 	}
 
 	private boolean requireBodyCondition(IHasKnowledge user) {
@@ -246,6 +270,14 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 
 	public Set<ITaskHint> getUsage() {
 		return usage;
+	}
+
+	@Override
+	public Collection<IMeme> requiredConcepts(ITaskGoal forGoal) {
+		Collection<IMeme> conc = this.requiredKnown.apply(forGoal);
+		if (conc == null)
+			return Set.of();
+		return Set.copyOf(conc);
 	}
 
 	@Override

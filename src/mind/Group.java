@@ -23,7 +23,7 @@ import sim.World;
  * @author borah
  *
  */
-public class Group implements IGroup, IHasKnowledge {
+public class Group implements IGroup, IEntity {
 
 	private String identifier;
 	private UUID id;
@@ -215,7 +215,7 @@ public class Group implements IGroup, IHasKnowledge {
 
 	@Override
 	public String toString() {
-		return "Group(" + this.identifier + "," + this.id + ")";
+		return "Group(" + this.identifier + ",\"" + this.culture.getNameWord().getDisplay() + "\")";
 	}
 
 	@Override
@@ -226,6 +226,12 @@ public class Group implements IGroup, IHasKnowledge {
 	@Override
 	public long worldTicks() {
 		return world.getTicks();
+	}
+
+	@Override
+	public IWill getWill() {
+		// TODO create a Will for groups
+		return null;
 	}
 
 }

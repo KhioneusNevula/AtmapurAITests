@@ -7,20 +7,17 @@ import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
 
-import humans.Food;
 import mind.concepts.PropertyController;
 import mind.concepts.identifiers.PossessionIdentifier;
-import mind.concepts.identifiers.PresencePredicateIdentifier;
-import mind.goals.TaskHint;
 
 public class BasicProperties {
 	private static Map<Property, Supplier<PropertyController>> gens = Map.of();
 
 	// TODO make food more dynamic; for now the identifier is just, the food entity
-	public static final Property FOOD = reg(Property.builder("b_food").addIntProp().build(), (con) -> con
-			.addPurpose(TaskHint.CONSUME).setIdentifier(new PresencePredicateIdentifier((a) -> a instanceof Food)));
+	public static final Property FOOD = reg(Property.create("b_food"), (con) -> {
+	});
 	public static final Property POSSESSIONS = reg(Property.builder("b_possessions").addProfileListProp().build(),
-			(con) -> con.setIdentifier(PossessionIdentifier.IDENTIFIER));
+			(con) -> con.editIdentifier(PossessionIdentifier.IDENTIFIER));
 	public static final Property DANGER = reg(Property.create("b_danger"), (con) -> {
 		/* TODO danger prop */});
 	public static final Property SHELTER = reg(Property.create("b_shelter"), (con) -> {
@@ -29,6 +26,9 @@ public class BasicProperties {
 		/* TODO awesome prop */});
 	public static final Property PROTECTION = reg(Property.create("b_protection"), (con) -> {
 		/* TODO protection prop */});
+	public static final Property SPEAKS_LANGUAGE = reg(
+			Property.builder("b_speaks_language").addConceptListProp().build(), (con) -> {
+			});
 	/**
 	 * The basic property for someone being part of the in-group
 	 */

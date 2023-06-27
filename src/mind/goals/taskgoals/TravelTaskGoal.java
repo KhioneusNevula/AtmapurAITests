@@ -17,6 +17,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	private Location location;
 
 	private boolean reachDistance;
+	private Priority priority = Priority.NORMAL;
 
 	/**
 	 * 
@@ -29,8 +30,17 @@ public class TravelTaskGoal implements ITaskGoal {
 		this.reachDistance = reachDistance;
 	}
 
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public TravelTaskGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
+	}
+
 	@Override
-	public Location getTargetLocation() {
+	public Location targetLocation() {
 		return location;
 	}
 
@@ -48,7 +58,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return target;
 	}
 
@@ -74,12 +84,12 @@ public class TravelTaskGoal implements ITaskGoal {
 	@Override
 	public boolean isComplete(IHasKnowledge entity) {
 		return entity.getAsHasActor().getActor()
-				.distance(location) <= (reachDistance ? (entity.getAsHasActor().getActor()).REACH : 0);
+				.distance(location) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
 	}
 
 	@Override
 	public String toString() {
-		return "TravelGoal{" + this.location + "}";
+		return "TravelTG{" + this.location + "}";
 	}
 
 	@Override

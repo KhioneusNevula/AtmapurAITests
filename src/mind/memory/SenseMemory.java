@@ -1,8 +1,10 @@
 package mind.memory;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -16,7 +18,7 @@ import com.google.common.collect.MultimapBuilder;
 import actor.Actor;
 import actor.IComponentPart;
 import actor.IComponentType;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.SenseProperty;
 import mind.concepts.type.SenseProperty.ActorReferentProperty;
@@ -39,7 +41,7 @@ import sim.Location;
 public class SenseMemory<T> {
 
 	private Map<UUID, Profile> sensedProfiles;
-	private Map<Profile, Actor> profilesToActors;
+	private Map<Profile, WeakReference<Actor>> profilesToActors;
 	private Map<Profile, Location> sensedLocations;
 	/**
 	 * Sensed traits for actors
@@ -100,8 +102,8 @@ public class SenseMemory<T> {
 	public Profile senseActor(Actor actor, boolean overrideMax) {
 		if (profilesToActors == null)
 			throw new UnsupportedOperationException();
-		Profile prof = this.addProfile(actor.getUUID(), "unit", overrideMax);
-		this.profilesToActors.put(prof, actor);
+		Profile prof = this.addProfile(actor.getUUID(), actor.getName().toLowerCase(), overrideMax);
+		this.profilesToActors.put(prof, new WeakReference<>(actor));
 		return prof;
 	}
 
@@ -134,7 +136,8 @@ public class SenseMemory<T> {
 	public Actor getActorFor(Profile prof) {
 		if (this.profilesToActors == null)
 			throw new UnsupportedOperationException();
-		return this.profilesToActors.get(prof);
+		WeakReference<Actor> ref = this.profilesToActors.get(prof);
+		return ref == null ? null : ref.get();
 	}
 
 	public Collection<Profile> getAllSensedProfiles() {
@@ -159,14 +162,18 @@ public class SenseMemory<T> {
 
 	/**
 	 * Call this frequently on sense memory to clean out actors that no longer exist
+	 * <br>
+	 * for now, just deletes them all
 	 */
 	public void cleanDeadActors() {
 		if (this.profilesToActors == null)
 			throw new UnsupportedOperationException();
-		Iterator<Actor> actors = this.profilesToActors.values().iterator();
+		Iterator<Entry<Profile, WeakReference<Actor>>> actors = Set.copyOf(this.profilesToActors.entrySet()).iterator();
 		while (actors.hasNext()) {
-			if (actors.next().isRemoved())
-				actors.remove();
+			Entry<Profile, WeakReference<Actor>> next = actors.next();
+			if (next.getValue().get() == null || next.getValue().get().isRemoved()) {
+				this.forget(next.getKey());
+			}
 		}
 	}
 
@@ -268,7 +275,7 @@ public class SenseMemory<T> {
 	 * @param <T>this is used to indicate the type of the "actor" properties --
 	 *                whether stored as profiles or as actors or whatever
 	 */
-	public static class TraitsMemory<AP> implements IConcept {
+	public static class TraitsMemory<AP> implements IMeme {
 
 		private String name;
 		private Profile profile;
@@ -493,9 +500,12 @@ public class SenseMemory<T> {
 					Stream<Map.Entry<ActorReferentProperty, T>> stream = actorRefSenseProperties.entrySet().stream();
 					if (!(stream.findAny().get().getValue() instanceof Actor))
 						throw new UnsupportedOperationException();
-					newTraits.actorRefSenseProperties.putAll(stream
-							.map((a) -> Map.entry(a.getKey(), new Profile(((Actor) a.getValue()).getUUID(), "unit")))
-							.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+					newTraits.actorRefSenseProperties
+							.putAll(stream
+									.map((a) -> Map.entry(a.getKey(),
+											new Profile(((Actor) a.getValue()).getUUID(),
+													((Actor) a).getName().toLowerCase())))
+									.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 					this.actorRefSenseProperties = null;
 				}
 				return newTraits;

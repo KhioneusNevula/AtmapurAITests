@@ -34,10 +34,7 @@ public class BodyPartType implements IBodyPartType, Cloneable {
 	public static final BodyPartType CHEST = part("chest", 0.2f).setParent(BODY).setFace(Face.FRONT)
 			.setTissueTags("muscle", "skin", "hair", "fat").setSensableProperties(
 					Map.of(SenseProperty.SHAPE, BasicShape.PILLOW, SenseProperty.TEXTURE, BasicTexture.FIRM));
-	public static final BodyPartType LEFT_BREAST = part("left_breast", 0.2f).setParent(CHEST).setFace(Face.FRONT)
-			.setCategory("breast").setTissueTags("muscle", "skin", "fat").setSensableProperties(
-					Map.of(SenseProperty.SHAPE, BasicShape.OVOID, SenseProperty.TEXTURE, BasicTexture.FIRM));
-	public static final BodyPartType RIGHT_BREAST = LEFT_BREAST.thatIsOnRight().setName("right_breast");
+
 	public static final BodyPartType COLLARBONE = part("collarbone", 0.09f).setParent(RIBCAGE).setSurrounding(BODY)
 			/* .setHasBlood(false) */.setTissueTags("bone").setSensableProperties(
 					Map.of(SenseProperty.SHAPE, BasicShape.PLANK, SenseProperty.TEXTURE, BasicTexture.HARD));
@@ -73,7 +70,7 @@ public class BodyPartType implements IBodyPartType, Cloneable {
 	public static final BodyPartType LEFT_OVARY = part("left_ovary", 0.02f).setParent(BODY).setSurrounding(BODY)
 			.setAbilities(Abilities.STORE_EGGS).setSide(Side.LEFT).setCategory("ovary").setTissueTags("muscle");
 	public static final BodyPartType RIGHT_OVARY = LEFT_OVARY.thatIsOnRight().setName("right_ovary");
-	public static final BodyPartType BIRTHING_CANAL = part("birthing_canal", 0.02f).setParent(BODY).setSurrounding(BODY)
+	public static final BodyPartType BIRTHING = part("birthing_canal", 0.02f).setParent(BODY).setSurrounding(BODY)
 			.setHeight(Height.BELOW).setHole(true).setAbilities(Abilities.GIVE_BIRTH).setTissueTags("muscle")
 			.setSensableProperties(Map.of(SenseProperty.SHAPE, BasicShape.ORIFICE));
 	public static final BodyPartType WOMB = part("womb", 0.2f).setParent(BODY).setSurrounding(BODY)

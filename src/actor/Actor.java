@@ -1,5 +1,6 @@
 package actor;
 
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Random;
@@ -13,6 +14,7 @@ import com.google.common.collect.Table;
 import biology.systems.ESystem;
 import biology.systems.ISystemHolder;
 import biology.systems.SystemType;
+import biology.systems.types.ISensor;
 import biology.systems.types.LifeSystem;
 import mind.concepts.type.Property;
 import mind.memory.IKnowledgeBase;
@@ -31,19 +33,19 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		NONE, HOLD, WEAR
 	}
 
-	public final static int STEP = 5;
-	public final static int REACH = 15;
+	private final static int STEP = 10;
+	private final static int REACH = 15;
 
 	private Map<SystemType<?>, ESystem> systems = new TreeMap<>();
 
 	private int x;
 	private int y;
 
-	private Actor possessor;
+	private WeakReference<Actor> possessor = new WeakReference<>(null);
 	private PossessState possessState = PossessState.NONE;
 
-	private Actor clothing;
-	private Actor held;
+	private WeakReference<Actor> clothing = new WeakReference<Actor>(null);
+	private WeakReference<Actor> held = new WeakReference<>(null);
 
 	protected Random rand = new Random();
 	private boolean removed;
@@ -64,13 +66,16 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 
 	private Table<IKnowledgeBase, Property, IPropertyData> socialProperties;
 
-	public Actor(World world, String name, int startX, int startY, int radius) {
+	protected ITemplate species;
+
+	public Actor(World world, String name, ITemplate species, int startX, int startY, int radius) {
 		this.world = world;
 		this.name = name;
 		this.radius = radius;
 		this.x = startX;
 		this.y = startY;
 		location = new Location(this);
+		this.species = species;
 	}
 
 	protected void addSystems(ESystem... sys) {
@@ -119,10 +124,20 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return world;
 	}
 
+	public ITemplate getSpecies() {
+		return species;
+	}
+
 	public void movementTick() {
-		if (this.possessor != null) {
-			this.setX(possessor.x);
-			this.setY(possessor.y);
+		if (this.possessor.get() != null && !this.possessor.get().isRemoved()) {
+			this.setX(possessor.get().x);
+			this.setY(possessor.get().y);
+		}
+		if (this.held.get() != null && this.held.get().isRemoved()) {
+			this.held = new WeakReference<>(null);
+		}
+		if (this.clothing.get() != null && this.clothing.get().isRemoved()) {
+			this.clothing = new WeakReference<>(null);
 		}
 	}
 
@@ -140,11 +155,11 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public void tick() {
-		if (clothing != null && clothing.isRemoved())
-			clothing = null;
-		if (held != null && held.isRemoved())
-			held = null;
+
 		for (ESystem sys : this.getSystems()) {
+			if (sys instanceof LifeSystem && ((LifeSystem) sys).isDead()) {
+				this.remove(); // TODO make some corpse feature idk idfk
+			}
 			if (sys.canUpdate()) {
 				sys._update(world.getTicks());
 			}
@@ -174,7 +189,7 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public void move(int xplus, int yplus) {
-		if (this.possessor != null) {
+		if (this.possessor.get() != null) {
 			return;
 		}
 		IPhysicalExistence.super.move(xplus, yplus);
@@ -201,26 +216,26 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public Actor getPossessor() {
-		return possessor;
+		return possessor.get();
 	}
 
 	public Actor getHeld() {
-		return held;
+		return held.get();
 	}
 
 	public Actor getClothing() {
-		return clothing;
+		return clothing.get();
 	}
 
 	public void possess(Actor other, PossessState state) {
-		if (other.isRemoved())
-			throw new IllegalArgumentException("dead " + other);
+		if (other.isRemoved() || other == this)
+			throw new IllegalArgumentException("dead or held " + other + " by " + this);
 		if (state == PossessState.HOLD) {
-			this.held = other;
+			this.held = new WeakReference<>(other);
 		} else {
-			this.clothing = other;
+			this.clothing = new WeakReference<>(other);
 		}
-		other.possessor = this;
+		other.possessor = new WeakReference<>(this);
 		other.possessState = state;
 	}
 
@@ -232,9 +247,9 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	 */
 	public Collection<Actor> getPossessed() {
 
-		return clothing != null && held != null ? Set.of(this.clothing, this.held)
-				: (clothing == null && held != null ? Set.of(held)
-						: (held == null && clothing != null ? Set.of(clothing) : Set.of()));
+		return clothing.get() != null && held.get() != null ? Set.of(this.clothing.get(), this.held.get())
+				: (clothing.get() == null && held.get() != null ? Set.of(held.get())
+						: (held.get() == null && clothing.get() != null ? Set.of(clothing.get()) : Set.of()));
 	}
 
 	public void wear(Actor other) {
@@ -250,27 +265,35 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public void drop() {
-		this.held = null;
-		held.possessor = null;
-		held.possessState = PossessState.NONE;
+		if (held.get() != null) {
+			held.get().possessor = new WeakReference<>(null);
+			held.get().possessState = PossessState.NONE;
+			this.held = new WeakReference<>(null);
+		}
 	}
 
 	public void strip() {
-		this.held = this.clothing;
-		this.clothing = null;
-		this.held.possessState = PossessState.HOLD;
+		if (this.clothing.get() != null) {
+			this.held = this.clothing;
+			this.clothing = null;
+			this.held.get().possessState = PossessState.HOLD;
+		}
 	}
 
 	public boolean reachable(ILocatable other) {
-		return this.distance(other) <= this.REACH;
+		return this.distance(other) <= REACH;
+	}
+
+	public int getReach() {
+		return REACH;
 	}
 
 	public boolean held(Actor other) {
-		return other == this.held;
+		return other == this.held.get();
 	}
 
 	public boolean worn(Actor other) {
-		return other == this.clothing;
+		return other == this.clothing.get();
 	}
 
 	public boolean at(Actor other) {
@@ -325,7 +348,9 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 			g.fill(0);
 
 		}
-		g.text(this.name, x, y);
+		g.text(this.isLiving() && this.getAsLiving().getMind().getNameWord() != null
+				? this.getAsLiving().getMind().getNameWord().getDisplay()
+				: this.name, x, y);
 
 	}
 
@@ -374,8 +399,9 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	@Override
 	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
 		if (this.socialProperties == null)
-			return null;
-		return socialProperties.get(culture, property);
+			return IPropertyData.UNKNOWN;
+		return socialProperties.contains(culture, property) ? socialProperties.get(culture, property)
+				: IPropertyData.UNKNOWN;
 	}
 
 	@Override
@@ -393,15 +419,15 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public boolean isLiving() {
-		return this instanceof LivingActor;
+		return this instanceof SentientActor;
 	}
 
 	public MultipartActor getAsMultipart() {
 		return (MultipartActor) this;
 	}
 
-	public LivingActor getAsLiving() {
-		return (LivingActor) this;
+	public SentientActor getAsLiving() {
+		return (SentientActor) this;
 	}
 
 	public boolean isRemoved() {
@@ -410,6 +436,20 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 
 	public void remove() {
 		this.removed = true;
+	}
+
+	public double getStep() {
+		return STEP;
+	}
+
+	@Override
+	public IPropertyData getPropertyHint(Property property) {
+		return this.species.getPropertyHint(property);
+	}
+
+	@Override
+	public Collection<ISensor> getPreferredSensesForHint(Property property) {
+		return this.species.getPreferredSensesForHint(property);
 	}
 
 }

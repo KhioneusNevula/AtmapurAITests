@@ -1,42 +1,48 @@
 package mind;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.WeakHashMap;
+import java.util.stream.Collectors;
 
 import actor.IComponentPart;
 import actor.IPartAbility;
 import mind.action.IAction;
 import mind.action.IActionType;
+import mind.action.IInteraction;
+import mind.action.IInteractionInstance;
 import mind.goals.IGoal;
+import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.need.INeed;
 import mind.need.INeed.Degree;
 import mind.need.INeed.INeedType;
+import mind.relationships.IParty;
+import mind.relationships.Relationship;
 
-public class Will {
+public class Will implements IWill {
 
 	private Mind owner;
 
-	private Map<ITaskGoal, ActionQueue> goals;
+	private TreeMap<ITaskGoal, ActionQueue> goals;
 
 	private int focusCount = 3;
 
 	private int maxActions = 10;
 
 	private Map<IPartAbility, IAction> utilizedParts;
-	private List<ActionQueue> currentActionQueues;
+	private WeakHashMap<ActionQueue, Integer> executionAttempts; // number of attempts to execute each queue;
 	private Map<IAction, Integer> currentActions;
+	private Map<IAction, IInteractionInstance> currentInteractions;
 
 	public Will(Mind owner) {
 		this.owner = owner;
@@ -56,6 +62,7 @@ public class Will {
 	 * 
 	 * @return
 	 */
+	@Override
 	public int getMaxActions() {
 		return maxActions;
 	}
@@ -68,52 +75,55 @@ public class Will {
 		this.goals = null;
 	}
 
-	/**
-	 * Cancels the currently executing actions and returns them in their queues
-	 * 
-	 * @return
-	 */
-	public Collection<ActionQueue> cancelActions() {
-		List<ActionQueue> set = this.currentActionQueues == null ? List.of() : this.currentActionQueues;
+	public void cancelActions() {
 		this.currentActions = null;
 		this.utilizedParts = null;
-		return set;
+		this.executionAttempts = null;
 	}
 
-	/**
-	 * All action queues currently executing
-	 * 
-	 * @return
-	 */
-	public List<ActionQueue> getCurrentActionQueues() {
-		return this.currentActionQueues == null ? List.of() : currentActionQueues;
-	}
-
+	@Override
 	public Collection<IAction> getCurrentActions() {
 		return currentActions == null ? Set.of() : currentActions.keySet();
 	}
 
+	@Override
+	public boolean considerInteraction(ICanAct offerer, IInteractionInstance interaction, IInteraction action,
+			Priority priority) {
+		// TODO consider relationships or whatever idk
+		if (offerer instanceof IParty) {
+			Collection<Relationship> relations = this.owner.getMindMemory().getRelationshipsWith((IParty) offerer);
+
+		}
+		return false;
+	}
+
+	@Override
 	public int getTicksPassed(IAction action) {
 		return this.currentActions.getOrDefault(action, -1);
+	}
+
+	private void handleNullify() {
+		if (this.utilizedParts != null && this.utilizedParts.isEmpty())
+			utilizedParts = null;
+		if (this.currentActions != null && this.currentActions.isEmpty())
+			currentActions = null;
+		if (this.goals != null && this.goals.isEmpty())
+			this.goals = null;
 	}
 
 	/**
 	 * Tick when actions are not being performed, only considered
 	 */
 	public void thinkTick(long tick) {
-		if (this.utilizedParts != null && this.utilizedParts.isEmpty())
-			utilizedParts = null;
-		if (this.currentActionQueues != null && this.currentActionQueues.isEmpty())
-			currentActionQueues = null;
-		if (this.currentActions != null && this.currentActions.isEmpty())
-			currentActions = null;
-		if (this.goals != null && this.goals.isEmpty())
-			this.goals = null;
-		this.thinkAboutActions();
-		if (tick % 10 < 4) {
+		this.handleNullify();
+
+		if (tick % 10 > 4 && this.owner.rand().nextBoolean()) {
+			this.thinkAboutActions();
+		}
+		if (tick % 10 < 8 && this.owner.rand().nextBoolean()) {
 			this.updateGoalsFromNeeds();
-			this.updateGoals();
-			this.decideActions();
+			if (this.owner.rand().nextDouble() < 0.8)
+				this.updateGoals();
 		}
 	}
 
@@ -121,153 +131,165 @@ public class Will {
 	 * Tick executed when actions are being performed
 	 */
 	public void activeTick(long tick) {
-		if (tick % 10 < 4)
-			this.beginActions();
-		this.updateActions();
+		if (this.decideActions())
+			this.updateActions();
 	}
 
 	/**
-	 * Add actions to the currently executing queue from the map of goals for later
-	 * execution TODO some form of prioritizing system
+	 * return true if actions can be executed
 	 */
-	public void decideActions() {
-		if (goals != null) {
-			for (ITaskGoal goal : goals.keySet()) {
-				ActionQueue queue = goals.get(goal);
-				if (currentActionQueues != null && currentActionQueues.size() > focusCount)
-					return;
-				if (queue.ready() && (currentActionQueues == null || !currentActionQueues.contains(queue))) {
-					(currentActionQueues == null ? currentActionQueues = new ArrayList<>() : currentActionQueues)
-							.add(queue);
+	private boolean decideActions() {
+		if (goals == null)
+			return false;
+		Iterator<ITaskGoal> goalsi = this.goals.keySet().stream()
+				.sorted((o, t) -> o.getPriority().compareTo(t.getPriority())).iterator();
+		ITaskGoal goal = null;
+		while (goalsi.hasNext()) {
+			goal = goalsi.next();
+
+			if (this.currentActions != null && this.currentActions.size() > this.focusCount) {
+				continue;
+			}
+			ActionQueue queue = goals.get(goal);
+			for (IAction aaa : queue.actionQueue) {
+				if (this.currentActions != null && this.currentActions.containsKey(aaa))
+					continue;
+			}
+			boolean complete = goal.isComplete(owner);
+
+			if (queue.clearCompleted() || complete) {
+				/*
+				 * if (!complete) System.out.println(this.owner + " " + goal + " " + queue);
+				 */
+				this.removeQueueFromCurrent(queue);
+				if (complete)
+					goals.remove(goal);
+
+				breakpoint();
+				continue;
+			}
+			if (!queue.ready())
+				continue;
+			Collection<IPartAbility> slots = this.requiredAbilitySlots(queue.getLatestAction());
+			if (this.owner.getOwner().getName().equals("bobzy")) {
+				System.out.print("");
+			}
+			boolean fail = false;
+			for (IPartAbility ab : slots)
+				if (this.utilizedParts != null && utilizedParts.get(ab) != null) {
+					fail = true;
+					break;
+				}
+			if (fail)
+				continue;
+			Boolean prep = queue.prepareLatestAction();
+			if (prep == null || !prep) {
+				if (failedAttempt(queue)) {
+					queue.clearActions();
+				}
+				continue;
+			} else {
+				(this.currentActions == null ? currentActions = new HashMap<>() : currentActions)
+						.put(queue.getLatestAction(), -1);
+				for (IPartAbility ab : slots) {
+					if (this.findUtilizedPartsMap().get(ab) != null)
+						throw new IllegalStateException(
+								"" + queue.getLatestAction() + " " + utilizedParts + " " + currentActions);
+					this.findUtilizedPartsMap().put(ab, queue.getLatestAction());
 				}
 			}
+			return true;
 		}
+		return currentActions != null && !currentActions.isEmpty();
 	}
 
 	/**
-	 * Put actions from the queue list into the currently executing list
+	 * return true if it has failed too many times
+	 * 
+	 * @return
 	 */
-	public void beginActions() {
-		if (this.currentActionQueues != null) {
-			for (ActionQueue queue : List.copyOf(this.currentActionQueues)) {
-				if (!queue.ready()) {
-					// System.out.println("nr " + this.owner + " " + queue);
-					currentActionQueues.remove(queue);
-					if (utilizedParts != null)
-						this.utilizedParts.values().removeIf((a) -> a == queue.getLatestAction());
-					if (currentActions != null)
-						currentActions.remove(queue.getLatestAction());
-					continue;
-				}
-				if (!queue.canExecute()) {
-					// System.out.println("cne " + this.owner + " " + queue);
-					if (this.currentActionQueues.size() > this.focusCount || this.owner.rand().nextInt(10) < 3) {
-						currentActionQueues.remove(queue);
-						if (utilizedParts != null)
-							this.utilizedParts.values().removeIf((a) -> a == queue.getLatestAction());
-						if (currentActions != null)
-							currentActions.remove(queue.getLatestAction());
-					}
-					continue;
-				}
-				IAction topA = queue.getLatestAction();
-				if (currentActions != null && this.currentActions.containsKey(topA))
-					continue;
-				ITaskGoal topG = queue.getLatestGoal();
-				if (topG.isComplete(owner)) {
-					Boolean ready = queue.prepareLatestAction();
-					queue.reserveAbilitySlots(topA);
-					if (ready == Boolean.FALSE) {
-						// System.out.println("fp " + this.owner + " " + queue);
-						currentActionQueues.remove(queue);
-						if (utilizedParts != null)
-							this.utilizedParts.values().removeIf((a) -> a == queue.getLatestAction());
-						if (currentActions != null)
-							currentActions.remove(topA);
-						// System.out.println("" + this.owner + " found action " + topA + " unenactable
-						// because "+ topA.reasonForLastFailure());
-
-						continue;
-					} else if (ready == Boolean.TRUE) {
-						topA.beginExecutingIndividual(owner);
-						(this.currentActions == null ? this.currentActions = new HashMap<>() : currentActions).put(topA,
-								0);
-						// System.out.println("" + this.owner + " began action " + topA);
-					} else {
-						// System.out.println("bp " + this.owner + " " + queue);
-						currentActionQueues.remove(queue);
-						if (currentActions != null)
-							currentActions.remove(topA);
-						if (utilizedParts != null)
-							this.utilizedParts.values().removeIf((a) -> a == queue.getLatestAction());
-						queue.removeLatestAction();
-						queue.removeLatestAction();
-						// TODO remove two actions just in case? or no
-						// System.out.println("" + this.owner + " found action " + topA + " unviable
-						// because "+ topA.reasonForUnviability());
-
-						continue;
-					}
-				} else {
-					currentActionQueues.remove(queue);
-					if (utilizedParts != null)
-						this.utilizedParts.values().removeIf((a) -> a == queue.getLatestAction());
-					if (currentActions != null)
-						currentActions.remove(topA);
-				}
-			}
+	private boolean failedAttempt(ActionQueue queue) {
+		int attempts = this.executionAttempts == null ? queue.getLatestAction().executionAttempts()
+				: this.executionAttempts.getOrDefault(queue, queue.getLatestAction().executionAttempts());
+		(this.executionAttempts == null ? executionAttempts = new WeakHashMap<>() : executionAttempts).put(queue,
+				attempts - 1);
+		if (attempts <= 0) {
+			if (this.executionAttempts != null)
+				this.executionAttempts.remove(queue);
+			return true;
 		}
+		return false;
 	}
 
-	/**
-	 * Update currently executing actions
-	 */
-	public void updateActions() {
+	private void updateActions() {
 		if (this.currentActions == null)
 			return;
 		for (Map.Entry<IAction, Integer> entry : Set.copyOf(this.currentActions.entrySet())) {
 			IAction action = entry.getKey();
-			if (action.canContinueExecutingIndividual(owner, entry.getValue())) {
-				action.executionTickIndividual(owner, entry.getValue());
-				entry.setValue(entry.getValue() + 1);
+			Integer ticks = entry.getValue();
+			breakpoint();
+			if (ticks < 0) {
+				action.beginExecutingIndividual(owner);
+				entry.setValue(0);
 			} else {
-				boolean succ = action.finishActionIndividual(owner, entry.getValue());
-				// System.out.println("action " + action + " finished for " + this.owner);
-				this.currentActions.remove(entry.getKey());
-				if (this.utilizedParts != null) {
-					this.utilizedParts.values().removeIf((a) -> a == action);
-					if (this.utilizedParts.isEmpty())
-						utilizedParts = null;
-				}
-				ActionQueue queue = null;
-				if (currentActionQueues != null) {
-					for (ActionQueue queu : currentActionQueues) {
-						if (queu.getLatestAction() == action) {
-							queue = queu;
-							break;
+				if (action.canContinueExecutingIndividual(owner, ticks)) {
+					action.executionTickIndividual(owner, ticks);
+					entry.setValue(ticks + 1);
+				} else {
+					boolean succ = action.finishActionIndividual(owner, ticks);
+					for (ActionQueue queue : this.goals.values()) {
+						if (queue.getLatestAction() == action) {
+							if (!succ)
+								queue.tried(action.getType());
+							queue.removeLatestAction();
 						}
 					}
-				}
-				if (queue == null) {
-					currentActions.remove(action);
-					continue;
-				}
-				queue.removeLatestAction();
 
-				currentActionQueues.remove(queue);
-				if (queue.getFirstGoal().isComplete(owner)) {
-					this.goals.remove(queue.getFirstGoal(), queue);
-					if (this.goals.isEmpty())
-						goals = null;
-					if (this.currentActionQueues.isEmpty())
-						currentActionQueues = null;
-					this.owner.getKnowledgeBase().forgetGoal(queue.getFirstGoal());
-				} else {
-					currentActionQueues.add(0, queue); // Move the actionqueue to the front because now it is completed
-														// its queue is first priority
+					this.currentActions.remove(action);
+					if (this.utilizedParts != null)
+						this.utilizedParts.values().removeIf((a) -> a == action);
 				}
 			}
 		}
+	}
+
+	private Collection<IPartAbility> requiredAbilitySlots(IAction action) {
+		if (!action.getType().requiresMultipartBody())
+			return Set.of();
+		Set<IPartAbility> blockedAbilities = null;
+		for (IPartAbility ability : action.usesAbilities()) {
+			(blockedAbilities == null
+					? blockedAbilities = new TreeSet<>((o1, o2) -> o1.getName().compareTo(o2.getName()))
+					: blockedAbilities).add(ability);
+			IComponentPart part = null;
+			Iterator<? extends IComponentPart> iterator = Will.this.owner.getActorAsMultipart().getBody()
+					.getPartsWithAbility(ability).iterator();
+			if (!iterator.hasNext())
+				throw new IllegalStateException("Body does not have correct abilities");
+			part = iterator.next();
+			blockedAbilities.addAll(obtainAbilities(part));
+		}
+		return blockedAbilities == null ? Set.of() : blockedAbilities;
+	}
+
+	private Set<IPartAbility> obtainAbilities(IComponentPart part) {
+		Set<IPartAbility> abs = new TreeSet<>((on, tw) -> on.getName().compareTo(tw.getName()));
+		abs.addAll(part.getType().abilities());
+		for (IComponentPart child : part.getChildParts().values()) {
+			abs.addAll(obtainAbilities(child));
+		}
+		return abs;
+	}
+
+	private void removeQueueFromCurrent(ActionQueue queue) {
+		if (!queue.empty()) {
+			if (this.currentActions != null)
+				queue.actionQueue.forEach((a) -> currentActions.remove(a));
+			if (this.utilizedParts != null)
+				this.utilizedParts.values().removeAll(queue.actionQueue);
+		}
+		if (this.executionAttempts != null)
+			this.executionAttempts.remove(queue);
 	}
 
 	/**
@@ -275,7 +297,15 @@ public class Will {
 	 */
 	public void thinkAboutActions() {
 		if (goals != null) {
+			/*
+			 * Iterator<Map.Entry<ITaskGoal, ActionQueue>> goalIter =
+			 * goals.entrySet().iterator(); if (goalIter.hasNext()) { for
+			 * (Map.Entry<ITaskGoal, ActionQueue> ent = goalIter.next(); goalIter
+			 * .hasNext(); ent = goalIter.next()) { if (ent.getKey().isComplete(owner)) {
+			 * goalIter.remove(); this.removeQueueFromCurrent(ent.getValue()); } } }
+			 */
 			for (ActionQueue queue : goals.values()) {
+
 				if (this.owner.rand().nextInt(10) < 3)
 					continue;
 				if (!queue.ready()) {
@@ -300,14 +330,21 @@ public class Will {
 				: utilizedParts;
 	}
 
+	private void breakpoint() {
+		if (this.owner.getOwner().getName().equals("bobzy")) {
+			System.out.print("");
+		}
+	}
+
 	/**
 	 * Generates goals from active needs TODO better prioritizing
 	 */
+	@Override
 	public void updateGoalsFromNeeds() {
 		for (Map.Entry<INeedType, Collection<INeed>> entry : Set
 				.copyOf(this.owner.getMindMemory().getNeeds().asMap().entrySet())) {
 			TreeSet<INeed> needs = new TreeSet<>((o1, o2) -> o1.getDegree().compareTo(o2.getDegree()));
-			for (INeed need : entry.getValue()) {
+			for (INeed need : Set.copyOf(entry.getValue())) {
 				if (need.getDegree() == Degree.BEYOND || need.getDegree() == Degree.SEVERE) {
 					IGoal goal = need.genIndividualGoal();
 					if (!goal.isComplete(owner)) {
@@ -337,10 +374,11 @@ public class Will {
 	/**
 	 * Obtains goals from memory to register them for actions
 	 */
+	@Override
 	public void updateGoals() {
 		// TODO figure out how to prioritize goals or something idk
 
-		Iterator<IGoal> iter = owner.getMindMemory().getGoals().iterator();
+		Iterator<IGoal> iter = Set.copyOf(owner.getMindMemory().getGoals()).iterator();
 		for (int i = 0; i < this.focusCount; i++) {
 			if (goals != null && goals.size() >= this.maxActions) {
 				return;
@@ -349,21 +387,40 @@ public class Will {
 			if (iter.hasNext()) {
 				IGoal ofocus = iter.next();
 
+				if (goals != null && goals.containsKey(ofocus)) {
+					i--;
+					continue;
+				}
+
 				if ((ofocus instanceof ITaskGoal)) {
-					if (goals != null && goals.keySet().stream().anyMatch((a) -> a.equivalent(ofocus))) {
-						i--;
-						continue;
-					}
 					ITaskGoal focus = (ITaskGoal) ofocus;
-					if (focus.isInvalid(owner)) {
+
+					breakpoint();
+					if ((goals != null && goals.keySet().stream().anyMatch((a) -> {
+						boolean dumma = a.equivalent(ofocus);
+						if (dumma)
+							breakpoint();
+						return dumma;
+					})) || (focus.isComplete(owner)) || (focus.isInvalid(owner))) {
+						ActionQueue trashq = goals != null ? this.goals.get(focus) : null;
+						if (trashq != null) {
+							this.removeQueueFromCurrent(trashq);
+							this.goals.remove(focus);
+						}
 						owner.getMindMemory().forgetGoal(focus);
+
+						breakpoint();
 						i--;
 						continue;
-					} else {
-						if (goals == null)
-							goals = new HashMap<>();
-						goals.put((ITaskGoal) focus, new ActionQueue(focus));
 					}
+					breakpoint();
+					if (goals == null) {
+						goals = new TreeMap<>((a1, a2) -> a1.getPriority().compareTo(a2.getPriority()));
+					}
+					ActionQueue aq = null;
+					goals.put((ITaskGoal) focus, aq = new ActionQueue(focus));
+
+					breakpoint();
 				} else {
 					i--;
 					continue;
@@ -377,10 +434,11 @@ public class Will {
 	public String report() {
 		StringBuilder build = new StringBuilder("Actions->{");
 		build.append("\n\tfocusCount:" + this.focusCount);
-		build.append("\n\tgoals:" + this.goals);
-		build.append("\n\tcurrenctActionQueues:" + this.currentActionQueues);
+		build.append("\n\tgoals:" + (this.goals == null ? null : this.goals.keySet()));
+		build.append("\n\tactionqueues:" + (this.goals == null ? null : this.goals));
 		build.append("\n\texecutingActions:" + this.currentActions);
 		build.append("\n\tutilizedParts:" + this.utilizedParts);
+		build.append("\n\texecutionAttempts:" + this.executionAttempts);
 		build.append("}");
 		return build.toString();
 	}
@@ -392,8 +450,9 @@ public class Will {
 	 *
 	 */
 	public class ActionQueue {
-		private ITaskGoal firstGoal;
+		private final ITaskGoal firstGoal;
 		private Stack<IAction> actionQueue = new Stack<>();
+		private Map<IActionType<?>, Integer> recentlyTried;
 		/**
 		 * This is staggered above the ActionQueue; the bottommost element of this is
 		 * one "above" the bottommost element of the actionqueue
@@ -402,6 +461,11 @@ public class Will {
 
 		public ActionQueue(ITaskGoal goal) {
 			this.firstGoal = goal;
+		}
+
+		public void clearActions() {
+			this.actionQueue.clear();
+			this.goalQueue.clear();
 		}
 
 		/**
@@ -440,6 +504,10 @@ public class Will {
 			return actionQueue.peek();
 		}
 
+		public boolean empty() {
+			return this.actionQueue.empty();
+		}
+
 		/**
 		 * Removes the latest action from the queue and the goal as well
 		 */
@@ -448,56 +516,39 @@ public class Will {
 			return actionQueue.pop();
 		}
 
+		/**
+		 * clears actions/goals which are completed (aside from the first goal); return
+		 * true if anything changed
+		 */
+		public boolean clearCompleted() {
+			boolean clear = false;
+			boolean ret = false;
+			for (int i = 0; i < goalQueue.size(); i++) {
+				if (clear) {
+					goalQueue.remove(i);
+					actionQueue.remove(i);
+					ret = true;
+					i--;
+				} else if (goalQueue.get(i).isComplete(owner)) {
+					clear = true;
+				}
+			}
+			return ret;
+		}
+
+		public ITaskGoal getSecondToLastGoal() {
+			if (goalQueue.empty())
+				return null;
+			if (goalQueue.size() == 1)
+				return firstGoal;
+			return goalQueue.elementAt(goalQueue.size() - 2);
+		}
+
 		public ITaskGoal getLatestGoal() {
 			if (goalQueue.empty()) {
 				return firstGoal;
 			}
 			return goalQueue.lastElement();
-		}
-
-		/**
-		 * Whether the ability slots for this are open
-		 * 
-		 * @return
-		 */
-		public boolean canExecute() {
-			for (IPartAbility ability : this.actionQueue.lastElement().usesAbilities()) {
-				IAction a = getUtilizedParts().get(ability);
-				if (a != null && a != this.getLatestAction()) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		private void reserveAbilitySlots(IAction action) {
-			if (!action.getType().requiresMultipartBody())
-				return;
-			Set<IPartAbility> blockedAbilities = null;
-			for (IPartAbility ability : action.usesAbilities()) {
-				(blockedAbilities == null
-						? blockedAbilities = new TreeSet<>((o1, o2) -> o1.getName().compareTo(o2.getName()))
-						: blockedAbilities).add(ability);
-				IComponentPart part = null;
-				Iterator<? extends IComponentPart> iterator = Will.this.owner.getActorAsMultipart().getBody()
-						.getPartsWithAbility(ability).iterator();
-				if (!iterator.hasNext())
-					throw new IllegalStateException("Body does not have correct abilities");
-				part = iterator.next();
-				blockedAbilities.addAll(obtainAbilities(part));
-			}
-			for (IPartAbility ability : blockedAbilities) {
-				findUtilizedPartsMap().put(ability, action);
-			}
-		}
-
-		private Set<IPartAbility> obtainAbilities(IComponentPart part) {
-			Set<IPartAbility> abs = new TreeSet<>((on, tw) -> on.getName().compareTo(tw.getName()));
-			abs.addAll(part.getType().abilities());
-			for (IComponentPart child : part.getChildParts().values()) {
-				abs.addAll(obtainAbilities(child));
-			}
-			return abs;
 		}
 
 		/**
@@ -512,6 +563,8 @@ public class Will {
 			IAction action = actionQueue.peek();
 			ITaskGoal goal = goalQueue.size() <= 1 ? firstGoal : goalQueue.get(goalQueue.size() - 2);
 			if (!action.getType().isViable(owner, goal)) {
+				removeLatestAction();
+				tried(action.getType());
 				return null;
 			}
 			if (action.canExecuteIndividual(owner, false)) {
@@ -535,6 +588,10 @@ public class Will {
 			return actionQueue.size();
 		}
 
+		private void tried(IActionType<?> type) {
+			(recentlyTried == null ? recentlyTried = new HashMap<>() : recentlyTried).put(type, 5);
+		}
+
 		private void ponderActions() {
 			if (ready())
 				throw new IllegalStateException("No more actions to add; stack is complete");
@@ -545,28 +602,47 @@ public class Will {
 			Set<IActionType<?>> potentialActions = new HashSet<>(owner.getMindMemory().getPossibleActions(hint));
 
 			potentialActions.addAll(owner.getMindMemory().getPossibleActionsFromCulture(hint).values());
+			if (recentlyTried != null) {
+				potentialActions.removeIf((a) -> {
+					if (recentlyTried.getOrDefault(a, 0) > 0) {
+						int o = 0;
+						recentlyTried.put(a, o = recentlyTried.get(a) - 1);
+						if (o <= 0)
+							recentlyTried.remove(a);
+						return true;
+					}
+					return false;
+				});
+			}
 			for (IActionType<?> atype : Set.copyOf(potentialActions)) {
 				if (!atype.isViable(owner, goal)) {
 					potentialActions.remove(atype);
+					tried(atype);
 				}
 			}
 
 			// TODO priority system or somesh idk; also, what happens if we cant find
 			// actions?
 			if (potentialActions.isEmpty()) {
-
+				if (!this.actionQueue.empty())
+					this.removeLatestAction();
 				return;
 			}
-			IAction action = potentialActions.stream().findAny().get().genAction(goal);
-			if (action.canExecuteIndividual(owner, true)) {
-				this.pushActionAndGoal(action, ITaskGoal.FINISHED);
-			} else {
-				// TODO how to handle multiple actions/goals??
-				Collection<ITaskGoal> goals = action.genConditionGoal(owner);
-				if (goals.isEmpty()) {
-					return;
+			Collection<ITaskGoal> goals = new HashSet<>();
+			for (int i = 0; i < 5 && goals.isEmpty(); i++) {
+
+				IAction action = potentialActions.stream().collect(Collectors.toList())
+						.get(Will.this.owner.rand().nextInt(potentialActions.size())).genAction(goal);
+				if (action.canExecuteIndividual(owner, true)) {
+					this.pushActionAndGoal(action, ITaskGoal.FINISHED);
+				} else {
+					// TODO how to handle multiple actions/goals??
+					goals = action.genConditionGoal(owner);
+					if (goals.isEmpty()) {
+						continue;
+					}
+					this.pushActionAndGoal(action, goals.stream().findAny().get());
 				}
-				this.pushActionAndGoal(action, goals.stream().findAny().get());
 			}
 
 		}
@@ -597,7 +673,7 @@ public class Will {
 					} else {
 						builder.append("->FINISH");
 					}
-					if (!c && i == actionQueue.size() - 1) {
+					if (i == actionQueue.size() - 1) {
 						builder.append("::" + actionQueue.get(i).reasonForLastFailure());
 					}
 				} catch (Exception e) {

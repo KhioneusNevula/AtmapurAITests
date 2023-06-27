@@ -89,13 +89,22 @@ public class HungerSystem extends EnergySystem {
 	@Override
 	protected void update(long ticks) {
 		super.update(ticks);
-
-		if (this.getEnergy() / (double) this.getMaxCapacity() < 0.2) {
-			if (this.needs == null || this.needs.get(NeedType.SUSTENANCE).isEmpty()) {
+		double percent = this.getPercent();
+		if (percent < 0.2) {
+			if (!this.getNeeds().get(NeedType.SUSTENANCE).stream().anyMatch((a) -> a.getDegree() == Degree.SEVERE)) {
+				this.clearNeeds(NeedType.SUSTENANCE);
+				this.postNeed(new SustenanceNeed(Degree.SEVERE, null));
+			}
+		} else if (percent < 0.5) {
+			if (!this.getNeeds().get(NeedType.SUSTENANCE).stream().anyMatch((a) -> a.getDegree() == Degree.MODERATE)) {
+				this.clearNeeds(NeedType.SUSTENANCE);
 				this.postNeed(new SustenanceNeed(Degree.MODERATE, null));
 			}
-		} else {
-			this.needs = null;
+		} else if (percent < 0.7) {
+			if (!this.getNeeds().get(NeedType.SUSTENANCE).stream().anyMatch((a) -> a.getDegree() == Degree.MILD)) {
+				this.clearNeeds(NeedType.SUSTENANCE);
+				this.postNeed(new SustenanceNeed(Degree.MILD, null));
+			}
 		}
 	}
 

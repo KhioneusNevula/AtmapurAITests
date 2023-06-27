@@ -1,21 +1,25 @@
-package mind.action;
+package mind.action.types;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
 import actor.Actor;
-import mind.concepts.type.IConcept;
+import mind.ICanAct;
+import mind.action.ActionType;
+import mind.action.IAction;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.ITaskGoal;
+import mind.goals.question.Question;
+import mind.goals.taskgoals.LearnTaskGoal;
 import mind.goals.taskgoals.TravelTaskGoal;
-import mind.memory.IHasKnowledge;
 import sim.Location;
 
 public class PickUpAction implements IAction {
 
-	private IConcept acquireWhat;
+	private IMeme acquireWhat;
 	private Actor specificTarget;
 	private Profile nearestTarget;
 	private Actor nearestActorTarget;
@@ -26,18 +30,18 @@ public class PickUpAction implements IAction {
 	private boolean handsFull;
 
 	public PickUpAction(ITaskGoal goal) {
-		this(goal.transferTarget());
+		this(goal.transferItem());
 	}
 
-	public PickUpAction(IConcept acquireWhat) {
+	public PickUpAction(IMeme acquireWhat) {
 		this.acquireWhat = acquireWhat;
 	}
 
-	public IConcept getAcquireTarget() {
+	public IMeme getAcquireTarget() {
 		return acquireWhat;
 	}
 
-	private boolean findTargetsAndStuff(IHasKnowledge user, boolean pondering) {
+	private boolean findTargetsAndStuff(ICanAct user, boolean pondering) {
 
 		if (acquireWhat instanceof Profile) {
 			Profile profile = (Profile) acquireWhat;
@@ -57,6 +61,8 @@ public class PickUpAction implements IAction {
 			// how to memory hmm
 			Collection<Profile> profiles = user.getMindMemory().getSenses().getAllSensedProfiles();
 			Location ownLoc = user.getMindMemory().getLocation(user.getMindMemory().getSelfProfile());
+			if (ownLoc == null)
+				return false;
 			failure = "pondering=" + pondering + ", no actor can be sensed";
 			for (Profile prof : profiles) {
 				Actor actor = user.getMindMemory().getSenses().getActorFor(prof);
@@ -64,9 +70,9 @@ public class PickUpAction implements IAction {
 				if (loc == null)
 					loc = user.getMindMemory().getLocationsFromCulture(prof).values().stream().findAny().orElse(null);
 				if (loc == null)
-					loc = actor.getLocation(); // TODO a lil cheat for now
-				failure = "pondering=" + pondering + ", no instances of food can be sensed " + actor;
-				if (actor != null && (ITaskGoal.getProperty(actor, property, user) != null
+					continue;// loc = actor.getLocation();
+				failure = "pondering=" + pondering + ", no instances of " + property + " can be sensed " + actor;
+				if (actor != null && (ITaskGoal.getProperty(actor, property, user).isPresent()
 						|| user.getMindMemory().hasProperty(prof, property))) {
 					if (this.targetLoc == null || this.targetLoc.distance(ownLoc) > loc.distance(ownLoc)) {
 						/*
@@ -79,7 +85,7 @@ public class PickUpAction implements IAction {
 						if (user.getAsHasActor().getActor().reachable(loc)) {
 							this.specificTarget = actor;
 							if (actor.isRemoved())
-								throw new IllegalStateException("dead " + actor + " " + user);
+								continue;
 							failure = "success";
 							return true;
 						}
@@ -115,7 +121,7 @@ public class PickUpAction implements IAction {
 	}
 
 	@Override
-	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
+	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
 		// currently, if pondering it can check its memory, but not if it is not in the
 		// pondering stage
 		body = user.getAsHasActor().getActor();
@@ -144,22 +150,22 @@ public class PickUpAction implements IAction {
 	}
 
 	@Override
-	public void beginExecutingIndividual(IHasKnowledge forUser) {
+	public void beginExecutingIndividual(ICanAct forUser) {
 		success = body.pickUp(specificTarget);
 	}
 
 	@Override
-	public boolean finishActionIndividual(IHasKnowledge individual, int tick) {
+	public boolean finishActionIndividual(ICanAct individual, int tick) {
 		return success;
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(IHasKnowledge user) {
+	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
 		if (handsFull) {
 			return Set.of();
 		}
 		if (targetLoc == null) {
-			return Set.of();
+			return Set.of(new LearnTaskGoal(Question.askLocation(acquireWhat)));
 		}
 		return Set.of(new TravelTaskGoal(targetLoc, true));
 	}
@@ -176,7 +182,7 @@ public class PickUpAction implements IAction {
 
 	@Override
 	public String toString() {
-		return "PickUpAction{" + this.acquireWhat + (this.targetLoc != null ? ",at:" + this.targetLoc : "")
+		return "PickupA{" + this.acquireWhat + (this.targetLoc != null ? ",at:" + this.targetLoc : "")
 				+ (this.nearestActorTarget != null ? ",a:" + this.nearestActorTarget
 						: (this.nearestTarget != null ? ",a:" + this.nearestTarget : ""))
 				+ "}";

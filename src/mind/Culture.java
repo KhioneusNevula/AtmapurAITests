@@ -1,6 +1,7 @@
 package mind;
 
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -9,6 +10,8 @@ import mind.action.IActionType;
 import mind.concepts.type.BasicProperties;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
+import mind.linguistics.Language;
+import mind.linguistics.NameWord;
 import mind.memory.AbstractKnowledgeEntity;
 import sim.Location;
 
@@ -23,16 +26,25 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 	private Map<Profile, Location> locationKnowledge;
 	private boolean isStatic;
 	private String groupName;
+	private NameWord nameWord;
 
 	/**
 	 * TODO will delete later when better systems in place
 	 */
 	public static final Set<IActionType<?>> USUAL_ACTIONS = Set.of(ActionType.EAT, ActionType.WALK, ActionType.SLEEP,
-			ActionType.PICK_UP, ActionType.WANDER);
+			ActionType.PICK_UP, ActionType.WANDER, ActionType.SEARCH);
 
 	public Culture(UUID id, String type, String groupName) {
 		super(id, type);
 		this.groupName = groupName;
+	}
+
+	public Culture languageInit(Random rand) {
+		this.mainLanguage = new Language(this.groupName); // TODO idk allow using existing languages? idfk
+		this.mainLanguage.generate(rand);
+		this.languages.add(mainLanguage);
+		nameWord = mainLanguage.name(getSelfProfile(), new Random());
+		return this;
 	}
 
 	/**
@@ -43,9 +55,6 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 	public Culture usualInit() {
 		for (Property property : BasicProperties.getAll()) {
 			this.learnProperty(property, BasicProperties.genAssociations(property));
-		}
-		for (IActionType<?> atype : USUAL_ACTIONS) {
-			this.addDoableAction(atype);
 		}
 		return this;
 	}
@@ -86,13 +95,23 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 		return locationKnowledge.get(prof);
 	}
 
+	public NameWord getNameWord() {
+		return nameWord;
+	}
+
+	@Override
+	public boolean knowsLocation(Profile prof) {
+		return this.getLocation(prof) != null;
+	}
+
 	@Override
 	public int compareTo(Culture o) {
 		return this.self.compareTo(o.self);
 	}
 
 	public String report() {
-		StringBuilder builder = new StringBuilder("Culture-" + this.groupName + "{");
+		StringBuilder builder = new StringBuilder("Culture-" + this.groupName
+				+ (this.nameWord != null ? " \"" + this.nameWord.getDisplay() + "\"" : this.nameWord) + "{");
 		if (this.locationKnowledge != null)
 			builder.append("\n\tlocations:" + this.locationKnowledge);
 
@@ -112,7 +131,7 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 
 	@Override
 	public String toString() {
-		return "culture_" + this.groupName + "_" + this.getSelfProfile().getUUID().toString().substring(0, 4);
+		return "culture_" + this.groupName + (this.nameWord != null ? "_" + nameWord.getDisplay() : "");
 	}
 
 	@Override

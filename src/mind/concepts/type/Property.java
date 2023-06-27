@@ -1,6 +1,6 @@
 package mind.concepts.type;
 
-public class Property implements IConcept, Comparable<Property> {
+public class Property implements IMeme, Comparable<Property> {
 
 	private String uniqueName;
 	private boolean hasIntegerProperty;

@@ -9,7 +9,19 @@ import mind.memory.IHasKnowledge;
 
 public enum RestTaskGoal implements ITaskGoal {
 
-	INSTANCE;
+	OBSESSION(Priority.OBSESSION), VITAL(Priority.VITAL), SERIOUS(Priority.SERIOUS), NORMAL(Priority.NORMAL),
+	TRIVIAL(Priority.TRIVIAL);
+
+	private Priority priority;
+
+	private RestTaskGoal(Priority vital2) {
+		this.priority = vital2;
+	}
+
+	@Override
+	public Priority getPriority() {
+		return priority;
+	}
 
 	@Override
 	public ITaskHint getActionHint() {
@@ -17,7 +29,7 @@ public enum RestTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return IProfile.SELF;
 	}
 
@@ -43,7 +55,7 @@ public enum RestTaskGoal implements ITaskGoal {
 
 	@Override
 	public String toString() {
-		return "RestGoal";
+		return "RestTG";
 	}
 
 	@Override

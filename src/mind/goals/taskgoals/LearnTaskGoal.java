@@ -1,22 +1,40 @@
 package mind.goals.taskgoals;
 
-import mind.concepts.type.IConcept;
 import mind.concepts.type.IProfile;
+import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.goals.question.Question;
 import mind.memory.IHasKnowledge;
 
 public class LearnTaskGoal implements ITaskGoal {
 
-	private IConcept learnAbout;
+	private Question question;
+	private Priority priority = Priority.NORMAL;
 
 	public LearnTaskGoal() {
 
 	}
 
-	public LearnTaskGoal(IConcept learnAbout) {
-		this.learnAbout = learnAbout;
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public LearnTaskGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
+	}
+
+	/**
+	 * The target of learning, and the property to learn about (can be null if the
+	 * information to learn is variable)
+	 * 
+	 * @param learnAbout
+	 * @param learnProperty
+	 */
+	public LearnTaskGoal(Question question) {
+		this.question = question;
 	}
 
 	@Override
@@ -31,8 +49,7 @@ public class LearnTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isComplete(IHasKnowledge entity) {
-		return learnAbout != null ? entity.getKnowledgeBase().isKnown(learnAbout)
-				: !entity.getMindMemory().isFeelingCurious();
+		return question != null ? question.isAnswered(entity) : !entity.getMindMemory().isFeelingCurious();
 	}
 
 	@Override
@@ -46,7 +63,7 @@ public class LearnTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return IProfile.SELF;
 	}
 
@@ -54,8 +71,8 @@ public class LearnTaskGoal implements ITaskGoal {
 	 * May be null if the learning is just general curiosity
 	 */
 	@Override
-	public IConcept getLearnTarget() {
-		return this.learnAbout;
+	public Question learnTarget() {
+		return this.question;
 	}
 
 	@Override
@@ -65,7 +82,13 @@ public class LearnTaskGoal implements ITaskGoal {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName() + (this.learnAbout != null ? "{" + learnAbout + "}" : "");
+		return "LearnTG" + (this.question != null ? "{" + question + "}" : "");
+	}
+
+	@Override
+	public boolean equivalent(IGoal other) {
+		return other instanceof LearnTaskGoal && (((LearnTaskGoal) other).question == null
+				|| ((LearnTaskGoal) other).question.getTopic().equals(this.question.getTopic()));
 	}
 
 }

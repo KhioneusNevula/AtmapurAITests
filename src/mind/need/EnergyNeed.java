@@ -15,9 +15,14 @@ public class EnergyNeed extends AbstractNeed {
 		switch (getDegree()) {
 		case BEYOND:
 			return null;
-		default:
-			return RestTaskGoal.INSTANCE;
+		case MILD:
+			return RestTaskGoal.TRIVIAL;
+		case MODERATE:
+			return RestTaskGoal.NORMAL;
+		case SEVERE:
+			return RestTaskGoal.SERIOUS;
 		}
+		return null;
 	}
 
 	@Override

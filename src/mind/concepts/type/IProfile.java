@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import sim.interfaces.IUnique;
 
-public interface IProfile extends IConcept, IUnique {
+public interface IProfile extends IMeme, IUnique {
 
 	/**
 	 * indicates the haver of a goal

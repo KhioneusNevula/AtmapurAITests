@@ -10,12 +10,23 @@ import mind.memory.IHasKnowledge;
 
 public class StowTaskGoal implements ITaskGoal {
 
+	private Priority priority = Priority.NORMAL;
+
 	/**
 	 * TODO allow specifying which body part holds the item, and where to stow
 	 */
 	public StowTaskGoal(/** IComponentPart holding, Location loc */
 	) {
 
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public StowTaskGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
 	}
 
 	@Override
@@ -30,7 +41,7 @@ public class StowTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return null;
 	}
 
@@ -52,7 +63,7 @@ public class StowTaskGoal implements ITaskGoal {
 
 	@Override
 	public String toString() {
-		return "StowGoal";
+		return "StowTG";
 	}
 
 	@Override

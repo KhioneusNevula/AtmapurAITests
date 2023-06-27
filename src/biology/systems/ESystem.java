@@ -59,6 +59,14 @@ public abstract class ESystem {
 				need);
 	}
 
+	protected void clearNeeds(INeedType type) {
+		if (this.needs != null) {
+			needs.get(type).clear();
+			if (needs.isEmpty())
+				needs = null;
+		}
+	}
+
 	public Multimap<INeedType, INeed> getNeeds() {
 		return needs == null ? ImmutableMultimap.of() : needs;
 	}

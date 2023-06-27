@@ -19,7 +19,7 @@ import mind.Group;
 import mind.IGroup;
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.ITaskHint;
@@ -40,6 +40,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	private TreeMap<UUID, Relationship> agreementsById;
 	private HashMap<IGroup, Integer> partOfGroups;
 	private boolean feelingCurious = true;
+	private boolean socializedRecently;
 
 	public Memory(UUID selfID, String type) {
 		super(selfID, type);
@@ -48,6 +49,9 @@ public class Memory extends AbstractKnowledgeEntity {
 	public Memory addCulture(Culture culture) {
 
 		cultures.add(culture);
+		if (this.mainLanguage == null)
+			this.mainLanguage = culture.mainLanguage;
+		this.languages.addAll(culture.getLanguages());
 		return this;
 	}
 
@@ -79,7 +83,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	}
 
 	@Override
-	public boolean isKnown(IConcept concept) {
+	public boolean isKnown(IMeme concept) {
 		if (!super.isKnown(concept)) {
 			for (Culture cul : cultures) {
 				if (cul.isKnown(concept))
@@ -111,7 +115,7 @@ public class Memory extends AbstractKnowledgeEntity {
 		Map<Culture, IPropertyData> set = Map.of();
 		for (Culture cult : cultures) {
 			IPropertyData dat2 = cult.getProperties(prof, cat);
-			if (dat2 != null) {
+			if (dat2 != null && !dat2.isUnknown()) {
 				if (set.isEmpty())
 					set = Map.of(cult, dat2);
 				else if (set.size() == 1) {
@@ -151,9 +155,20 @@ public class Memory extends AbstractKnowledgeEntity {
 
 	@Override
 	public boolean hasProperty(Profile prof, Property cat) {
-		if (!super.hasProperty(prof, cat)) {
+		if (super.hasProperty(prof, cat))
+			return true;
+		for (IPropertyData d : this.getPropertiesFromCulture(prof, cat).values()) {
+			if (d.isPresent())
+				return true;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isPropertyKnown(Profile prof, Property cat) {
+		if (!super.isPropertyKnown(prof, cat)) {
 			for (Culture c : cultures)
-				if (c.hasProperty(prof, cat))
+				if (c.isPropertyKnown(prof, cat))
 					return true;
 			return false;
 		}
@@ -179,6 +194,19 @@ public class Memory extends AbstractKnowledgeEntity {
 			}
 		}
 		return Map.copyOf(set);
+	}
+
+	@Override
+	public boolean knowsLocation(Profile prof) {
+		if (this.getLocation(prof) == null) {
+			for (Culture c : cultures) {
+				Location a = c.getLocation(prof);
+				if (a != null) {
+					return true;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -319,6 +347,14 @@ public class Memory extends AbstractKnowledgeEntity {
 
 	public void setFeelingCurious(boolean feelingCurious) {
 		this.feelingCurious = feelingCurious;
+	}
+
+	public boolean socializedRecently() {
+		return this.socializedRecently;
+	}
+
+	public void setSocializedRecently(boolean re) {
+		this.socializedRecently = re;
 	}
 
 }

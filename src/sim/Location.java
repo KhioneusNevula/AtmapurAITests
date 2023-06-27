@@ -1,9 +1,10 @@
 package sim;
 
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import sim.interfaces.ILocatable;
 
-public class Location implements ILocatable {
+public class Location implements ILocatable, IMeme {
 
 	private int x;
 	private int y;
@@ -52,6 +53,11 @@ public class Location implements ILocatable {
 	@Override
 	public String toString() {
 		return "(" + x + "," + y + ")";
+	}
+
+	@Override
+	public String getUniqueName() {
+		return "location_" + x + "_" + y;
 	}
 
 }

@@ -1,22 +1,17 @@
 package mind.memory.trend;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 
 /**
  * A Trend in a culture; this will be stored in the culture and will spread
  * among people in it; individuals will have a chance of knowing it. May have
  * data that can be stored with the concept.
  */
-public abstract class Trend {
+public abstract class Trend implements IMeme {
 
-	protected IConcept concept;
-	/**
-	 * What percent of people have adopted this trend -- the percent chance someone
-	 * random will know it, essentially
-	 */
-	protected float percentage = 0f;
+	protected IMeme concept;
 
-	public Trend(IConcept concept) {
+	public Trend(IMeme concept) {
 		this.concept = concept;
 	}
 
@@ -29,18 +24,13 @@ public abstract class Trend {
 		return null;
 	}
 
-	public IConcept getConcept() {
+	public IMeme getConcept() {
 		return concept;
 	}
 
-	public float getPercentage() {
-		return percentage;
-	}
-
-	public void setPercentage(float percentage) {
-		if (percentage < 0 || percentage > 1)
-			throw new IllegalArgumentException("" + percentage);
-		this.percentage = percentage;
+	@Override
+	public String getUniqueName() {
+		return "trend_" + this.getClass().getSimpleName().replace("trend", "") + "_" + concept.getUniqueName();
 	}
 
 }

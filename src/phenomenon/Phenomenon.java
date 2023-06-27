@@ -1,8 +1,14 @@
 package phenomenon;
 
+import java.util.Random;
 import java.util.UUID;
 
-import actor.IUniqueExistence;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
+
+import mind.concepts.type.Property;
+import mind.memory.IKnowledgeBase;
+import mind.memory.IPropertyData;
 import sim.World;
 
 /**
@@ -11,10 +17,27 @@ import sim.World;
  * @author borah
  *
  */
-public abstract class Phenomenon implements IUniqueExistence {
+public abstract class Phenomenon implements IPhenomenon {
 
 	private World world;
 	private UUID id = UUID.randomUUID();
+	private IPhenomenonType type;
+	private Table<IKnowledgeBase, Property, IPropertyData> socialProperties;
+
+	public Phenomenon(IPhenomenonType type) {
+		this.type = type;
+	}
+
+	@Override
+	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
+		(socialProperties == null ? socialProperties = HashBasedTable.create() : socialProperties).put(culture,
+				property, data);
+	}
+
+	@Override
+	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
+		return socialProperties == null ? IPropertyData.UNKNOWN : socialProperties.get(culture, property);
+	}
 
 	@Override
 	public World getWorld() {
@@ -24,5 +47,20 @@ public abstract class Phenomenon implements IUniqueExistence {
 	@Override
 	public UUID getUUID() {
 		return id;
+	}
+
+	@Override
+	public IPhenomenonType type() {
+		return type;
+	}
+
+	@Override
+	public IPhenomenonType getSpecies() {
+		return type;
+	}
+
+	@Override
+	public Random rand() {
+		return this.world.rand();
 	}
 }

@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import biology.systems.ISystemHolder;
 import biology.systems.SystemType;
 import mind.concepts.type.BasicProperties;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
@@ -23,22 +23,32 @@ import mind.memory.IHasKnowledge;
  */
 public class EatTaskGoal implements ITaskGoal {
 
-	private IConcept foodType;
-	private ImmutableSet<IConcept> foodSet;
+	private IMeme foodType;
+	private ImmutableSet<IMeme> foodSet;
 	private IProfile target;
 	public static final double DEFAULT_PERCENT = 0.4;
 	private double percent = DEFAULT_PERCENT;
+	private Priority priority = Priority.SERIOUS;
 
 	/**
 	 * optional food type or specific food target; can be null
 	 * 
 	 * @param food
 	 */
-	public EatTaskGoal(IConcept foodType, double percent) {
+	public EatTaskGoal(IMeme foodType, double percent) {
 		this.foodType = foodType == null ? BasicProperties.FOOD : null;
 		this.target = IProfile.SELF;
 		this.foodSet = ImmutableSet.of(this.foodType);
 		this.percent = percent;
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public EatTaskGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
 	}
 
 	/**
@@ -55,17 +65,17 @@ public class EatTaskGoal implements ITaskGoal {
 		return TaskHint.CONSUME;
 	}
 
-	public IConcept getFoodType() {
+	public IMeme getFoodType() {
 		return foodType;
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return target;
 	}
 
 	@Override
-	public Set<IConcept> useTarget() {
+	public Set<IMeme> usedItem() {
 		return foodSet;
 	}
 
@@ -92,7 +102,7 @@ public class EatTaskGoal implements ITaskGoal {
 
 	@Override
 	public String toString() {
-		return "EatGoal" + (foodType != BasicProperties.FOOD ? "{" + this.foodType + "}" : "");
+		return "EatTG" + (foodType != BasicProperties.FOOD ? "{" + this.foodType + "}" : "");
 	}
 
 	@Override

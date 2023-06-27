@@ -2,19 +2,19 @@ package mind.need;
 
 import com.google.common.collect.ImmutableSet;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.goals.IGoal;
 
 public class SafetyNeed extends AbstractNeed {
 
-	private ImmutableSet<IConcept> dangers;
+	private ImmutableSet<IMeme> dangers;
 
 	/**
 	 * optional argument representing the dangerous thing to be defended against
 	 * 
 	 * @param deg
 	 */
-	public SafetyNeed(Degree deg, IConcept... dangers) {
+	public SafetyNeed(Degree deg, IMeme... dangers) {
 		super(NeedType.CREATIVITY, deg);
 		if (dangers.length > 0)
 			this.dangers = ImmutableSet.copyOf(dangers);
@@ -30,7 +30,7 @@ public class SafetyNeed extends AbstractNeed {
 		return dangers.size() > 0;
 	}
 
-	public ImmutableSet<IConcept> getDangers() {
+	public ImmutableSet<IMeme> getDangers() {
 		return dangers;
 	}
 

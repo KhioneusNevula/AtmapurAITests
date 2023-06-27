@@ -4,11 +4,9 @@ import java.util.Collection;
 import java.util.Set;
 
 import actor.IPartAbility;
-import mind.concepts.type.IConcept;
+import mind.ICanAct;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
-import mind.memory.IHasKnowledge;
-import sim.Location;
 
 /**
  * An instance of an action in memory
@@ -37,40 +35,6 @@ public interface IAction {
 	}
 
 	/**
-	 * if this action targets a location, this returns the location
-	 * 
-	 * @return
-	 */
-	default Location targetLocation() {
-		return null;
-	}
-
-	/**
-	 * if the target is multiple locations, this returns that
-	 * 
-	 * @return
-	 */
-	default Iterable<Location> targetLocations() {
-		return Set.of();
-	}
-
-	/**
-	 * if the target is a concept, this returns it
-	 * 
-	 * @return
-	 */
-	default IConcept targetConcept() {
-		return null;
-	}
-
-	/**
-	 * if the target is multiple concepts
-	 */
-	default Iterable<IConcept> targetConcepts() {
-		return Set.of();
-	}
-
-	/**
 	 * What use this task is for
 	 * 
 	 * @return
@@ -93,7 +57,7 @@ public interface IAction {
 	 *                  action's execution
 	 * @return
 	 */
-	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering);
+	public boolean canExecuteIndividual(ICanAct user, boolean pondering);
 
 	/**
 	 * {@link IAction#canExecuteIndividual}, but for a group
@@ -101,7 +65,7 @@ public interface IAction {
 	 * @param group
 	 * @return
 	 */
-	default boolean canExecuteGroup(IHasKnowledge group, boolean pondering) {
+	default boolean canExecuteGroup(ICanAct group, boolean pondering) {
 		return false;
 	}
 
@@ -110,14 +74,14 @@ public interface IAction {
 	 * 
 	 * @param forUser
 	 */
-	public void beginExecutingIndividual(IHasKnowledge forUser);
+	public void beginExecutingIndividual(ICanAct forUser);
 
 	/**
 	 * {@link IAction#beginExecutingIndividual} but for a group
 	 * 
 	 * @param forUser
 	 */
-	default void beginExecutingGroup(IHasKnowledge group) {
+	default void beginExecutingGroup(ICanAct group) {
 
 	}
 
@@ -127,11 +91,11 @@ public interface IAction {
 	 * @param individual
 	 * @return
 	 */
-	default boolean canContinueExecutingIndividual(IHasKnowledge individual, int tick) {
+	default boolean canContinueExecutingIndividual(ICanAct individual, int tick) {
 		return false;
 	}
 
-	default boolean canContinueExecutingGroup(IHasKnowledge group, int tick) {
+	default boolean canContinueExecutingGroup(ICanAct group, int tick) {
 		return false;
 	}
 
@@ -143,11 +107,11 @@ public interface IAction {
 	 * @param tick
 	 * @return
 	 */
-	default void executionTickIndividual(IHasKnowledge individual, int tick) {
+	default void executionTickIndividual(ICanAct individual, int tick) {
 
 	}
 
-	default void executionTickGroup(IHasKnowledge group, int tick) {
+	default void executionTickGroup(ICanAct group, int tick) {
 
 	}
 
@@ -158,11 +122,11 @@ public interface IAction {
 	 * @param individual
 	 * @param tick
 	 */
-	default boolean finishActionIndividual(IHasKnowledge individual, int tick) {
+	default boolean finishActionIndividual(ICanAct individual, int tick) {
 		return true;
 	}
 
-	default boolean finishActionGroup(IHasKnowledge group, int tick) {
+	default boolean finishActionGroup(ICanAct group, int tick) {
 		return false;
 	}
 
@@ -173,7 +137,7 @@ public interface IAction {
 	 * 
 	 * @return
 	 */
-	public Collection<ITaskGoal> genConditionGoal(IHasKnowledge user);
+	public Collection<ITaskGoal> genConditionGoal(ICanAct user);
 
 	/**
 	 * Generates whatever action this needs to in order to work (e.g. for actions
@@ -181,7 +145,7 @@ public interface IAction {
 	 * 
 	 * @return
 	 */
-	default Collection<IAction> genExtraActions(IHasKnowledge user) {
+	default Collection<IAction> genExtraActions(ICanAct user) {
 		return Set.of();
 	}
 
@@ -217,6 +181,58 @@ public interface IAction {
 	 */
 	default String reasonForUnviability() {
 		return "action is impossible";
+	}
+
+	/**
+	 * How many times this action should be attempted before written off as undoable
+	 * 
+	 * @return
+	 */
+	default int executionAttempts() {
+		return 3;
+	}
+
+	/**
+	 * The selected target of an action which involves two parties, like socializing
+	 * 
+	 * @return
+	 */
+	default ICanAct interactionTarget() {
+		return null;
+	}
+
+	/**
+	 * For actions with multiple interaction targets, technically
+	 * 
+	 * @return
+	 */
+	default Collection<ICanAct> interactionTargets() {
+		return Set.of();
+	}
+
+	default boolean isInteraction() {
+		return this instanceof IInteraction;
+	}
+
+	/**
+	 * Gets this action as an interaction
+	 * 
+	 * @return
+	 */
+	default IInteraction getAsInteraction() {
+		return (IInteraction) this;
+	}
+
+	/**
+	 * Creates an action which behaves as a request to the other user to perform an
+	 * action parallel to this action (e.g. initiate a conversation)
+	 * 
+	 * @param user
+	 * @param other
+	 * @return
+	 */
+	default IInteraction createInteraction(ICanAct offerer, ICanAct partner) {
+		return null;
 	}
 
 }

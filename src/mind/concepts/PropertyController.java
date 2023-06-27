@@ -1,8 +1,8 @@
 package mind.concepts;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -29,9 +29,11 @@ public class PropertyController {
 		return identifier;
 	}
 
-	public PropertyController setIdentifier(IPropertyIdentifier identifier) {
-		this.identifier = identifier;
-		return this;
+	public CompositeIdentifier editIdentifier(IPropertyIdentifier... identifiers) {
+		if (identifier == IPropertyIdentifier.UNKNOWN) {
+			return (CompositeIdentifier) (identifier = new CompositeIdentifier().addIdentifier(identifiers));
+		}
+		return (CompositeIdentifier) identifier;
 	}
 
 	public Collection<ITaskHint> getPurposes() {
@@ -44,7 +46,7 @@ public class PropertyController {
 	}
 
 	public PropertyController removePurposes(ITaskHint... purpose) {
-		TreeSet<ITaskHint> goals = new TreeSet<>(purposes);
+		HashSet<ITaskHint> goals = new HashSet<>(purposes);
 		goals.removeAll(Set.of(purpose));
 		if (goals.isEmpty())
 			purposes = Set.of();

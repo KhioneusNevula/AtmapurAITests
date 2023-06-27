@@ -5,71 +5,19 @@ import java.util.Set;
 
 import actor.Actor;
 import mind.Culture;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
+import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
+import mind.goals.question.Question;
 import mind.memory.IHasKnowledge;
 import mind.memory.IKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.memory.Memory;
+import mind.speech.IUtterance;
 import sim.Location;
 
 public interface ITaskGoal extends IGoal {
-
-	/**
-	 * represents a goal which does not have any conditions
-	 */
-	public static final ITaskGoal CONTINUE = new ITaskGoal() {
-		@Override
-		public Type getGoalType() {
-			return Type.NONE;
-		}
-
-		@Override
-		public boolean isDone() {
-			return false;
-		}
-
-		@Override
-		public boolean societalGoal() {
-			return false;
-		}
-
-		@Override
-		public boolean individualGoal() {
-			return false;
-		}
-
-		@Override
-		public ITaskHint getActionHint() {
-			return TaskHint.NONE;
-		}
-
-		@Override
-		public IProfile getTarget() {
-			return null;
-		}
-
-		@Override
-		public boolean isComplete(IHasKnowledge entity) {
-			return false;
-		}
-
-		@Override
-		public boolean isInvalid(IHasKnowledge knower) {
-			return false;
-		}
-
-		@Override
-		public String getUniqueName() {
-			return "goal_CONTINUE";
-		}
-
-		@Override
-		public String toString() {
-			return getUniqueName();
-		}
-	};
 
 	/**
 	 * Represents the top of a goal stack; the goal indicating that requirements are
@@ -92,6 +40,11 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
+		public Priority getPriority() {
+			return Priority.TRIVIAL;
+		}
+
+		@Override
 		public boolean individualGoal() {
 			return false;
 		}
@@ -102,7 +55,7 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
-		public IProfile getTarget() {
+		public IProfile beneficiary() {
 			return null;
 		}
 
@@ -135,7 +88,12 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
-		public IProfile getTarget() {
+		public Priority getPriority() {
+			return Priority.TRIVIAL;
+		}
+
+		@Override
+		public IProfile beneficiary() {
 			return null;
 		}
 
@@ -183,20 +141,20 @@ public interface ITaskGoal extends IGoal {
 	public ITaskHint getActionHint();
 
 	/**
-	 * Gets the desired target of this task. This would be who acquires the Acquire
-	 * tasks items; who is resurrected by the Resurrect tasks; what is stowed; etc.
-	 * Almost always the self.
+	 * Gets the desired beneficiary of this task. This would be who acquires the
+	 * Acquire tasks items; who is resurrected by the Resurrect tasks; what is
+	 * stowed; etc. Almost always the self.
 	 * 
 	 * @return
 	 */
-	public IProfile getTarget();
+	public IProfile beneficiary();
 
 	/**
 	 * the location that is the target of this task goal
 	 * 
 	 * @return
 	 */
-	default Location getTargetLocation() {
+	default Location targetLocation() {
 		return null;
 	}
 
@@ -206,7 +164,7 @@ public interface ITaskGoal extends IGoal {
 	 * 
 	 * @return
 	 */
-	default IConcept transferTarget() {
+	default IMeme transferItem() {
 		return null;
 	}
 
@@ -215,16 +173,38 @@ public interface ITaskGoal extends IGoal {
 	 * task to complete it; this would be the item consumed by a consumer, or the
 	 * healing item used to heal
 	 */
-	default Collection<IConcept> useTarget() {
+	default Collection<IMeme> usedItem() {
 		return Set.of();
 	}
 
 	/**
-	 * This woud be the topic learned about in a learning goal
+	 * the target of a social interaction
 	 * 
 	 * @return
 	 */
-	default IConcept getLearnTarget() {
+	default Profile socialTarget() {
+		return null;
+	}
+
+	default Collection<Profile> socialTargets() {
+		return Set.of();
+	}
+
+	/**
+	 * This woud be the question learned about in a learning goal
+	 * 
+	 * @return
+	 */
+	default Question learnTarget() {
+		return null;
+	}
+
+	/**
+	 * The information that needs to be communicated via this action
+	 * 
+	 * @return
+	 */
+	default IUtterance communicationInfo() {
 		return null;
 	}
 
@@ -241,7 +221,7 @@ public interface ITaskGoal extends IGoal {
 	 * 
 	 * @return
 	 */
-	default Collection<IConcept> producedItem() {
+	default Collection<IMeme> producedItem() {
 		return Set.of();
 	}
 
@@ -261,7 +241,7 @@ public interface ITaskGoal extends IGoal {
 			return actor.getPropertyData(knowledge, property);
 		} else if (knowledge instanceof Memory) {
 			IPropertyData dat = actor.getPropertyData(knowledge, property);
-			if (dat != null)
+			if (!dat.isUnknown())
 				return dat;
 			for (Culture cult : ((Memory) knowledge).cultures()) {
 				IPropertyData twa = actor.getPropertyData(cult, property);
@@ -272,6 +252,7 @@ public interface ITaskGoal extends IGoal {
 			}
 			return dat;
 		}
-		return null;
+		return IPropertyData.UNKNOWN;
 	}
+
 }

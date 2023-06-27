@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableSet;
 
 import biology.systems.types.ISensor;
 
-public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IConcept {
+public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
 
 	public static final SenseProperty<IColor> COLOR = new SenseProperty<>("color", IColor.class, ISensor.SIGHT);
 	public static final SenseProperty<IShape> SHAPE = new SenseProperty<>("shape", IShape.class, ISensor.SIGHT);

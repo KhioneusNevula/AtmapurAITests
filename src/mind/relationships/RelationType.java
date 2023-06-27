@@ -23,7 +23,7 @@ public enum RelationType {
 	/** relationship requiring performance of a specific task */
 	REQUIRE_TASK(false, true, DO, IGoal.Type.TASK),
 	/** social relationship */
-	SOCIALIZE(true, true, null, IGoal.Type.COMMUNITY),
+	FEEL(true, true, null, IGoal.Type.COMMUNITY),
 	/**
 	 * a relationship characterized by this party making decisions for the other
 	 * party

@@ -8,6 +8,8 @@ public class ItemResource implements IResource {
 
 	private Profile item;
 
+	private Priority priority = Priority.NORMAL;
+
 	public ItemResource(Profile item) {
 		this.item = item;
 	}
@@ -15,6 +17,15 @@ public class ItemResource implements IResource {
 	@Override
 	public IResourceType getType() {
 		return ResourceType.ITEM;
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public ItemResource setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
 	}
 
 	@Override

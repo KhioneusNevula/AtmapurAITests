@@ -1,18 +1,18 @@
 package mind.need;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.goals.IGoal;
 
 public class SelfPreservationNeed extends AbstractNeed {
 
-	private IConcept danger;
+	private IMeme danger;
 
-	public SelfPreservationNeed(Degree degree, IConcept protectFrom) {
+	public SelfPreservationNeed(Degree degree, IMeme protectFrom) {
 		super(NeedType.SELF_PRESERVATION, degree);
 		this.danger = protectFrom;
 	}
 
-	public IConcept getDanger() {
+	public IMeme getDanger() {
 		return danger;
 	}
 

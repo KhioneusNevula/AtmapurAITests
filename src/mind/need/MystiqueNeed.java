@@ -2,17 +2,17 @@ package mind.need;
 
 import com.google.common.collect.ImmutableSet;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.goals.IGoal;
 
 public class MystiqueNeed extends AbstractNeed {
 
-	private ImmutableSet<IConcept> concepts;
+	private ImmutableSet<IMeme> concepts;
 
 	/**
 	 * need to make mystical stories about different concepts
 	 */
-	public MystiqueNeed(Degree degree, Iterable<IConcept> concepts) {
+	public MystiqueNeed(Degree degree, Iterable<IMeme> concepts) {
 		super(NeedType.MYSTIQUE, degree);
 		this.concepts = ImmutableSet.copyOf(concepts);
 	}
@@ -22,7 +22,7 @@ public class MystiqueNeed extends AbstractNeed {
 	 * 
 	 * @param degree
 	 */
-	public MystiqueNeed(Degree degree, IConcept... concepts) {
+	public MystiqueNeed(Degree degree, IMeme... concepts) {
 		super(NeedType.MYSTIQUE, degree);
 		this.concepts = ImmutableSet.copyOf(concepts);
 	}

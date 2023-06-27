@@ -1,19 +1,20 @@
 package mind.need;
 
-import mind.concepts.type.IConcept;
 import mind.goals.IGoal;
+import mind.goals.IGoal.Priority;
+import mind.goals.question.Question;
 import mind.goals.taskgoals.LearnTaskGoal;
 
 public class KnowledgeNeed extends AbstractNeed {
 
-	private IConcept topic;
+	private Question topic;
 
-	public KnowledgeNeed(Degree degree, IConcept topic) {
+	public KnowledgeNeed(Degree degree, Question topic) {
 		super(NeedType.KNOWLEDGE, degree);
 		this.topic = topic;
 	}
 
-	public IConcept getTopic() {
+	public Question getTopic() {
 		return topic;
 	}
 
@@ -24,7 +25,7 @@ public class KnowledgeNeed extends AbstractNeed {
 		case BEYOND:
 			return null;
 		case MILD:
-			return new LearnTaskGoal(topic);
+			return new LearnTaskGoal(topic).setPriority(Priority.TRIVIAL);
 		default:
 			return null;
 		}

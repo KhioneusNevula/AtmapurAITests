@@ -3,11 +3,13 @@ package actor;
 import biology.anatomy.Body;
 import biology.anatomy.ISpeciesTemplate;
 import biology.systems.ESystem;
+import mind.Culture;
 import mind.IMind;
+import mind.Mind;
 import mind.need.INeed;
 import sim.World;
 
-public class LivingActor extends MultipartActor {
+public class SentientActor extends MultipartActor {
 
 	private IMind mind;
 
@@ -20,16 +22,24 @@ public class LivingActor extends MultipartActor {
 	 * @param startY
 	 * @param radius
 	 */
-	public LivingActor(World world, String name, ISpeciesTemplate species, int startX, int startY, int radius) {
+	public SentientActor(World world, String name, ISpeciesTemplate species, int startX, int startY, int radius) {
 		super(world, name, species, startX, startY, radius);
 		this.species = species;
+	}
+
+	protected void initMind() {
+		this.mind = new Mind(this);
+		Culture a = this.getWorld().getOrGenDefaultCulture(this.getSpecies());
+		this.mind.getMindMemory().addCulture(a);
 	}
 
 	protected void initBody() {
 		if (species == null)
 			this.body = new Body(this.getUUID());
-		else
+		else {
 			this.body = new Body(getUUID(), (ISpeciesTemplate) species);
+
+		}
 		((Body) this.body).buildBody();
 	}
 
@@ -61,7 +71,8 @@ public class LivingActor extends MultipartActor {
 		for (ESystem sys : this.getSystems()) {
 			if (!sys.getNeeds().isEmpty()) {
 				for (INeed need : sys.getNeeds().values()) {
-					this.mind.getKnowledgeBase().addNeed(need);
+					if (!mind.getKnowledgeBase().getNeeds().get(need.getType()).contains(need))
+						this.mind.getKnowledgeBase().addNeed(need);
 				}
 			}
 		}

@@ -2,11 +2,12 @@ package mind.memory;
 
 import java.util.Set;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 
 public interface IPropertyData {
-	public static final IPropertyData PRESENCE = new IPropertyData() {
+
+	public static final IPropertyData UNKNOWN = new IPropertyData() {
 		@Override
 		public Integer getIntProp() {
 			return null;
@@ -18,7 +19,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public Set<IConcept> getConceptList() {
+		public Set<IMeme> getConceptList() {
 			return null;
 		}
 
@@ -28,12 +29,12 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public boolean hasConceptInList(IConcept con) {
+		public boolean hasConceptInList(IMeme con) {
 			return false;
 		}
 
 		@Override
-		public IConcept getConceptProp() {
+		public IMeme getConceptProp() {
 			return null;
 		}
 
@@ -43,7 +44,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public void addConceptToList(IConcept con) {
+		public void addConceptToList(IMeme con) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -53,7 +54,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public void removeConceptFromList(IConcept con) {
+		public void removeConceptFromList(IMeme con) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -63,7 +64,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public RememberedProperties setConcept(IConcept other) {
+		public RememberedProperties setConcept(IMeme other) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -88,7 +89,118 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public boolean isPresence() {
+		public boolean onlyMarksPresence() {
+			return true;
+		}
+
+		@Override
+		public boolean isUnknown() {
+			return true;
+		}
+
+		@Override
+		public int getKnownCount() {
+			return -1;
+		}
+
+		@Override
+		public boolean isPresent() {
+			return false;
+		}
+
+		@Override
+		public boolean isAbsent() {
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "UNKNOWN";
+		}
+	};
+	public static final IPropertyData PRESENCE = new IPropertyData() {
+		@Override
+		public Integer getIntProp() {
+			return null;
+		}
+
+		@Override
+		public Set<Profile> getProfileList() {
+			return null;
+		}
+
+		@Override
+		public Set<IMeme> getConceptList() {
+			return null;
+		}
+
+		@Override
+		public boolean hasProfileInList(Profile prof) {
+			return false;
+		}
+
+		@Override
+		public boolean hasConceptInList(IMeme con) {
+			return false;
+		}
+
+		@Override
+		public IMeme getConceptProp() {
+			return null;
+		}
+
+		@Override
+		public Profile getProfileProp() {
+			return null;
+		}
+
+		@Override
+		public void addConceptToList(IMeme con) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addProfileToList(Profile prof) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void removeConceptFromList(IMeme con) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void removeProfileFromList(Profile prof) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setConcept(IMeme other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setInt(int other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setProfile(Profile other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void forgetAllConceptList() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void forgetAllProfileList() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean onlyMarksPresence() {
 			return true;
 		}
 
@@ -98,32 +210,134 @@ public interface IPropertyData {
 		}
 	};
 
+	public static final IPropertyData ABSENCE = new IPropertyData() {
+		@Override
+		public Integer getIntProp() {
+			return null;
+		}
+
+		@Override
+		public Set<Profile> getProfileList() {
+			return null;
+		}
+
+		@Override
+		public Set<IMeme> getConceptList() {
+			return null;
+		}
+
+		@Override
+		public boolean hasProfileInList(Profile prof) {
+			return false;
+		}
+
+		@Override
+		public boolean hasConceptInList(IMeme con) {
+			return false;
+		}
+
+		@Override
+		public IMeme getConceptProp() {
+			return null;
+		}
+
+		@Override
+		public Profile getProfileProp() {
+			return null;
+		}
+
+		@Override
+		public void addConceptToList(IMeme con) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void addProfileToList(Profile prof) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void removeConceptFromList(IMeme con) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void removeProfileFromList(Profile prof) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setConcept(IMeme other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setInt(int other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public RememberedProperties setProfile(Profile other) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void forgetAllConceptList() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public void forgetAllProfileList() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean onlyMarksPresence() {
+			return true;
+		}
+
+		@Override
+		public boolean isPresent() {
+			return false;
+		}
+
+		@Override
+		public boolean isAbsent() {
+			return true;
+		}
+
+		@Override
+		public String toString() {
+			return "NO";
+		}
+	};
+
 	public Integer getIntProp();
 
 	public Set<Profile> getProfileList();
 
-	public Set<IConcept> getConceptList();
+	public Set<IMeme> getConceptList();
 
 	public boolean hasProfileInList(Profile prof);
 
-	public boolean hasConceptInList(IConcept con);
+	public boolean hasConceptInList(IMeme con);
 
-	public IConcept getConceptProp();
+	public IMeme getConceptProp();
 
 	public Profile getProfileProp();
 
 	public void removeProfileFromList(Profile prof);
 
-	public void removeConceptFromList(IConcept con);
+	public void removeConceptFromList(IMeme con);
 
 	public void forgetAllConceptList();
 
 	public void forgetAllProfileList();
 
-	public void addConceptToList(IConcept con);
+	public void addConceptToList(IMeme con);
 
-	default void addConceptsToList(Iterable<IConcept> cons) {
-		for (IConcept con : cons) {
+	default void addConceptsToList(Iterable<IMeme> cons) {
+		for (IMeme con : cons) {
 			addConceptToList(con);
 		}
 	}
@@ -140,7 +354,7 @@ public interface IPropertyData {
 
 	public RememberedProperties setInt(int other);
 
-	public RememberedProperties setConcept(IConcept other);
+	public RememberedProperties setConcept(IMeme other);
 
 	/**
 	 * Return how many of the properties stored in this are known
@@ -152,11 +366,28 @@ public interface IPropertyData {
 	}
 
 	/**
-	 * Returns true if this property data is only a marker of presence
+	 * Returns true if this property data is only a marker of presence or absence
 	 * 
 	 * @return
 	 */
-	default boolean isPresence() {
+	default boolean onlyMarksPresence() {
+		return false;
+	}
+
+	/**
+	 * Return true if this property data indicates absence
+	 * 
+	 * @return
+	 */
+	default boolean isAbsent() {
+		return false;
+	}
+
+	default boolean isPresent() {
+		return true;
+	}
+
+	default boolean isUnknown() {
 		return false;
 	}
 

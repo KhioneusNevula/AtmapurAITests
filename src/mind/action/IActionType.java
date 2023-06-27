@@ -4,12 +4,12 @@ import java.util.Collection;
 import java.util.Set;
 
 import actor.IPartAbility;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.memory.IHasKnowledge;
 
-public interface IActionType<T extends IAction> extends IConcept {
+public interface IActionType<T extends IAction> extends IMeme {
 	/**
 	 * if this action type requires an actor to execute
 	 * 
@@ -46,6 +46,14 @@ public interface IActionType<T extends IAction> extends IConcept {
 	 * @return
 	 */
 	public boolean isViable(IHasKnowledge user, ITaskGoal forGoal);
+
+	/**
+	 * Required known concepts for a given goal
+	 * 
+	 * @param forGoal
+	 * @return
+	 */
+	public Collection<IMeme> requiredConcepts(ITaskGoal forGoal);
 
 	/**
 	 * what abilities of a creature this action uses

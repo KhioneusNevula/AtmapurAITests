@@ -1,6 +1,6 @@
 package mind.goals;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.memory.IHasKnowledge;
 
 /**
@@ -155,7 +155,7 @@ public interface IResource extends IGoal {
 	 * 
 	 * @return
 	 */
-	public IConcept getConcept();
+	public IMeme getConcept();
 
 	@Override
 	public default IGoal.Type getGoalType() {

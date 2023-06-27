@@ -6,7 +6,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import actor.Actor;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
@@ -18,20 +18,30 @@ import mind.memory.IHasKnowledge;
 
 public class AcquireTaskGoal implements ITaskGoal {
 
-	private IConcept item;
+	private IMeme item;
 	private IProfile target;
-	private Set<IConcept> productSet;
+	private Set<IMeme> productSet;
+	private Priority priority = Priority.NORMAL;
 
-	public AcquireTaskGoal(IConcept item) {
+	public AcquireTaskGoal(IMeme item) {
 		this(item, IProfile.SELF);
 	}
 
-	public AcquireTaskGoal(IConcept item, IProfile target) {
+	public AcquireTaskGoal(IMeme item, IProfile target) {
 		if (!(item instanceof Property || item instanceof Profile))
 			throw new IllegalArgumentException("" + item.getClass());
 		this.item = item;
 		this.target = target;
 		this.productSet = ImmutableSet.of(item);
+	}
+
+	public AcquireTaskGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
+	}
+
+	public Priority getPriority() {
+		return priority;
 	}
 
 	@Override
@@ -43,7 +53,7 @@ public class AcquireTaskGoal implements ITaskGoal {
 	public boolean isComplete(IHasKnowledge entity) {
 		if (item instanceof Property)
 			return ((entity.getAsHasActor().getActor()).getPossessed().stream()
-					.anyMatch((a) -> ITaskGoal.getProperty(a, (Property) item, entity) != null));
+					.anyMatch((a) -> ITaskGoal.getProperty(a, (Property) item, entity).isPresent()));
 		if (item instanceof Profile) {
 			return ((entity.getAsHasActor().getActor()).getPossessed().stream()
 					.anyMatch((a) -> a.getUUID().equals(((Profile) item).getUUID())));
@@ -51,22 +61,22 @@ public class AcquireTaskGoal implements ITaskGoal {
 		return false;
 	}
 
-	public IConcept getItem() {
+	public IMeme getItem() {
 		return item;
 	}
 
 	@Override
-	public Collection<IConcept> producedItem() {
+	public Collection<IMeme> producedItem() {
 		return productSet;
 	}
 
 	@Override
-	public IProfile getTarget() {
+	public IProfile beneficiary() {
 		return target;
 	}
 
 	@Override
-	public IConcept transferTarget() {
+	public IMeme transferItem() {
 		return this.item;
 	}
 
@@ -88,7 +98,7 @@ public class AcquireTaskGoal implements ITaskGoal {
 
 	@Override
 	public String toString() {
-		return "AcquireGoal{" + this.item + "}";
+		return "AcquireTG{" + this.item + "}";
 	}
 
 	@Override

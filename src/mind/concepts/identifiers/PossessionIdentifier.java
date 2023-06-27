@@ -24,13 +24,13 @@ public enum PossessionIdentifier implements IPropertyIdentifier {
 			Collection<Actor> poss = actor.getPossessed();
 			if (!poss.isEmpty()) {
 				// TODO check for concealment, etc
-				data.addProfilesToList(
-						poss.stream().filter((a) -> a.getVisage() != null && !a.getVisage().isInvisible())
-								.map((a) -> new Profile(a.getUUID(), "unit")).collect(Collectors.toSet()));
+				data.addProfilesToList(poss.stream()
+						.filter((a) -> a.getVisage() != null && !a.getVisage().isInvisible())
+						.map((a) -> new Profile(a.getUUID(), a.getName().toLowerCase())).collect(Collectors.toSet()));
 			}
 			return data;
 		}
-		return null;
+		return IPropertyData.ABSENCE;
 	}
 
 }

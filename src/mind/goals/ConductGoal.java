@@ -6,6 +6,7 @@ import mind.relationships.Role;
 public class ConductGoal implements IConduct {
 
 	private Role requiredRole;
+	private Priority priority = Priority.NORMAL;
 
 	public ConductGoal(Role requiredRole) {
 		this.requiredRole = requiredRole;
@@ -14,6 +15,16 @@ public class ConductGoal implements IConduct {
 	@Override
 	public Role getRequiredRole() {
 		return requiredRole;
+	}
+
+	public ConductGoal setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
+	}
+
+	@Override
+	public Priority getPriority() {
+		return priority;
 	}
 
 	@Override

@@ -11,6 +11,10 @@ import sim.interfaces.IPhysicalExistence;
  */
 public abstract class WorldPhenomenon extends Phenomenon implements IPhysicalExistence {
 
+	public WorldPhenomenon(IPhenomenonType type) {
+		super(type);
+	}
+
 	private int x;
 	private int y;
 	private Location location;

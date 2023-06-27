@@ -31,6 +31,8 @@ public enum TaskHint implements ITaskHint {
 	DESTROY("destroy"),
 	/** for stowing a resource in a storage */
 	STOW("stow"),
+	/** for communicating */
+	COMMUNICATE("talk"),
 	/** for cleaning something */
 	CLEAN("clean"),
 	/** for making yourself feel better */

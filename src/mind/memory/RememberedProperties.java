@@ -3,14 +3,14 @@ package mind.memory;
 import java.util.HashSet;
 import java.util.Set;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 
 public class RememberedProperties implements IPropertyData {
 	private Integer intProp;
-	private IConcept conceptProp;
-	private Set<IConcept> conceptListProp;
+	private IMeme conceptProp;
+	private Set<IMeme> conceptListProp;
 	private Profile profileProp;
 	private Set<Profile> profileListProp;
 	private Property property;
@@ -33,7 +33,7 @@ public class RememberedProperties implements IPropertyData {
 		return profileListProp;
 	}
 
-	public Set<IConcept> getConceptList() {
+	public Set<IMeme> getConceptList() {
 		if (conceptListProp == null)
 			return Set.of();
 		return conceptListProp;
@@ -49,7 +49,7 @@ public class RememberedProperties implements IPropertyData {
 			profileListProp = null;
 	}
 
-	public void removeConceptFromList(IConcept con) {
+	public void removeConceptFromList(IMeme con) {
 		if (!property.hasConceptListProperty())
 			throw new UnsupportedOperationException();
 		if (conceptListProp == null)
@@ -65,13 +65,13 @@ public class RememberedProperties implements IPropertyData {
 		return profileListProp.contains(prof);
 	}
 
-	public boolean hasConceptInList(IConcept con) {
+	public boolean hasConceptInList(IMeme con) {
 		if (conceptListProp == null)
 			return false;
 		return conceptListProp.contains(con);
 	}
 
-	public void addConceptToList(IConcept con) {
+	public void addConceptToList(IMeme con) {
 		if (!property.hasConceptListProperty())
 			throw new UnsupportedOperationException();
 		if (conceptListProp == null) {
@@ -89,7 +89,7 @@ public class RememberedProperties implements IPropertyData {
 		profileListProp.add(prof);
 	}
 
-	public IConcept getConceptProp() {
+	public IMeme getConceptProp() {
 		return conceptProp;
 	}
 
@@ -111,7 +111,7 @@ public class RememberedProperties implements IPropertyData {
 		return this;
 	}
 
-	public RememberedProperties setConcept(IConcept other) {
+	public RememberedProperties setConcept(IMeme other) {
 		if (!property.hasConceptProperty())
 			throw new UnsupportedOperationException();
 		conceptProp = other;
@@ -148,6 +148,7 @@ public class RememberedProperties implements IPropertyData {
 			builder.append(" concept[]=").append(conceptListProp).append(";");
 		if (profileListProp != null)
 			builder.append(" profile[]=").append(profileListProp);
-		return builder.append("}").toString();
+
+		return builder.append("}").toString().equals("{}") ? "YES{}" : builder.toString();
 	}
 }

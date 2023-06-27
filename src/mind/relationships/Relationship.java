@@ -2,14 +2,14 @@ package mind.relationships;
 
 import java.util.UUID;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.goals.IConduct;
 import mind.goals.IGoal;
 import mind.goals.IPersonalRelationship;
 import mind.goals.IResource;
 import mind.goals.ITaskGoal;
 
-public class Relationship implements Comparable<Relationship>, IConcept {
+public class Relationship implements Comparable<Relationship>, IMeme {
 
 	private UUID relationshipID;
 	private RelationType type;
@@ -24,7 +24,7 @@ public class Relationship implements Comparable<Relationship>, IConcept {
 	}
 
 	public static Relationship social(IPersonalRelationship personalRelation) {
-		return new Relationship(UUID.randomUUID(), RelationType.SOCIALIZE, personalRelation);
+		return new Relationship(UUID.randomUUID(), RelationType.FEEL, personalRelation);
 	}
 
 	public static Relationship requireTask(ITaskGoal task) {

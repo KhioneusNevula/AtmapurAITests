@@ -1,6 +1,6 @@
 package mind.goals;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.memory.IHasKnowledge;
 
 /**
@@ -10,7 +10,7 @@ import mind.memory.IHasKnowledge;
  * @author borah
  *
  */
-public interface IGoal extends IConcept {
+public interface IGoal extends IMeme {
 
 	public static enum Type {
 		/** Membership to a group/role */
@@ -89,6 +89,16 @@ public interface IGoal extends IConcept {
 	 */
 	default boolean equivalent(IGoal other) {
 		return this.getGoalType() == other.getGoalType();
+	}
+
+	public Priority getPriority();
+
+	public static enum Priority {
+		/**
+		 * a goal of this priority is not driven by rational need; this would be
+		 * something resultant of insanity or whatever
+		 */
+		OBSESSION, VITAL, SERIOUS, NORMAL, TRIVIAL
 	}
 
 }

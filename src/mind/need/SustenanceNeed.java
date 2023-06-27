@@ -1,15 +1,16 @@
 package mind.need;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.goals.IGoal;
+import mind.goals.IGoal.Priority;
 import mind.goals.RoleGoal;
 import mind.goals.taskgoals.AcquireTaskGoal;
 import mind.goals.taskgoals.EatTaskGoal;
 
 public class SustenanceNeed extends AbstractNeed {
 
-	private IConcept type;
+	private IMeme type;
 
 	/**
 	 * What type of food is needed (i.e. some civilization needs both food and
@@ -18,12 +19,12 @@ public class SustenanceNeed extends AbstractNeed {
 	 * @param degree
 	 * @param type
 	 */
-	public SustenanceNeed(Degree degree, IConcept type) {
+	public SustenanceNeed(Degree degree, IMeme type) {
 		super(NeedType.SUSTENANCE, degree);
 		this.type = type;
 	}
 
-	public IConcept getFoodType() {
+	public IMeme getFoodType() {
 		return type;
 	}
 
@@ -32,9 +33,17 @@ public class SustenanceNeed extends AbstractNeed {
 		switch (this.getDegree()) {
 		case BEYOND:
 			return null; // TODO beyond eating goal
-		default:
-			return new EatTaskGoal(type, EatTaskGoal.DEFAULT_PERCENT); // TODO check if the food is edible or drinkable
+		case MILD:
+			return new EatTaskGoal(type, 0.9f).setPriority(Priority.TRIVIAL);
+		case MODERATE:
+			return new EatTaskGoal(type, EatTaskGoal.DEFAULT_PERCENT).setPriority(Priority.NORMAL); // TODO check if the
+																									// food is edible or
+																									// drinkable
+		case SEVERE:
+			return new EatTaskGoal(type, EatTaskGoal.DEFAULT_PERCENT).setPriority(Priority.VITAL);
+
 		}
+		return null;
 	}
 
 	@Override

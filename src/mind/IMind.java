@@ -4,14 +4,16 @@ import java.util.Collection;
 import java.util.Random;
 
 import actor.IUniqueExistence;
-import mind.memory.IHasKnowledge;
-import mind.relationships.IParty;
+import mind.linguistics.NameWord;
+import mind.memory.Memory;
 
-public interface IMind extends IParty, IHasKnowledge {
+public interface IMind extends IEntity {
 
 	public IUniqueExistence getOwner();
 
 	public boolean isPartOf(IGroup group);
+
+	Memory getKnowledgeBase();
 
 	/**
 	 * The part of the mind that takes actions
@@ -74,5 +76,7 @@ public interface IMind extends IParty, IHasKnowledge {
 	void actionTicks(long tick);
 
 	public Collection<Culture> cultures();
+
+	public NameWord getNameWord();
 
 }

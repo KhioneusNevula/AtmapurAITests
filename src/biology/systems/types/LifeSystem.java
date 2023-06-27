@@ -1,9 +1,9 @@
 package biology.systems.types;
 
-import energy.IEnergyUnit.EnergyUnit;
 import biology.systems.EnergySystem;
 import biology.systems.ISystemHolder;
 import biology.systems.SystemType;
+import energy.IEnergyUnit.EnergyUnit;
 import energy.IEnergyUser;
 
 /**
@@ -26,7 +26,7 @@ public class LifeSystem extends EnergySystem implements IEnergyUser {
 
 		super(SystemType.LIFE, owner, EnergyUnit.LIFE, max, max);
 		this.severe = severe;
-		this.powerUse = max / 300.0;
+		this.powerUse = max / 1000.0;
 	}
 
 	public LifeSystem(ISystemHolder owner, int max) {
@@ -49,6 +49,7 @@ public class LifeSystem extends EnergySystem implements IEnergyUser {
 	@Override
 	protected void update(long ticks) {
 		this.drainEnergy(getPowerUse());
+
 	}
 
 	public boolean isSevere() {

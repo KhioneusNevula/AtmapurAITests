@@ -1,8 +1,8 @@
 package mind.linguistics;
 
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 
-public class GrammarSystem implements IConcept {
+public class GrammarSystem implements IMeme {
 
 	private String identifier;
 

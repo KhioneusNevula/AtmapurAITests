@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import actor.Actor;
+import mind.linguistics.NameWord;
 import mind.memory.Memory;
 import mind.relationships.IParty;
 import mind.relationships.Relationship;
@@ -18,6 +19,7 @@ public class Mind implements IMind, IHasActor {
 	private boolean conscious = true;
 	private int timeAwake;
 	private int timeAsleep;
+	private NameWord name; // TODO make a better name system
 	/**
 	 * Number of ticks before the sense memories are all cleared and actions are all
 	 * reset
@@ -32,7 +34,7 @@ public class Mind implements IMind, IHasActor {
 	public Mind(Actor owner) {
 		this.owner = owner;
 		this.id = owner.getUUID();
-		this.memory = new Memory(this.id, "unit");
+		this.memory = new Memory(this.id, owner.getClass().getName().toLowerCase());
 		this.will = new Will(this);
 	}
 
@@ -43,6 +45,13 @@ public class Mind implements IMind, IHasActor {
 		// TODO mind ticks
 		if (tick % 5 == 0 && this.rand().nextInt(timeAwake) < 2) {
 			this.memory.prune(this.rand().nextInt(2) + 1);
+		}
+		if (this.name == null) {
+			if (this.memory.getMajorLanguage() != null) {
+				System.out.println("naming self - " + this.owner.getName());
+				this.name = this.memory.getMajorLanguage().name(this.memory.getSelfProfile(), this.rand());
+				System.out.println("named self " + name.getDisplay());
+			}
 		}
 		this.will.thinkTick(tick);
 
@@ -179,8 +188,14 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
+	public NameWord getNameWord() {
+		return name;
+	}
+
+	@Override
 	public String report() {
-		StringBuilder builder = new StringBuilder("Mind(" + this.owner.getName() + ")->{");
+		StringBuilder builder = new StringBuilder("Mind_" + this.owner.getName()
+				+ (this.name != null ? "(\"" + this.name.getDisplay() + "\")" : "") + "->{");
 		builder.append("\n\tMemory:" + this.memory.report());
 		builder.append("\n\t" + this.will.report());
 		builder.append("}");

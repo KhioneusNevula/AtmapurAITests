@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableMultimap;
@@ -16,12 +17,13 @@ import com.google.common.collect.TreeBasedTable;
 
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
-import mind.concepts.type.IConcept;
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.linguistics.Language;
 import mind.need.INeed;
 import mind.need.INeed.INeedType;
 
@@ -34,6 +36,8 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	protected Set<IGoal> goals;
 	protected Multimap<INeedType, INeed> needs;
 	protected Multimap<ITaskHint, IActionType<?>> doableActions;
+	protected Language mainLanguage;
+	protected Set<Language> languages = new TreeSet<>();
 
 	public AbstractKnowledgeEntity(UUID selfID, String type) {
 		this.self = new Profile(selfID, type);
@@ -136,13 +140,17 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	}
 
 	@Override
-	public boolean isKnown(IConcept concept) {
+	public boolean isKnown(IMeme concept) {
 
 		// TODO different kinds of concepts that may be known
 		if (concept instanceof Profile) {
 			return this.isKnown(((Profile) concept).getUUID());
 		} else if (concept instanceof Property) {
 			return (this.propertyConcepts == null ? false : propertyConcepts.containsKey(concept));
+		} else if (concept instanceof IActionType) {
+			return (this.doableActions == null ? false : this.doableActions.containsValue(concept));
+		} else if (concept instanceof Language) {
+			return (this.languages == null ? false : this.languages.contains(concept));
 		}
 		return false;
 	}
@@ -163,8 +171,8 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	@Override
 	public IPropertyData getProperties(Profile prof, Property cat) {
 		if (infoTable != null)
-			return infoTable.get(prof, cat);
-		return null;
+			return infoTable.contains(prof, cat) ? infoTable.get(prof, cat) : IPropertyData.UNKNOWN;
+		return IPropertyData.UNKNOWN;
 	}
 
 	/**
@@ -179,11 +187,14 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 
 	@Override
 	public boolean hasProperty(Profile prof, Property cat) {
-		if (this.infoTable == null)
-			return false;
-		if (this.infoTable.contains(prof, cat))
+		if (this.getProperties(prof, cat).isPresent())
 			return true;
 		return false;
+	}
+
+	@Override
+	public boolean isPropertyKnown(Profile prof, Property cat) {
+		return !this.getProperties(prof, cat).isUnknown();
 	}
 
 	@Override
@@ -299,14 +310,24 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	}
 
 	@Override
-	public boolean isSignificant(IConcept concept) {
+	public boolean isSignificant(IMeme concept) {
 		// TODO make an algorithm of significance
 		return true;
 	}
 
 	@Override
-	public boolean isLongTerm(IConcept concept) {
+	public boolean isLongTerm(IMeme concept) {
 		return true;
+	}
+
+	@Override
+	public Collection<Language> getLanguages() {
+		return this.languages;
+	}
+
+	@Override
+	public Language getMajorLanguage() {
+		return this.mainLanguage;
 	}
 
 }

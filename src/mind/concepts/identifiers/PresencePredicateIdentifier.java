@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 
 import actor.IUniqueExistence;
 import actor.IVisage;
-import actor.LivingActor;
+import actor.SentientActor;
 import actor.MultipartActor;
 import mind.concepts.type.Property;
 import mind.memory.IPropertyData;
@@ -18,7 +18,7 @@ import mind.memory.IPropertyData;
 public class PresencePredicateIdentifier implements IPropertyIdentifier {
 
 	public static final PresencePredicateIdentifier IS_SENTIENT = new PresencePredicateIdentifier(
-			(a) -> a instanceof LivingActor);
+			(a) -> a instanceof SentientActor);
 	public static final PresencePredicateIdentifier HAS_MULTIPART = new PresencePredicateIdentifier(
 			(a) -> a instanceof MultipartActor);
 
@@ -30,7 +30,7 @@ public class PresencePredicateIdentifier implements IPropertyIdentifier {
 
 	@Override
 	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage) {
-		return predicate.test(forExistence) ? IPropertyData.PRESENCE : null;
+		return predicate.test(forExistence) ? IPropertyData.PRESENCE : IPropertyData.ABSENCE;
 	}
 
 	/**

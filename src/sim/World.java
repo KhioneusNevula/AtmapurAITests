@@ -12,13 +12,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import actor.Actor;
+import actor.ITemplate;
 import actor.IUniqueExistence;
 import actor.IVisage;
-import actor.LivingActor;
+import actor.SentientActor;
+import biology.anatomy.ISpeciesTemplate;
 import biology.anatomy.Species;
 import humans.Food;
 import humans.Person;
 import main.ImmutableCollection;
+import mind.Culture;
 import mind.Group;
 import mind.concepts.type.Property;
 import mind.memory.IKnowledgeBase;
@@ -37,13 +40,14 @@ public class World implements IUniqueExistence {
 
 	private final int width, height;
 	private WorldGraphics worldGraphics;
-	private LivingActor testActor;
+	private SentientActor testActor;
 	private Group testGroup;
 	private Random rand = new Random();
 	protected long ticks = 0;
 	private ImmutableCollection<Actor> actorCollection = new ImmutableCollection<>(actors.values());
 	private UUID id = UUID.randomUUID();
 	private Map<String, Group> groups;
+	private Map<ISpeciesTemplate, Culture> defaultCultures;
 
 	public World(int width, int height) {
 		this.width = width;
@@ -85,6 +89,26 @@ public class World implements IUniqueExistence {
 		return group;
 	}
 
+	public Culture getDefaultCulture(ISpeciesTemplate forSp) {
+		return defaultCultures == null ? null : defaultCultures.get(forSp);
+	}
+
+	public Culture getOrGenDefaultCulture(ISpeciesTemplate forSp) {
+		Culture a = this.getDefaultCulture(forSp);
+		if (a == null) {
+			a = this.putDefaultCulture(forSp);
+		}
+		return a;
+	}
+
+	protected Culture putDefaultCulture(ISpeciesTemplate forSp) {
+		if (this.defaultCultures == null)
+			defaultCultures = new HashMap<>();
+		Culture c = null;
+		this.defaultCultures.put(forSp, c = forSp.genDefaultCulture());
+		return c;
+	}
+
 	public Collection<Actor> getActors() {
 		return actorCollection;
 	}
@@ -96,14 +120,25 @@ public class World implements IUniqueExistence {
 
 	}
 
-	public void worldSetup() {
-		System.out.println("setting up");
+	private Actor makeTestActor() {
+		if (testActor != null)
+			testActor.setOptionalColor(Color.yellow.getRGB());
 		this.spawnActor(testActor = new Person(this, "bobzy", Species.HUMAN, 300, 300, 10));
 		testActor.setOptionalColor(Color.WHITE.getRGB());
+		if (testGroup != null) {
+
+			testActor.getMind().establishRelationship(testGroup, Relationship.be());
+			testGroup.establishRelationship(testActor.getMind(), Relationship.include());
+		}
+		return testActor;
+	}
+
+	public void worldSetup() {
+		System.out.println("setting up");
 		testGroup = this.makeGroup("TheGroup");
 		testGroup.getCulture().usualInit();
-		testActor.getMind().establishRelationship(testGroup, Relationship.be());
-		testGroup.establishRelationship(testActor.getMind(), Relationship.include());
+		testGroup.getCulture().languageInit(this.rand);
+		this.makeTestActor();
 		Person idk = null;
 		for (int i = 0; i < 100; i++) {
 			int x = Math.max(0, Math.min(width, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));
@@ -126,7 +161,8 @@ public class World implements IUniqueExistence {
 		for (Actor e : Set.copyOf(actors.values())) {
 			if (e.isRemoved()) {
 				actors.remove(e.getUUID());
-				continue;
+				if (e == this.testActor)
+					makeTestActor();
 			}
 			e.movementTick();
 			e.tick();
@@ -162,7 +198,7 @@ public class World implements IUniqueExistence {
 		return actors.values().stream().filter((a) -> a.distance(x, y) <= a.getRadius()).collect(Collectors.toSet());
 	}
 
-	public LivingActor getTestActor() {
+	public SentientActor getTestActor() {
 		return testActor;
 	}
 
@@ -188,6 +224,14 @@ public class World implements IUniqueExistence {
 		return this;
 	}
 
+	public int clampX(int x) {
+		return Math.max(Math.min(x, this.width), 0);
+	}
+
+	public int clampY(int y) {
+		return Math.max(Math.min(y, this.height), 0);
+	}
+
 	@Override
 	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
 		// TODO assign property to world
@@ -196,11 +240,16 @@ public class World implements IUniqueExistence {
 
 	@Override
 	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
-		return null;
+		return IPropertyData.UNKNOWN;
 	}
 
 	@Override
 	public IVisage getVisage() {
 		return null;
+	}
+
+	@Override
+	public ITemplate getSpecies() {
+		return ITemplate.WORLD;
 	}
 }

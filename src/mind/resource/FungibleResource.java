@@ -8,10 +8,20 @@ public class FungibleResource implements IResource {
 
 	private Property item;
 	private int count;
+	private Priority priority = Priority.NORMAL;
 
 	public FungibleResource(Property item, int count) {
 		this.item = item;
 		this.count = count;
+	}
+
+	public Priority getPriority() {
+		return priority;
+	}
+
+	public FungibleResource setPriority(Priority priority) {
+		this.priority = priority;
+		return this;
 	}
 
 	@Override
