@@ -342,6 +342,10 @@ public interface IPropertyData {
 		}
 	}
 
+	default void updateInformation(IPropertyData fromOther) {
+		throw new UnsupportedOperationException();
+	}
+
 	public void addProfileToList(Profile prof);
 
 	default void addProfilesToList(Iterable<Profile> profs) {

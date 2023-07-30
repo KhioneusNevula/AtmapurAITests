@@ -26,13 +26,34 @@ public interface IGoal extends IMeme {
 		/**
 		 * the essential relationship trade; feelings of belonging, friendship, and love
 		 */
-		COMMUNITY,
+		PERSONAL,
 		/**
 		 * Placeholder purpose for a goal that indicates goals which do nothing. This
 		 * may be the end of a goal stack, or a middle element indicating a lack of
 		 * conditions between
 		 */
 		NONE;
+
+	}
+
+	default IConduct asConduct() {
+		return (IConduct) this;
+	}
+
+	default IPersonalRelationship asPersonalRelationship() {
+		return (IPersonalRelationship) this;
+	}
+
+	default IResource asResource() {
+		return (IResource) this;
+	}
+
+	default IRoleGoal asRoleGoal() {
+		return (IRoleGoal) this;
+	}
+
+	default ITaskGoal asTask() {
+		return (ITaskGoal) this;
 	}
 
 	/**
@@ -93,12 +114,25 @@ public interface IGoal extends IMeme {
 
 	public Priority getPriority();
 
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.GOAL;
+	}
+
 	public static enum Priority {
 		/**
 		 * a goal of this priority is not driven by rational need; this would be
 		 * something resultant of insanity or whatever
 		 */
-		OBSESSION, VITAL, SERIOUS, NORMAL, TRIVIAL
+		OBSESSION,
+		/** the goal of this priority is mortal in nature */
+		VITAL,
+		/** this is a serious priority, but not life-threatening in nature */
+		SERIOUS,
+		/** this priority is preferred but not imminent */
+		NORMAL,
+		/** this thing is of least priority */
+		TRIVIAL
 	}
 
 }

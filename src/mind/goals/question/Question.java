@@ -27,6 +27,11 @@ public class Question implements IMeme {
 
 	private Map<String, Object> arguments;
 
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.QUESTION;
+	}
+
 	public static Question askLocation(IMeme topic) {
 		return new Question(topic, QuestionType.LOCATION);
 	}

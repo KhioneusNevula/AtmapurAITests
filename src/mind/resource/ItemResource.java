@@ -34,6 +34,11 @@ public class ItemResource implements IResource {
 	}
 
 	@Override
+	public boolean isApproximate() {
+		return false;
+	}
+
+	@Override
 	public Profile getConcept() {
 		return item;
 	}

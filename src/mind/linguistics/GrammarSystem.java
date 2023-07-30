@@ -15,4 +15,9 @@ public class GrammarSystem implements IMeme {
 		return identifier;
 	}
 
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.GRAMMAR_SYSTEM;
+	}
+
 }

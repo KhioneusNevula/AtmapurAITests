@@ -1,11 +1,7 @@
 package mind.action.types;
 
-import java.util.Collection;
-import java.util.Set;
-
 import actor.Actor;
 import biology.systems.SystemType;
-import mind.ICanAct;
 import mind.action.ActionType;
 import mind.action.IAction;
 import mind.concepts.type.BasicProperties;
@@ -16,8 +12,9 @@ import mind.concepts.type.Property;
 import mind.goals.ITaskGoal;
 import mind.goals.taskgoals.AcquireTaskGoal;
 import mind.goals.taskgoals.EatTaskGoal;
-import mind.memory.Memory;
-import mind.memory.SenseMemory.TraitsMemory;
+import mind.memory.IHasKnowledge;
+import mind.memory.IMindMemory;
+import mind.memory.TraitsMemory;
 
 public class EatFoodAction implements IAction {
 
@@ -36,11 +33,11 @@ public class EatFoodAction implements IAction {
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
+	public ITaskGoal genConditionGoal(IHasKnowledge user) {
 		if (foodItem == null) {
-			return Set.of(new AcquireTaskGoal(foodType));
+			return new AcquireTaskGoal(foodType);
 		}
-		return Set.of();
+		return null;
 	}
 
 	@Override
@@ -55,13 +52,13 @@ public class EatFoodAction implements IAction {
 	}
 
 	@Override
-	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
+	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
 
 		if (user.hasMindAndMultipartBody()) {
 			Actor possible = null;
-			Memory memory = user.getMindMemory();
+			IMindMemory memory = user.getMindMemory();
 			// MultipartActor actor = (MultipartActor) user.getAsHasActor().getActor();
-			TraitsMemory<Actor> selfMemory = memory.getSenses().getTraits(memory.getSelfProfile());
+			TraitsMemory selfMemory = memory.getSenses().getTraits(memory.getSelfProfile());
 			if (selfMemory == null) {
 				failure = "mind cannot perceive itself (?)";
 				return false;
@@ -74,8 +71,7 @@ public class EatFoodAction implements IAction {
 			Profile possibleProfile = memory.getProfileFor(possible.getUUID());
 			if (foodType instanceof Property) {
 
-				if (memory.hasProperty(possibleProfile, (Property) foodType)
-						|| ITaskGoal.getProperty(possible, (Property) foodType, user).isPresent()) {
+				if (ITaskGoal.getProperty(possible, (Property) foodType, user).isPresent()) {
 
 					/*
 					 * System.out.println("" + foodType + " " + possible.getName() + " " +
@@ -124,16 +120,16 @@ public class EatFoodAction implements IAction {
 	}
 
 	@Override
-	public void beginExecutingIndividual(ICanAct forUser) {
+	public void beginExecutingIndividual(IHasKnowledge forUser) {
 	}
 
 	@Override
-	public boolean canContinueExecutingIndividual(ICanAct individual, int tick) {
+	public boolean canContinueExecutingIndividual(IHasKnowledge individual, int tick) {
 		return tick < 10;
 	}
 
 	@Override
-	public boolean finishActionIndividual(ICanAct individual, int tick) {
+	public boolean finishActionIndividual(IHasKnowledge individual, int tick) {
 		succ = individual.getAsHasActor().getActor().getSystem(SystemType.HUNGER).eat(foodItem) == 1;
 
 		return succ;

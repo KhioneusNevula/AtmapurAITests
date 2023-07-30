@@ -1,7 +1,12 @@
 package mind.concepts.type;
 
-public class Property implements IMeme, Comparable<Property> {
+public class Property implements IProperty, Comparable<Property> {
 
+	/**
+	 * Meant to be used as a placeholder property for things which sense anything,
+	 * regardless of property
+	 */
+	public static final Property ANY = Property.create("_any_property");
 	private String uniqueName;
 	private boolean hasIntegerProperty;
 	private boolean hasProfileProperty;
@@ -146,6 +151,11 @@ public class Property implements IMeme, Comparable<Property> {
 		 * builder.append("}");
 		 */
 		return builder.toString();
+	}
+
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.PROPERTY;
 	}
 
 }

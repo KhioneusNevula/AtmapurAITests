@@ -145,6 +145,13 @@ public interface IResource extends IGoal {
 	 */
 	public Integer count();
 
+	/**
+	 * If the resource count is only an approximation
+	 * 
+	 * @return
+	 */
+	public boolean isApproximate();
+
 	@Override
 	default boolean isComplete(IHasKnowledge entity) {
 		return false;

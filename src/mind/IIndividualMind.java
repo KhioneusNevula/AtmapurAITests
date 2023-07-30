@@ -4,23 +4,33 @@ import java.util.Collection;
 import java.util.Random;
 
 import actor.IUniqueExistence;
+import mind.concepts.type.IProfile;
 import mind.linguistics.NameWord;
-import mind.memory.Memory;
+import mind.memory.IEmotions;
+import mind.memory.IMindMemory;
+import mind.personality.Personality;
 
-public interface IMind extends IEntity {
+public interface IIndividualMind extends IEntity {
 
 	public IUniqueExistence getOwner();
 
-	public boolean isPartOf(IGroup group);
+	public boolean isPartOf(IProfile group);
 
-	Memory getKnowledgeBase();
+	IMindMemory getKnowledgeBase();
 
 	/**
 	 * The part of the mind that takes actions
 	 */
-	public Will getWill();
+	public IWill getWill();
 
 	public Random rand();
+
+	/**
+	 * the personality of this mind
+	 * 
+	 * @return
+	 */
+	public Personality personality();
 
 	/**
 	 * Whether this mind is conscious; if unconscious, it should run unconscious
@@ -78,5 +88,34 @@ public interface IMind extends IEntity {
 	public Collection<Culture> cultures();
 
 	public NameWord getNameWord();
+
+	public boolean hasEmotions();
+
+	public IEmotions getEmotions();
+
+	public boolean isNotViable();
+
+	public void kill();
+
+	/**
+	 * Which cultures this mind can read from (i.e. know knowledge from) but cannot
+	 * affect (i.e. cannot send trends to). <br>
+	 * TODO would it be better to just have isolated minds make some form of copy of
+	 * the culture(?)
+	 * 
+	 * @param culture
+	 * @return
+	 */
+	public boolean isIsolatedFrom(Culture culture);
+
+	@Override
+	default boolean isIndividual() {
+		return true;
+	}
+
+	@Override
+	default boolean isGroup() {
+		return false;
+	}
 
 }

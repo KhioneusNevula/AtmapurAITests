@@ -1,8 +1,7 @@
 package mind.memory.events;
 
+import java.util.Collection;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
 
 import mind.action.IActionType;
 import mind.action.IInteractionInstance;
@@ -14,12 +13,11 @@ import sim.Location;
 public class ActionEvent extends AbstractEvent {
 
 	private IActionType<?> actionType;
-	private Set<IMeme> used = Set.of();
 
 	private ActionEvent(IActionType<?> actionType, Profile doer, Location at, long time) {
 		super("event_" + actionType.getName() + "_" + time, at, time);
 		this.actionType = actionType;
-		this.addCause(doer);
+		this.add(EventRole.CAUSER, Set.of(doer));
 	}
 
 	@Override
@@ -33,8 +31,22 @@ public class ActionEvent extends AbstractEvent {
 	}
 
 	@Override
+	public Collection<IMeme> phenomenonProperties() {
+		return Set.of();
+	}
+
+	@Override
 	public boolean isAction() {
 		return true;
+	}
+
+	/**
+	 * what is used to do the action
+	 * 
+	 * @return
+	 */
+	public Collection<IMeme> used() {
+		return this.getForRole(EventRole.USED);
 	}
 
 	@Override
@@ -64,12 +76,12 @@ public class ActionEvent extends AbstractEvent {
 		}
 
 		public Builder addObject(Profile... obj) {
-			event.addObject(obj);
+			event.add(EventRole.OBJECT, Set.of(obj));
 			return this;
 		}
 
 		public Builder addUsed(IMeme... used) {
-			event.used = ImmutableSet.<IMeme>builder().addAll(event.used).add(used).build();
+			event.add(EventRole.USED, Set.of(used));
 			return this;
 		}
 

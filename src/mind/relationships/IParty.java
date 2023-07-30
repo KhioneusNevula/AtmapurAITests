@@ -3,6 +3,7 @@ package mind.relationships;
 import java.util.Collection;
 import java.util.UUID;
 
+import mind.concepts.type.IProfile;
 import sim.interfaces.IUnique;
 
 public interface IParty extends IUnique {
@@ -13,7 +14,22 @@ public interface IParty extends IUnique {
 	 * @param other
 	 * @return
 	 */
-	public Collection<Relationship> getRelationshipsWith(IParty other);
+	public Collection<Relationship> getRelationshipsWith(IProfile other);
+
+	/**
+	 * Get relationships of a certain type
+	 * 
+	 * @param other
+	 * @param type
+	 * @return
+	 */
+	public Collection<Relationship> getRelationshipsOfTypeWith(IProfile other, RelationType type);
+
+	/**
+	 * Gets a relationship of the specified type, PROVIDED it is a singular
+	 * relationship
+	 */
+	public Relationship getRelationship(IProfile with, RelationType type);
 
 	/**
 	 * Gets agreement by the given ID
@@ -36,7 +52,7 @@ public interface IParty extends IUnique {
 	 * 
 	 * @return
 	 */
-	public Collection<IParty> getAllPartiesWithRelationships();
+	public Collection<IProfile> getAllPartiesWithRelationships();
 
 	/**
 	 * Return an iterable form of all the agreements this entity is involved in
@@ -51,13 +67,33 @@ public interface IParty extends IUnique {
 	 * @param other
 	 * @return
 	 */
-	public boolean hasRelationshipsWith(IParty other);
+	public boolean hasRelationshipsWith(IProfile other);
 
 	/**
 	 * dissolve an agreement
 	 * 
 	 * @param agreement
 	 */
-	public void dissolveRelationship(IParty with, Relationship agreement);
+	public void dissolveRelationship(IProfile with, Relationship agreement);
+
+	/**
+	 * Gets the total trust with the given party
+	 * 
+	 * @return
+	 */
+	public float getTrust(IProfile with);
+
+	/** if this party is an individual being */
+	public boolean isIndividual();
+
+	/** if this party is a group entity */
+	public boolean isGroup();
+
+	/**
+	 * Whether this party is no longer existent or otherwise viable
+	 * 
+	 * @return
+	 */
+	public boolean isNotViable();
 
 }

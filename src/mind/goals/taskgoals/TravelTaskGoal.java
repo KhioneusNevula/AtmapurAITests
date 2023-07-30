@@ -1,20 +1,20 @@
 package mind.goals.taskgoals;
 
 import actor.Actor;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IProfile;
 import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
 import mind.memory.IHasKnowledge;
-import sim.Location;
 import sim.interfaces.IPhysicalExistence;
 
 public class TravelTaskGoal implements ITaskGoal {
 
 	private IProfile target = IProfile.SELF;
 
-	private Location location;
+	private ILocationMeme location;
 
 	private boolean reachDistance;
 	private Priority priority = Priority.NORMAL;
@@ -25,7 +25,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	 * @param reachDistance if the entity needs to precisely be at the location or
 	 *                      only within reach distance
 	 */
-	public TravelTaskGoal(Location targetLoc, boolean reachDistance) {
+	public TravelTaskGoal(ILocationMeme targetLoc, boolean reachDistance) {
 		this.location = targetLoc;
 		this.reachDistance = reachDistance;
 	}
@@ -40,7 +40,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public Location targetLocation() {
+	public ILocationMeme targetLocation() {
 		return location;
 	}
 
@@ -83,8 +83,8 @@ public class TravelTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isComplete(IHasKnowledge entity) {
-		return entity.getAsHasActor().getActor()
-				.distance(location) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
+		return entity.getAsHasActor().getActor().distance(
+				location.getGeneralLocation()) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class TravelTaskGoal implements ITaskGoal {
 
 	@Override
 	public String getUniqueName() {
-		return "goal_task_travel_x" + this.location.getX() + "_y" + this.location.getY();
+		return "goal_task_travel_x" + this.location;
 	}
 
 	@Override

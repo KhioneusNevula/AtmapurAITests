@@ -13,4 +13,9 @@ public class GoalTrend extends Trend {
 		return (IGoal) super.getConcept();
 	}
 
+	@Override
+	public TrendType getType() {
+		return TrendType.GOAL;
+	}
+
 }

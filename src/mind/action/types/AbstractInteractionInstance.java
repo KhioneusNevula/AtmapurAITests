@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
 
-import mind.ICanAct;
+import mind.IEntity;
 import mind.action.IInteraction;
 import mind.action.IInteractionInstance;
 import mind.action.IInteractionType;
@@ -17,10 +17,10 @@ public class AbstractInteractionInstance implements IInteractionInstance {
 	private IInteractionType type;
 	private Location location;
 	private IInteraction initiatingAction;
-	private ICanAct initiator;
-	private Map<ICanAct, IInteraction> participants = Map.of();
+	private IEntity initiator;
+	private Map<IEntity, IInteraction> participants = Map.of();
 
-	public AbstractInteractionInstance(IInteractionType type, Location location, ICanAct initiator,
+	public AbstractInteractionInstance(IInteractionType type, Location location, IEntity initiator,
 			IInteraction initatorAction) {
 		this.type = type;
 		this.location = location;
@@ -49,24 +49,24 @@ public class AbstractInteractionInstance implements IInteractionInstance {
 	}
 
 	@Override
-	public ICanAct initiator() {
+	public IEntity initiator() {
 		return initiator;
 	}
 
 	@Override
-	public Collection<ICanAct> participants() {
+	public Collection<IEntity> participants() {
 		return participants.keySet();
 	}
 
 	@Override
-	public void addParticipant(ICanAct participant, IInteraction action) {
-		this.participants = ImmutableMap.<ICanAct, IInteraction>builder().putAll(participants).put(participant, action)
+	public void addParticipant(IEntity participant, IInteraction action) {
+		this.participants = ImmutableMap.<IEntity, IInteraction>builder().putAll(participants).put(participant, action)
 				.build();
 	}
 
 	@Override
-	public void addCommunication(ICanAct source, IUtterance utterance) {
-		for (Map.Entry<ICanAct, IInteraction> entry : this.participants.entrySet()) {
+	public void addCommunication(IEntity source, IUtterance utterance) {
+		for (Map.Entry<IEntity, IInteraction> entry : this.participants.entrySet()) {
 			if (entry.getKey() == source)
 				continue;
 			entry.getValue().receiveCommunication(entry.getKey(), source, utterance);
@@ -74,19 +74,19 @@ public class AbstractInteractionInstance implements IInteractionInstance {
 	}
 
 	@Override
-	public void leave(ICanAct ender) {
+	public void leave(IEntity ender) {
 		this.participants.remove(ender);
 	}
 
 	@Override
-	public void end(ICanAct ender) {
-		for (Map.Entry<ICanAct, IInteraction> entry : this.participants.entrySet()) {
+	public void end(IEntity ender) {
+		for (Map.Entry<IEntity, IInteraction> entry : this.participants.entrySet()) {
 			entry.getValue().endInteraction(ender);
 		}
 	}
 
 	@Override
-	public IInteraction getAssociatedActionForParticipant(ICanAct participant) {
+	public IInteraction getAssociatedActionForParticipant(IEntity participant) {
 		return participants.get(participant);
 	}
 

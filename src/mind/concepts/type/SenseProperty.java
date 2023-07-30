@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableSet;
 
 import biology.systems.types.ISensor;
 
-public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
+public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IProperty {
 
 	public static final SenseProperty<IColor> COLOR = new SenseProperty<>("color", IColor.class, ISensor.SIGHT);
 	public static final SenseProperty<IShape> SHAPE = new SenseProperty<>("shape", IShape.class, ISensor.SIGHT);
@@ -17,7 +17,6 @@ public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
 	public static final SenseProperty<ISound> SOUND = new SenseProperty<>("sound", ISound.class);
 	public static final SenseProperty<Boolean> TRANSLUCENCE = new SenseProperty<>("translucence", Boolean.class,
 			ISensor.SIGHT);
-	public static final ActorReferentProperty HOLDING = new ActorReferentProperty("holding", ISensor.SIGHT);
 	public static final UniqueProperty SIGNATURE_SHAPE = new UniqueProperty("signature_shape", ISensor.SIGHT);
 
 	private Class<T> type;
@@ -35,14 +34,6 @@ public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
 
 	public Class<T> getType() {
 		return type;
-	}
-
-	/**
-	 * Whether this sense-property is sensing the Profile of another actor;
-	 * obviously, such properties are treated slightly differently than normal
-	 */
-	public boolean referencesActor() {
-		return this instanceof ActorReferentProperty;
 	}
 
 	public boolean isUnique() {
@@ -70,12 +61,6 @@ public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
 	@Override
 	public String toString() {
 		return this.getUniqueName() + this.sensors;
-	}
-
-	public static class ActorReferentProperty extends SenseProperty<UUID> {
-		public ActorReferentProperty(String name, ISensor... sensor) {
-			super(name, UUID.class, sensor);
-		}
 	}
 
 	public static class UniqueProperty extends SenseProperty<UUID> {
@@ -224,6 +209,11 @@ public class SenseProperty<T> implements Comparable<SenseProperty<?>>, IMeme {
 		public String getName() {
 			return name();
 		}
+	}
+
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.SENSE_PROPERTY;
 	}
 
 }

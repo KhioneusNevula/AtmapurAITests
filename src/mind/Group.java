@@ -1,17 +1,22 @@
 package mind;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
+import mind.concepts.type.IProfile;
+import mind.linguistics.NameWord;
 import mind.memory.IHasKnowledge;
 import mind.relationships.IParty;
+import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 import mind.relationships.Role;
 import sim.World;
@@ -27,20 +32,23 @@ public class Group implements IGroup, IEntity {
 
 	private String identifier;
 	private UUID id;
-	private Set<IMind> members;
-	private Set<Group> subGroups;
+	private Map<IProfile, IParty> members;
+	private Map<IProfile, Group> subGroups;
 	private int memberCount = 0;
 	private Group parentGroup;
-	private Set<Role> roles;
-	private SetMultimap<IParty, Relationship> agreements;
+	private Map<IProfile, Role> roles;
+	private SetMultimap<IProfile, Relationship> agreements;
 	private Map<UUID, Relationship> agreementsById;
+	private Map<IProfile, Float> trust;
 	private Culture culture;
 	private World world;
+	private static final int TYPICAL_MEMORY_PASS_COUNT = 10;
+	private boolean active = true;
 
 	public Group(String identifier, World world) {
 		this.identifier = identifier;
 		this.id = UUID.randomUUID();
-		this.culture = new Culture(id, "group", identifier);
+		this.culture = new Culture(this, "group");
 		this.world = world;
 	}
 
@@ -48,13 +56,18 @@ public class Group implements IGroup, IEntity {
 		return identifier;
 	}
 
+	@Override
+	public NameWord getNameWord() {
+		return this.culture.getNameWord();
+	}
+
 	/**
 	 * the set of roles
 	 * 
 	 * @return
 	 */
-	public Set<Role> roles() {
-		return roles == null ? Set.of() : roles;
+	public Collection<Role> roles() {
+		return roles == null ? Set.of() : roles.values();
 	}
 
 	/**
@@ -62,18 +75,24 @@ public class Group implements IGroup, IEntity {
 	 * 
 	 * @return
 	 */
-	public Set<IMind> members() {
-		return members == null ? Set.of() : members;
+	public Collection<IParty> members() {
+		return members == null ? Set.of() : members.values();
+	}
+
+	@Override
+	public float getTrust(IProfile with) {
+		return this.trust == null ? 0 : this.trust.getOrDefault(with, 0f);
 	}
 
 	/**
 	 * updates member count based on factors
 	 */
 	public void updateMemberCount() {
+		memberCount = 0;
 		if (members != null)
 			memberCount += this.members.size();
 		if (subGroups != null) {
-			for (Group g : this.subGroups) {
+			for (Group g : this.subGroups.values()) {
 				memberCount += g.memberCount;
 			}
 		}
@@ -88,7 +107,7 @@ public class Group implements IGroup, IEntity {
 		return memberCount;
 	}
 
-	private SetMultimap<IParty, Relationship> findAgreements() {
+	private SetMultimap<IProfile, Relationship> findAgreements() {
 		if (agreements == null) {
 			return agreements = MultimapBuilder.hashKeys().hashSetValues().build();
 		}
@@ -96,13 +115,13 @@ public class Group implements IGroup, IEntity {
 	}
 
 	@Override
-	public Collection<Relationship> getRelationshipsWith(IParty other) {
+	public Collection<Relationship> getRelationshipsWith(IProfile other) {
 		return agreements == null ? Set.of() : agreements.get(other);
 	}
 
 	@Override
 	public boolean isMember(IParty other) {
-		return agreements == null ? false : agreements.get(other).stream().anyMatch((r) -> r.getType().isMembership());
+		return !other.getRelationshipsOfTypeWith(this.getKnowledgeBase().getSelfProfile(), RelationType.BE).isEmpty();
 	}
 
 	@Override
@@ -110,8 +129,24 @@ public class Group implements IGroup, IEntity {
 		return agreementsById == null ? null : agreementsById.get(agreementID);
 	}
 
+	@Override
+	public Collection<Relationship> getRelationshipsOfTypeWith(IProfile other, RelationType type) {
+
+		return agreements != null
+				? agreements.get(other).stream().filter((a) -> a.getType() == type).collect(Collectors.toSet())
+				: Set.of();
+	}
+
 	public Group getParentGroup() {
 		return parentGroup;
+	}
+
+	@Override
+	public Relationship getRelationship(IProfile with, RelationType type) {
+		if (agreements != null) {
+			return agreements.get(with).stream().filter((a) -> a.getType().equals(type)).findAny().orElse(null);
+		}
+		return null;
 	}
 
 	/**
@@ -120,16 +155,23 @@ public class Group implements IGroup, IEntity {
 	 */
 	@Override
 	public void establishRelationship(IParty with, Relationship agreement) {
+		IProfile profile = this.culture.recognizeProfile(with);
+		if (agreement.getType().isSingular() && agreements != null) {
+			agreements.get(profile).forEach((r) -> {
+				if (r.getType() == agreement.getType())
+					agreementsById.remove(r.getAgreementID());
+			});
+			agreements.get(profile).removeIf((r) -> r.getType() == agreement.getType());
+
+		}
 		if (agreement.getType().isMembership()) {
-			if (agreements != null)
-				agreements.get(with).removeIf((r) -> r.getType().isMembership());
 			if (agreement.getType().benefits()) {
-				if (with instanceof IMind) {
-					(this.members == null ? members = new HashSet<>() : members).add((IMind) with);
+				if (with.isIndividual()) {
+					(this.members == null ? members = new HashMap<>() : members).put(profile, with);
 				} else if (with instanceof Role) {
-					(this.roles == null ? roles = new HashSet<>() : roles).add((Role) with);
+					(this.roles == null ? roles = new HashMap<>() : roles).put(profile, (Role) with);
 				} else if (with instanceof Group) {
-					(this.subGroups == null ? subGroups = new HashSet<>() : subGroups).add((Group) with);
+					(this.subGroups == null ? subGroups = new HashMap<>() : subGroups).put(profile, (Group) with);
 				} else {
 					throw new IllegalArgumentException(
 							"type of party: " + with.getClass().getSimpleName() + " for agreement with " + this + "??");
@@ -143,14 +185,16 @@ public class Group implements IGroup, IEntity {
 							"type of party: " + with.getClass().getSimpleName() + " for agreement with " + this + "??");
 				}
 			}
+		} else if (agreement.getType() == RelationType.FEEL) {
+			this.changeTrust(profile, agreement.getGoal().asPersonalRelationship().trust());
 		}
-		this.findAgreements().put(with, agreement);
+		this.findAgreements().put(profile, agreement);
 		(this.agreementsById == null ? agreementsById = new TreeMap<>() : agreementsById)
 				.put(agreement.getAgreementID(), agreement);
 	}
 
 	@Override
-	public Collection<IParty> getAllPartiesWithRelationships() {
+	public Collection<IProfile> getAllPartiesWithRelationships() {
 		return agreements == null ? Set.of() : agreements.keySet();
 	}
 
@@ -159,31 +203,39 @@ public class Group implements IGroup, IEntity {
 		return agreements == null ? Set.of() : agreements.values();
 	}
 
+	private void changeTrust(IProfile with, float trust) {
+		if (this.trust == null)
+			this.trust = new HashMap<>();
+		this.trust.put(with, this.trust.getOrDefault(with, 0f) + trust);
+	}
+
 	@Override
-	public void dissolveRelationship(IParty with, Relationship agreement) {
+	public void dissolveRelationship(IProfile with, Relationship agreement) {
 		if (agreements == null || this.agreementsById == null)
 			return;
 		if (this.agreements.remove(with, agreement)) {
 			this.agreementsById.remove(agreement.getAgreementID());
 			if (agreement.getType().isMembership()) {
 				if (agreement.getType().benefits()) {
-					if (with instanceof IMind)
+					if (members != null)
 						this.members.remove(with);
-					if (with instanceof Role && roles != null)
+					if (roles != null)
 						this.roles.remove(with);
-					if (with instanceof Group && subGroups != null)
+					if (subGroups != null)
 						this.subGroups.remove(with);
 				} else if (agreement.getType().provides()) {
-					if (with == this.parentGroup)
+					if (this.parentGroup != null && with.equals(this.parentGroup.culture.getSelfProfile()))
 						this.parentGroup = null;
 				}
 
+			} else if (agreement.getType() == RelationType.FEEL) {
+				this.changeTrust(with, -agreement.getGoal().asPersonalRelationship().trust());
 			}
 		}
 	}
 
 	@Override
-	public boolean hasRelationshipsWith(IParty other) {
+	public boolean hasRelationshipsWith(IProfile other) {
 		return agreements == null ? false : !this.agreements.get(other).isEmpty();
 	}
 
@@ -224,14 +276,43 @@ public class Group implements IGroup, IEntity {
 	}
 
 	@Override
-	public long worldTicks() {
-		return world.getTicks();
+	public String getUnitString() {
+		return "group";
 	}
 
 	@Override
 	public IWill getWill() {
 		// TODO create a Will for groups
 		return null;
+	}
+
+	public void tick(long worldTicks) {
+		if (members != null) {
+			IParty mind = null;
+			for (Iterator<IParty> iter = members.values().iterator(); iter.hasNext();) {
+				mind = iter.next();
+				if (mind.isNotViable()) {
+					iter.remove();
+				}
+			}
+		}
+		if (worldTicks % 20 < 3 || this.world.rand().nextInt(20) < 3) {
+			this.culture.prune(TYPICAL_MEMORY_PASS_COUNT);
+		}
+	}
+
+	public void deactivate() {
+		this.active = false;
+	}
+
+	@Override
+	public boolean isNotViable() {
+		return !active;
+	}
+
+	@Override
+	public void kill() {
+		this.deactivate();
 	}
 
 }

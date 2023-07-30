@@ -3,30 +3,35 @@ package mind.memory;
 import mind.Culture;
 import mind.Group;
 import mind.IHasActor;
-import mind.Mind;
+import mind.IIndividualMind;
+import mind.linguistics.NameWord;
 
 public interface IHasKnowledge {
 
 	public IKnowledgeBase getKnowledgeBase();
 
-	default Mind getAsMind() {
-		return (Mind) this;
+	default IIndividualMind getAsMind() {
+		return (IIndividualMind) this;
 	}
 
 	default Group getAsGroup() {
 		return (Group) this;
 	}
 
-	default Memory getMindMemory() {
-		return (Memory) getKnowledgeBase();
+	default IMindMemory getMindMemory() {
+		return (IMindMemory) getKnowledgeBase();
 	}
 
 	default Culture getCulture() {
 		return (Culture) getKnowledgeBase();
 	}
 
+	default boolean isMind() {
+		return this instanceof IIndividualMind;
+	}
+
 	default boolean isMindMemory() {
-		return getKnowledgeBase() instanceof Memory;
+		return getKnowledgeBase() instanceof IMindMemory;
 	}
 
 	default boolean isCulture() {
@@ -34,7 +39,7 @@ public interface IHasKnowledge {
 	}
 
 	default boolean hasActor() {
-		return this instanceof IHasActor;
+		return this instanceof IHasActor && this.getAsHasActor().getActor() != null;
 	}
 
 	default boolean hasMultipartActor() {
@@ -51,6 +56,8 @@ public interface IHasKnowledge {
 
 	public String report();
 
-	public long worldTicks();
+	public NameWord getNameWord();
+
+	public void kill();
 
 }

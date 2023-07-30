@@ -12,7 +12,7 @@ import mind.linguistics.Phonology.Phoneme.Consonant;
  * @author borah
  *
  */
-public class NameWord implements IMeme {
+public class NameWord implements IMeme, Comparable<NameWord> {
 
 	private String identifier;
 	private List<Phoneme> phonemes;
@@ -21,6 +21,11 @@ public class NameWord implements IMeme {
 	public NameWord(String identifier) {
 		this.identifier = "name_" + /* language.getName() + "_" + */identifier;
 
+	}
+
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.NAME_WORD;
 	}
 
 	public NameWord setPhonemes(List<Phoneme> ph) {
@@ -78,6 +83,11 @@ public class NameWord implements IMeme {
 	@Override
 	public String toString() {
 		return identifier + "{" + display + "}";
+	}
+
+	@Override
+	public int compareTo(NameWord o) {
+		return this.phonemes.toString().compareTo(o.phonemes.toString());
 	}
 
 }

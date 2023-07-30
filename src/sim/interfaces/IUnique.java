@@ -11,4 +11,8 @@ public interface IUnique extends Comparable<IUnique> {
 		return getUUID().compareTo(o.getUUID());
 	}
 
+	default String getUnitString() {
+		return "unit";
+	}
+
 }

@@ -133,4 +133,9 @@ public class Relationship implements Comparable<Relationship>, IMeme {
 		return this.type + "_" + this.getUniqueName();
 	}
 
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.RELATIONSHIP;
+	}
+
 }

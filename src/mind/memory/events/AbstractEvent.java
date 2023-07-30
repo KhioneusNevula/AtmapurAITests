@@ -1,17 +1,17 @@
 package mind.memory.events;
 
 import java.util.Collection;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
+import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import sim.Location;
 
 public abstract class AbstractEvent implements IEvent {
 
-	private Set<Profile> objects = Set.of();
-	private Set<Profile> causes = Set.of();
+	private Multimap<EventRole, ? extends IMeme> profiles = ImmutableMultimap.of();
 	private Location location;
 	private String name;
 	private long time;
@@ -22,12 +22,12 @@ public abstract class AbstractEvent implements IEvent {
 		this.location = location;
 	}
 
-	protected void addObject(Profile... obj) {
-		this.objects = ImmutableSet.<Profile>builder().addAll(objects).add(obj).build();
-	}
+	protected void add(EventRole role, Collection<? extends IMeme> obj) {
 
-	protected void addCause(Profile... obj) {
-		this.causes = ImmutableSet.<Profile>builder().addAll(causes).add(obj).build();
+		ImmutableMultimap.Builder<EventRole, IMeme> builder = ImmutableMultimap.builder();
+		builder.putAll(profiles);
+		obj.forEach((a) -> builder.put(role, a));
+		profiles = builder.build();
 	}
 
 	@Override
@@ -37,12 +37,12 @@ public abstract class AbstractEvent implements IEvent {
 
 	@Override
 	public Collection<Profile> object() {
-		return this.objects;
+		return this.getForRole(EventRole.OBJECT);
 	}
 
 	@Override
 	public Collection<Profile> cause() {
-		return this.causes;
+		return this.getForRole(EventRole.CAUSER);
 	}
 
 	@Override
@@ -58,6 +58,11 @@ public abstract class AbstractEvent implements IEvent {
 	@Override
 	public long time() {
 		return time;
+	}
+
+	@Override
+	public <T extends IMeme> Collection<T> getForRole(EventRole role) {
+		return (Collection<T>) this.profiles.get(role);
 	}
 
 }

@@ -21,34 +21,43 @@ import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
 import mind.goals.question.Question.QuestionType;
 import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedMind;
+import mind.thought_exp.actions.EatActionThought;
+import mind.thought_exp.actions.IActionThought;
+import mind.thought_exp.actions.PickupActionThought;
+import mind.thought_exp.actions.SearchActionThought;
+import mind.thought_exp.actions.WalkActionThought;
 
 public class ActionType<T extends IAction> implements IActionType<T> {
 
 	/** eating an item */
 	public static final ActionType<EatFoodAction> EAT = new ActionType<EatFoodAction>("eat", TaskHint.CONSUME)
-			.setGenerator(EatFoodAction::genAction).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
-			.setRequiredConcepts((a) -> a.usedItem());
+			.setGenerator(EatFoodAction::genAction).setThoughtGenerator(EatActionThought::new).requireBody()
+			.setUsedAbilities(Abilities.EAT, Abilities.GRASP).setRequiredConcepts((a) -> a.usedItem());
 	/** walking or running somewhere */
 	public static final ActionType<WalkAction> WALK = new ActionType<WalkAction>("walk", TaskHint.TRAVEL).requireBody()
-			.setGenerator(WalkAction::new).setUsedAbilities(Abilities.WALK);
+			.setGenerator(WalkAction::new).setThoughtGenerator(WalkActionThought::new).setUsedAbilities(Abilities.WALK);
 	/** sleeping */
 	public static final ActionType<SleepAction> SLEEP = new ActionType<SleepAction>("sleep", TaskHint.REST)
 			.requireBody().setGenerator(SleepAction::new).setUsedAbilities(Abilities.THINK)
-			.setViabilityCondition((a, b) -> a.isMindMemory());
+			.setViabilityCondition((a, b) -> a.isMindMemory() || a instanceof IUpgradedMind);
 	/** picking up an item */
 	public static final ActionType<PickUpAction> PICK_UP = new ActionType<PickUpAction>("pick_up", TaskHint.ACQUIRE)
-			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory()).setUsedAbilities(Abilities.GRASP)
-			.setGenerator(PickUpAction::new);
+			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory() || a instanceof IUpgradedMind)
+			.setUsedAbilities(Abilities.GRASP).setGenerator(PickUpAction::new)
+			.setThoughtGenerator(PickupActionThought::new);
 	public static final ActionType<WanderAction> WANDER = new ActionType<WanderAction>("wander", TaskHint.LEARN)
-			.requireBody().setViabilityCondition((a, b) -> a.isMindMemory() && b.learnTarget() == null)
+			.requireBody()
+			.setViabilityCondition((a, b) -> (a.isMindMemory() || a instanceof IUpgradedMind) && b.learnInfo() == null)
 			.setUsedAbilities(Abilities.WALK).setGenerator(WanderAction::new);
 
 	public static final ActionType<SearchAction> SEARCH = new ActionType<SearchAction>("search", TaskHint.LEARN)
-			.requireBody().setUsedAbilities(Abilities.WALK).setGenerator(SearchAction::new).setViabilityCondition(
-					(ihk, tg) -> tg.learnTarget() != null && tg.learnTarget().getType() == QuestionType.LOCATION);
+			.requireBody().setUsedAbilities(Abilities.WALK).setGenerator(SearchAction::new)
+			.setThoughtGenerator(SearchActionThought::new).setViabilityCondition(
+					(ihk, tg) -> tg.learnInfo() != null && tg.learnInfo().getType() == QuestionType.LOCATION);
 
 	public static final ActionType<TalkAction> TALK = new ActionType<TalkAction>("talk", TaskHint.COMMUNICATE)
-			.requireBody().setUsedAbilities(Abilities.SPEAK).setGenerator(TalkAction::new);
+			.requireBody().interaction().setUsedAbilities(Abilities.SPEAK).setGenerator(TalkAction::new);
 	/** drinking an item */
 	public static final ActionType DRINK = new ActionType("drink", TaskHint.CONSUME).requireBody()
 			.setUsedAbilities(Abilities.EAT, Abilities.GRASP);
@@ -190,6 +199,8 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 	private BiPredicate<IHasKnowledge, ITaskGoal> viabilityCondition = (a, b) -> true;
 	private Set<? extends IPartAbility> facilities = Set.of();
 	private Function<ITaskGoal, Collection<IMeme>> requiredKnown = (a) -> Set.of();
+	private boolean interaction;
+	private Function<ITaskGoal, ? extends IActionThought> actionThoughtGen = (a) -> null;
 
 	private ActionType(String name, ITaskHint... usage) {
 		this.name = name;
@@ -206,6 +217,11 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 		return this;
 	}
 
+	private ActionType<T> setThoughtGenerator(Function<ITaskGoal, ? extends IActionThought> gen) {
+		this.actionThoughtGen = gen;
+		return this;
+	}
+
 	private ActionType<T> setUsedAbilities(IPartAbility... facilities) {
 		this.facilities = Set.of(facilities);
 		return this;
@@ -219,6 +235,15 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 	private ActionType<T> requireBody() {
 		requiresBody = true;
 		return this;
+	}
+
+	private ActionType<T> interaction() {
+		interaction = true;
+		return this;
+	}
+
+	public boolean isInteraction() {
+		return interaction;
 	}
 
 	public boolean requiresActor() {
@@ -262,6 +287,11 @@ public class ActionType<T extends IAction> implements IActionType<T> {
 
 	public T genAction(ITaskGoal fromNeed) {
 		return actionGen.apply(fromNeed);
+	}
+
+	@Override
+	public IActionThought genActionThought(ITaskGoal fromNeed) {
+		return actionThoughtGen.apply(fromNeed);
 	}
 
 	public String getName() {

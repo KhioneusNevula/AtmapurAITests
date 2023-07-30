@@ -54,4 +54,9 @@ public enum PhenomenonType implements IPhenomenonType {
 		// TODO property hint
 		return IPhenomenonType.super.getPropertyHint(property);
 	}
+
+	@Override
+	public String getUniqueName() {
+		return "phenom_type_" + this.name();
+	}
 }

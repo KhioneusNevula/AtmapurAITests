@@ -38,4 +38,14 @@ public interface IProfile extends IMeme, IUnique {
 		}
 	};
 
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.PROFILE;
+	}
+
+	@Override
+	default String getUnitString() {
+		return "profile";
+	}
+
 }

@@ -119,6 +119,28 @@ public class RememberedProperties implements IPropertyData {
 	}
 
 	@Override
+	public void updateInformation(IPropertyData fromOther) {
+		if (fromOther instanceof RememberedProperties rp) {
+			if (rp.conceptProp != null) {
+				this.conceptProp = rp.conceptProp;
+			}
+			if (rp.intProp != null) {
+				this.intProp = rp.intProp;
+			}
+			if (rp.profileProp != null) {
+				this.profileProp = rp.profileProp;
+			}
+			if (rp.profileListProp != null) {
+				this.addProfilesToList(rp.profileListProp);
+			}
+			if (rp.conceptListProp != null) {
+				this.addConceptsToList(rp.conceptListProp);
+			}
+
+		}
+	}
+
+	@Override
 	public void forgetAllConceptList() {
 		this.conceptListProp = null;
 	}
@@ -150,5 +172,26 @@ public class RememberedProperties implements IPropertyData {
 			builder.append(" profile[]=").append(profileListProp);
 
 		return builder.append("}").toString().equals("{}") ? "YES{}" : builder.toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof RememberedProperties rp) {
+
+			return this.property.equals(rp.property)
+					&& (this.intProp != null ? rp.intProp != null && this.intProp.equals(rp.intProp)
+							: rp.intProp == null)
+					&& (this.conceptProp != null ? rp.conceptProp != null && this.conceptProp.equals(rp.conceptProp)
+							: rp.conceptProp == null)
+					&& (this.profileProp != null ? rp.profileProp != null && this.profileProp.equals(rp.profileProp)
+							: rp.profileProp == null)
+					&& (this.conceptListProp != null
+							? rp.conceptListProp != null && this.conceptListProp.equals(rp.conceptListProp)
+							: rp.conceptListProp == null)
+					&& (this.profileListProp != null
+							? rp.profileListProp != null && this.profileListProp.equals(rp.profileListProp)
+							: rp.profileListProp == null);
+		}
+		return false;
 	}
 }

@@ -7,39 +7,46 @@ import mind.goals.IGoal;
 public enum RelationType {
 
 	/** Give a resource */
-	GIVE(true, false, null, IGoal.Type.FLOW),
+	GIVE(true, false, false, null, IGoal.Type.FLOW),
 	/** Get a resource */
-	GET(false, true, GIVE, IGoal.Type.FLOW),
+	GET(false, true, false, GIVE, IGoal.Type.FLOW),
 	/** Be a member of a group/ do a job in a role */
-	BE(true, false, null, IGoal.Type.MEMBERSHIP),
+	BE(true, false, true, null, IGoal.Type.MEMBERSHIP),
 	/** Include a member in this group */
-	INCLUDE(false, true, BE, IGoal.Type.MEMBERSHIP),
+	INCLUDE(false, true, true, BE, IGoal.Type.MEMBERSHIP),
 	/** relationship involving performing a specific Role */
-	PERFORM(true, false, null, IGoal.Type.CONDUCT),
+	PERFORM(true, false, true, null, IGoal.Type.CONDUCT),
 	/** relationship that requires the performance of a specific Role */
-	REQUIRE_CONDUCT(false, true, PERFORM, IGoal.Type.CONDUCT),
-	/** relationship involving doing a specific task */
-	DO(true, false, null, IGoal.Type.TASK),
-	/** relationship requiring performance of a specific task */
-	REQUIRE_TASK(false, true, DO, IGoal.Type.TASK),
+	REQUIRE_CONDUCT(false, true, false, PERFORM, IGoal.Type.CONDUCT),
+	/**
+	 * relationship requiring doing a Task
+	 */
+	DO(true, false, false, null, IGoal.Type.TASK),
+	/**
+	 * relationship requiring performance of the Task
+	 */
+	REQUIRE_TASK(false, true, false, DO, IGoal.Type.TASK),
 	/** social relationship */
-	FEEL(true, true, null, IGoal.Type.COMMUNITY),
+	FEEL(true, true, true, null, IGoal.Type.PERSONAL),
 	/**
 	 * a relationship characterized by this party making decisions for the other
 	 * party
 	 */
-	GOVERN(true, false, null, IGoal.Type.MEMBERSHIP),
+	GOVERN(true, false, true, null, IGoal.Type.MEMBERSHIP),
 	/** being governed by the other party */
-	GOVERNED_BY(false, true, GOVERN, IGoal.Type.MEMBERSHIP);
+	GOVERNED_BY(false, true, true, GOVERN, IGoal.Type.MEMBERSHIP);
 
 	private boolean provides;
 	private boolean benefits;
 	private RelationType opposite;
 	private EnumSet<IGoal.Type> relationshipTypes;
+	private boolean singular;
 
-	private RelationType(boolean provide, boolean benefit, RelationType opposite, IGoal.Type... types) {
+	private RelationType(boolean provide, boolean benefit, boolean singular, RelationType opposite,
+			IGoal.Type... types) {
 		provides = provide;
 		benefits = benefit;
+		this.singular = singular;
 
 		if (types.length > 1) {
 			relationshipTypes = EnumSet.of(types[0], types);
@@ -78,6 +85,15 @@ public enum RelationType {
 
 	public EnumSet<IGoal.Type> getRelationshipTypes() {
 		return relationshipTypes;
+	}
+
+	/**
+	 * If there can only be one of this type of relation with a given party
+	 * 
+	 * @return
+	 */
+	public boolean isSingular() {
+		return singular;
 	}
 
 	/**

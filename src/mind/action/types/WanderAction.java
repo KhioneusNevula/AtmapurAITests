@@ -1,15 +1,12 @@
 package mind.action.types;
 
-import java.util.Collection;
-import java.util.Set;
-
 import actor.Actor;
-import mind.ICanAct;
 import mind.action.ActionType;
 import mind.action.IAction;
 import mind.action.IActionType;
 import mind.goals.ITaskGoal;
 import mind.goals.taskgoals.TravelTaskGoal;
+import mind.memory.IHasKnowledge;
 import sim.Location;
 
 public class WanderAction implements IAction {
@@ -21,7 +18,7 @@ public class WanderAction implements IAction {
 	}
 
 	@Override
-	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
+	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
 		Actor actor = user.getAsHasActor().getActor();
 		if (randomLoc != null && actor.distance(randomLoc) < actor.getReach())
 			return true;
@@ -37,15 +34,15 @@ public class WanderAction implements IAction {
 	}
 
 	@Override
-	public void beginExecutingIndividual(ICanAct forUser) {
+	public void beginExecutingIndividual(IHasKnowledge forUser) {
 		if (forUser.getAsMind().rand().nextInt(10) < 4)
 			forUser.getMindMemory().setFeelingCurious(false);
 
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
-		return Set.of(new TravelTaskGoal(randomLoc, true));
+	public ITaskGoal genConditionGoal(IHasKnowledge user) {
+		return new TravelTaskGoal(randomLoc, true);
 	}
 
 	@Override

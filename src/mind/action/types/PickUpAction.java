@@ -1,13 +1,12 @@
 package mind.action.types;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.TreeSet;
 
 import actor.Actor;
-import mind.ICanAct;
 import mind.action.ActionType;
 import mind.action.IAction;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
@@ -15,7 +14,8 @@ import mind.goals.ITaskGoal;
 import mind.goals.question.Question;
 import mind.goals.taskgoals.LearnTaskGoal;
 import mind.goals.taskgoals.TravelTaskGoal;
-import sim.Location;
+import mind.memory.IHasKnowledge;
+import sim.interfaces.ILocatable;
 
 public class PickUpAction implements IAction {
 
@@ -23,7 +23,7 @@ public class PickUpAction implements IAction {
 	private Actor specificTarget;
 	private Profile nearestTarget;
 	private Actor nearestActorTarget;
-	private Location targetLoc;
+	private ILocationMeme targetLoc;
 	private Actor body;
 	private boolean success;
 	private String failure = "n/a";
@@ -41,14 +41,14 @@ public class PickUpAction implements IAction {
 		return acquireWhat;
 	}
 
-	private boolean findTargetsAndStuff(ICanAct user, boolean pondering) {
+	private boolean findTargetsAndStuff(IHasKnowledge user, boolean pondering) {
 
 		if (acquireWhat instanceof Profile) {
 			Profile profile = (Profile) acquireWhat;
 			this.nearestTarget = profile;
 			this.targetLoc = user.getKnowledgeBase().getLocation(profile);
 			Actor ac = user.getMindMemory().getSenses().getActorFor(profile);
-			if (ac != null && user.getAsHasActor().getActor().reachable(targetLoc)) {
+			if (ac != null && user.getAsHasActor().getActor().reachable(targetLoc.getGeneralLocation())) {
 				this.specificTarget = ac;
 				this.nearestActorTarget = ac;
 				failure = "success";
@@ -60,21 +60,22 @@ public class PickUpAction implements IAction {
 			Property property = (Property) acquireWhat;
 			// how to memory hmm
 			Collection<Profile> profiles = user.getMindMemory().getSenses().getAllSensedProfiles();
-			Location ownLoc = user.getMindMemory().getLocation(user.getMindMemory().getSelfProfile());
+			ILocatable ownLoc = user.getMindMemory().getLocation(user.getMindMemory().getSelfProfile())
+					.getGeneralLocation();
 			if (ownLoc == null)
 				return false;
 			failure = "pondering=" + pondering + ", no actor can be sensed";
 			for (Profile prof : profiles) {
 				Actor actor = user.getMindMemory().getSenses().getActorFor(prof);
-				Location loc = user.getMindMemory().getLocation(prof);
+				ILocationMeme loc = user.getMindMemory().getLocation(prof);
 				if (loc == null)
 					loc = user.getMindMemory().getLocationsFromCulture(prof).values().stream().findAny().orElse(null);
 				if (loc == null)
 					continue;// loc = actor.getLocation();
 				failure = "pondering=" + pondering + ", no instances of " + property + " can be sensed " + actor;
-				if (actor != null && (ITaskGoal.getProperty(actor, property, user).isPresent()
-						|| user.getMindMemory().hasProperty(prof, property))) {
-					if (this.targetLoc == null || this.targetLoc.distance(ownLoc) > loc.distance(ownLoc)) {
+				if (actor != null && (ITaskGoal.getProperty(actor, property, user).isPresent())) {
+					if (this.targetLoc == null || this.targetLoc.getGeneralLocation().distance(ownLoc) > loc
+							.getGeneralLocation().distance(ownLoc)) {
 						/*
 						 * if (user.getAsHasActor().getActor().getName().equals("bobzy"))
 						 * System.out.println(actor + " " + property + " " + pondering);
@@ -82,7 +83,7 @@ public class PickUpAction implements IAction {
 						this.nearestActorTarget = actor;
 						this.nearestTarget = prof;
 						this.targetLoc = loc;
-						if (user.getAsHasActor().getActor().reachable(loc)) {
+						if (user.getAsHasActor().getActor().reachable(loc.getGeneralLocation())) {
 							this.specificTarget = actor;
 							if (actor.isRemoved())
 								continue;
@@ -101,13 +102,14 @@ public class PickUpAction implements IAction {
 				profiles.addAll(user.getMindMemory().getProfilesWithPropertyFromCulture(property).values());
 				failure += " and nothing is remembered";
 				for (Profile prof : profiles) {
-					Location loc = user.getMindMemory().getLocation(prof);
+					ILocationMeme loc = user.getMindMemory().getLocation(prof);
 					if (loc == null)
 						loc = user.getMindMemory().getLocationsFromCulture(prof).values().stream().findAny()
 								.orElse(null);
 					if (loc == null)
 						continue;
-					if (nearestTarget == null || this.targetLoc.distance(ownLoc) > loc.distance(ownLoc)) {
+					if (nearestTarget == null || this.targetLoc.getGeneralLocation().distance(ownLoc) > loc
+							.getGeneralLocation().distance(ownLoc)) {
 						this.nearestTarget = prof;
 						this.targetLoc = loc;
 						failure = "pondering=" + pondering + ", unreachable target " + loc + " from memory";
@@ -121,7 +123,7 @@ public class PickUpAction implements IAction {
 	}
 
 	@Override
-	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
+	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
 		// currently, if pondering it can check its memory, but not if it is not in the
 		// pondering stage
 		body = user.getAsHasActor().getActor();
@@ -150,24 +152,24 @@ public class PickUpAction implements IAction {
 	}
 
 	@Override
-	public void beginExecutingIndividual(ICanAct forUser) {
+	public void beginExecutingIndividual(IHasKnowledge forUser) {
 		success = body.pickUp(specificTarget);
 	}
 
 	@Override
-	public boolean finishActionIndividual(ICanAct individual, int tick) {
+	public boolean finishActionIndividual(IHasKnowledge individual, int tick) {
 		return success;
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
+	public ITaskGoal genConditionGoal(IHasKnowledge user) {
 		if (handsFull) {
-			return Set.of();
+			return null;
 		}
 		if (targetLoc == null) {
-			return Set.of(new LearnTaskGoal(Question.askLocation(acquireWhat)));
+			return new LearnTaskGoal(Question.askLocation(acquireWhat));
 		}
-		return Set.of(new TravelTaskGoal(targetLoc, true));
+		return new TravelTaskGoal(targetLoc, true);
 	}
 
 	@Override

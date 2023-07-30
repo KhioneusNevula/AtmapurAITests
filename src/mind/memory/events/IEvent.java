@@ -5,7 +5,6 @@ import java.util.Collection;
 import mind.action.IActionType;
 import mind.action.IInteractionInstance;
 import mind.concepts.type.IMeme;
-import mind.concepts.type.Profile;
 import phenomenon.IPhenomenonType;
 import sim.Location;
 
@@ -16,14 +15,22 @@ public interface IEvent extends IMeme {
 	 * 
 	 * @return
 	 */
-	public Collection<Profile> object();
+	public Collection<? extends IMeme> object();
 
 	/**
 	 * If the event has a cause, the entity(ies) which caused the event
 	 * 
 	 * @return
 	 */
-	public Collection<Profile> cause();
+	public Collection<? extends IMeme> cause();
+
+	/**
+	 * returns profile(s)/other meme types fitting in the specific event role
+	 * 
+	 * @param role
+	 * @return
+	 */
+	public <T extends IMeme> Collection<T> getForRole(EventRole role);
 
 	/**
 	 * Where the event occurred
@@ -68,6 +75,13 @@ public interface IEvent extends IMeme {
 	public IPhenomenonType phenomenon();
 
 	/**
+	 * Properties of the phenomenon resulting from this event
+	 * 
+	 * @return
+	 */
+	public Collection<IMeme> phenomenonProperties();
+
+	/**
 	 * If the event encompasses a phenomenon
 	 * 
 	 * @return
@@ -87,5 +101,24 @@ public interface IEvent extends IMeme {
 	 * @return
 	 */
 	public boolean isInteraction();
+
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.EVENT;
+	}
+
+	public static enum EventRole implements IMeme {
+		CAUSER, OBJECT, USED, LOCATION;
+
+		@Override
+		public String getUniqueName() {
+			return "eventrole_" + name();
+		}
+
+		@Override
+		public IMemeType getMemeType() {
+			return MemeType.EVENT_ROLE;
+		}
+	}
 
 }

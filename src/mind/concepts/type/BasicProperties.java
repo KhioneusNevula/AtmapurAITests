@@ -8,24 +8,56 @@ import java.util.function.Supplier;
 import com.google.common.collect.ImmutableMap;
 
 import mind.concepts.PropertyController;
-import mind.concepts.identifiers.PossessionIdentifier;
+import mind.concepts.identifiers.IsHeldByIdentifier;
 
 public class BasicProperties {
 	private static Map<Property, Supplier<PropertyController>> gens = Map.of();
 
-	// TODO make food more dynamic; for now the identifier is just, the food entity
+	/**
+	 * to identify things consumed for sustenance
+	 */
 	public static final Property FOOD = reg(Property.create("b_food"), (con) -> {
 	});
-	public static final Property POSSESSIONS = reg(Property.builder("b_possessions").addProfileListProp().build(),
-			(con) -> con.editIdentifier(PossessionIdentifier.IDENTIFIER));
+	/**
+	 * identify what something is held by
+	 */
+	public static final Property HELD = reg(Property.builder("b_held").addProfileProp().build(), (con) -> {
+		con.editIdentifier(IsHeldByIdentifier.HELD);
+	});
+
+	/** identify what something is worn by */
+	public static final Property WORN = reg(Property.builder("b_worn").addProfileProp().build(), (con) -> {
+		con.editIdentifier(IsHeldByIdentifier.WORN);
+	});
+
+	/**
+	 * to identify things that harm
+	 */
 	public static final Property DANGER = reg(Property.create("b_danger"), (con) -> {
 		/* TODO danger prop */});
+	/**
+	 * to identify things that are dead
+	 */
+	public static final Property DEAD = reg(Property.create("b_dead"), (con) -> {
+	});
+	/**
+	 * to identify things that protect from the environment
+	 */
 	public static final Property SHELTER = reg(Property.create("b_shelter"), (con) -> {
 		/* TODO shelter prop */});
+	/**
+	 * to identify things worthy of note
+	 */
 	public static final Property AWESOME = reg(Property.create("b_awesome"), (con) -> {
 		/* TODO awesome prop */});
+	/**
+	 * to identify things that protect from dangers
+	 */
 	public static final Property PROTECTION = reg(Property.create("b_protection"), (con) -> {
 		/* TODO protection prop */});
+	/**
+	 * to identify those that speak certain languages
+	 */
 	public static final Property SPEAKS_LANGUAGE = reg(
 			Property.builder("b_speaks_language").addConceptListProp().build(), (con) -> {
 			});

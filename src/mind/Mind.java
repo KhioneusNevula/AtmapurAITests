@@ -2,17 +2,24 @@ package mind;
 
 import java.util.Collection;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-import actor.Actor;
+import actor.SentientActor;
+import mind.concepts.type.IProfile;
 import mind.linguistics.NameWord;
 import mind.memory.Memory;
+import mind.memory.MemoryEmotions;
+import mind.personality.Personality;
 import mind.relationships.IParty;
+import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 
-public class Mind implements IMind, IHasActor {
+public class Mind implements IIndividualMind, IHasActor {
 
-	private Actor owner;
+	private SentientActor owner;
 	private UUID id;
 	private Memory memory;
 	private Will will;
@@ -20,6 +27,15 @@ public class Mind implements IMind, IHasActor {
 	private int timeAwake;
 	private int timeAsleep;
 	private NameWord name; // TODO make a better name system
+	/**
+	 * indicates whether the mind no longer exists for all intents and purposes
+	 */
+	private boolean dead;
+	/**
+	 * All cultures this mind is isolated from
+	 */
+	private Set<Culture> isolatedFrom;
+	private Personality personality = new Personality(this);
 	/**
 	 * Number of ticks before the sense memories are all cleared and actions are all
 	 * reset
@@ -31,7 +47,7 @@ public class Mind implements IMind, IHasActor {
 	 * 
 	 * @param owner
 	 */
-	public Mind(Actor owner) {
+	public Mind(SentientActor owner) {
 		this.owner = owner;
 		this.id = owner.getUUID();
 		this.memory = new Memory(this.id, owner.getClass().getName().toLowerCase());
@@ -49,7 +65,7 @@ public class Mind implements IMind, IHasActor {
 		if (this.name == null) {
 			if (this.memory.getMajorLanguage() != null) {
 				System.out.println("naming self - " + this.owner.getName());
-				this.name = this.memory.getMajorLanguage().name(this.memory.getSelfProfile(), this.rand());
+				this.name = this.memory.getMajorLanguage().name(this.memory.getSelfProfile(), this.rand(), Set.of());
 				System.out.println("named self " + name.getDisplay());
 			}
 		}
@@ -111,7 +127,7 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
-	public Actor getActor() {
+	public SentientActor getActor() {
 		return owner;
 	}
 
@@ -124,7 +140,22 @@ public class Mind implements IMind, IHasActor {
 		return this.will;
 	}
 
-	public Actor getOwner() {
+	@Override
+	public MemoryEmotions getEmotions() {
+		return this.memory.getEmotions();
+	}
+
+	@Override
+	public Personality personality() {
+		return personality;
+	}
+
+	@Override
+	public boolean hasEmotions() {
+		return true;
+	}
+
+	public SentientActor getOwner() {
 		return owner;
 	}
 
@@ -134,11 +165,11 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
-	public Collection<Relationship> getRelationshipsWith(IParty other) {
+	public Collection<Relationship> getRelationshipsWith(IProfile other) {
 		return memory.getRelationshipsWith(other);
 	}
 
-	public boolean isPartOf(IGroup group) {
+	public boolean isPartOf(IProfile group) {
 		return memory.isPartOf(group);
 	}
 
@@ -153,7 +184,7 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
-	public Collection<IParty> getAllPartiesWithRelationships() {
+	public Collection<IProfile> getAllPartiesWithRelationships() {
 		return memory.getAllPartiesWithRelationships();
 	}
 
@@ -163,12 +194,28 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
-	public void dissolveRelationship(IParty with, Relationship agreement) {
+	public Relationship getRelationship(IProfile with, RelationType type) {
+		return memory.getRelationship(with, type);
+	}
+
+	@Override
+	public Collection<Relationship> getRelationshipsOfTypeWith(IProfile other, RelationType type) {
+		return memory.getRelationshipsWith(other).stream().filter((a) -> a.getType() == type)
+				.collect(Collectors.toUnmodifiableSet());
+	}
+
+	@Override
+	public float getTrust(IProfile with) {
+		return memory.getTrust(with);
+	}
+
+	@Override
+	public void dissolveRelationship(IProfile with, Relationship agreement) {
 		memory.dissolveRelationship(with, agreement);
 	}
 
 	@Override
-	public boolean hasRelationshipsWith(IParty other) {
+	public boolean hasRelationshipsWith(IProfile other) {
 		return memory.hasRelationshipsWith(other);
 	}
 
@@ -184,7 +231,7 @@ public class Mind implements IMind, IHasActor {
 
 	@Override
 	public String toString() {
-		return "mind_" + this.owner.getName();
+		return (dead ? "dead_" : "") + "mind_" + this.owner.getName();
 	}
 
 	@Override
@@ -194,8 +241,9 @@ public class Mind implements IMind, IHasActor {
 
 	@Override
 	public String report() {
-		StringBuilder builder = new StringBuilder("Mind_" + this.owner.getName()
+		StringBuilder builder = new StringBuilder((dead ? "DEAD_" : "") + "Mind_" + this.owner.getName()
 				+ (this.name != null ? "(\"" + this.name.getDisplay() + "\")" : "") + "->{");
+		builder.append("\n\tpersonality:" + this.personality.report());
 		builder.append("\n\tMemory:" + this.memory.report());
 		builder.append("\n\t" + this.will.report());
 		builder.append("}");
@@ -208,8 +256,54 @@ public class Mind implements IMind, IHasActor {
 	}
 
 	@Override
-	public long worldTicks() {
-		return owner.getWorld().getTicks();
+	public boolean isIsolatedFrom(Culture culture) {
+		return isolatedFrom != null ? isolatedFrom.contains(culture) : false;
+	}
+
+	/**
+	 * Isolates this mind from a culture
+	 * 
+	 * @param culture
+	 */
+	public void isolateFrom(Culture culture) {
+		if (isolatedFrom == null)
+			isolatedFrom = new TreeSet<>();
+		isolatedFrom.add(culture);
+	}
+
+	/**
+	 * Marks this mind as no longer isolated from this culture
+	 */
+	public void exitIsolation(Culture culture) {
+		if (isolatedFrom == null)
+			return;
+		isolatedFrom.remove(culture);
+	}
+
+	/**
+	 * Cultures this mind is isolated from
+	 * 
+	 * @return
+	 */
+	public Set<Culture> getIsolatedCultures() {
+		return isolatedFrom == null ? Set.of() : isolatedFrom;
+	}
+
+	public boolean isDead() {
+		return dead;
+	}
+
+	/**
+	 * Registers this mind as dead
+	 */
+	public void kill() {
+		this.dead = true;
+		this.conscious = false;
+	}
+
+	@Override
+	public boolean isNotViable() {
+		return this.dead;
 	}
 
 }

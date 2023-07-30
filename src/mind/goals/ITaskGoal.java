@@ -5,6 +5,7 @@ import java.util.Set;
 
 import actor.Actor;
 import mind.Culture;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
@@ -15,7 +16,6 @@ import mind.memory.IKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.memory.Memory;
 import mind.speech.IUtterance;
-import sim.Location;
 
 public interface ITaskGoal extends IGoal {
 
@@ -143,7 +143,7 @@ public interface ITaskGoal extends IGoal {
 	/**
 	 * Gets the desired beneficiary of this task. This would be who acquires the
 	 * Acquire tasks items; who is resurrected by the Resurrect tasks; what is
-	 * stowed; etc. Almost always the self.
+	 * stowed; etc.
 	 * 
 	 * @return
 	 */
@@ -154,7 +154,7 @@ public interface ITaskGoal extends IGoal {
 	 * 
 	 * @return
 	 */
-	default Location targetLocation() {
+	default ILocationMeme targetLocation() {
 		return null;
 	}
 
@@ -191,11 +191,29 @@ public interface ITaskGoal extends IGoal {
 	}
 
 	/**
+	 * The group of profiles that would be harmed by this goal
+	 * 
+	 * @return
+	 */
+	default Collection<Profile> harmTargets() {
+		return Set.of();
+	}
+
+	/**
+	 * This is who would be harmed by this goal
+	 * 
+	 * @return
+	 */
+	default Profile harmTarget() {
+		return null;
+	}
+
+	/**
 	 * This woud be the question learned about in a learning goal
 	 * 
 	 * @return
 	 */
-	default Question learnTarget() {
+	default Question learnInfo() {
 		return null;
 	}
 
@@ -230,29 +248,46 @@ public interface ITaskGoal extends IGoal {
 	}
 
 	@Override
+	default IMemeType getMemeType() {
+		return MemeType.TASK_GOAL;
+	}
+
+	@Override
 	default boolean equivalent(IGoal other) {
 		return IGoal.super.equivalent(other) && other instanceof ITaskGoal
 				&& ((ITaskGoal) other).getActionHint() == this.getActionHint();
 	}
 
+	/**
+	 * Uses the given knowledge base and the actor's contained properties to figure
+	 * out if this has a given property
+	 * 
+	 * @param actor
+	 * @param property
+	 * @param entity
+	 * @return
+	 */
 	public static IPropertyData getProperty(Actor actor, Property property, IHasKnowledge entity) {
 		IKnowledgeBase knowledge = entity.getKnowledgeBase();
-		if (knowledge instanceof Culture) {
-			return actor.getPropertyData(knowledge, property);
-		} else if (knowledge instanceof Memory) {
-			IPropertyData dat = actor.getPropertyData(knowledge, property);
-			if (!dat.isUnknown())
-				return dat;
+		IPropertyData dat = actor.getPropertyData(knowledge, property);
+		IPropertyData dat2 = knowledge.getProperties(new Profile(actor), property);
+		if (dat2.getKnownCount() > dat.getKnownCount()) {
+			dat = dat2;
+		}
+		if (knowledge instanceof Memory) {
 			for (Culture cult : ((Memory) knowledge).cultures()) {
 				IPropertyData twa = actor.getPropertyData(cult, property);
-				if (twa != null) {
-					if (dat == null || twa.getKnownCount() > dat.getKnownCount())
-						dat = twa;
-				}
+				if (twa.getKnownCount() > dat.getKnownCount())
+					dat = twa;
+
+				twa = cult.getProperties(new Profile(actor), property);
+				if (twa.getKnownCount() > dat.getKnownCount())
+					dat = twa;
 			}
-			return dat;
+
 		}
-		return IPropertyData.UNKNOWN;
+
+		return dat;
 	}
 
 }

@@ -32,4 +32,14 @@ public class PropertyTrend extends Trend {
 	public Property getConcept() {
 		return (Property) super.getConcept();
 	}
+
+	@Override
+	public TrendType getType() {
+		return TrendType.PROPERTY_KNOWLEDGE;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + "_" + this.associations;
+	}
 }

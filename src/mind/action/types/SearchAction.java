@@ -1,16 +1,13 @@
 package mind.action.types;
 
-import java.util.Collection;
-import java.util.Set;
-
 import actor.Actor;
-import mind.ICanAct;
 import mind.action.ActionImpl;
 import mind.action.ActionType;
 import mind.goals.ITaskGoal;
 import mind.goals.TaskHint;
 import mind.goals.question.Question;
 import mind.goals.taskgoals.TravelTaskGoal;
+import mind.memory.IHasKnowledge;
 import sim.Location;
 
 public class SearchAction extends ActionImpl {
@@ -22,11 +19,11 @@ public class SearchAction extends ActionImpl {
 
 	public SearchAction(ITaskGoal goal) {
 		super(ActionType.SEARCH, TaskHint.LEARN);
-		this.question = goal.learnTarget();
+		this.question = goal.learnInfo();
 	}
 
 	@Override
-	public boolean canExecuteIndividual(ICanAct user, boolean pondering) {
+	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering) {
 		Actor actor = user.getAsHasActor().getActor();
 		if (targetLoc != null && actor.distance(targetLoc) < actor.getReach())
 			return true;
@@ -53,12 +50,12 @@ public class SearchAction extends ActionImpl {
 	}
 
 	@Override
-	public void beginExecutingIndividual(ICanAct forUser) {
+	public void beginExecutingIndividual(IHasKnowledge forUser) {
 	}
 
 	@Override
-	public Collection<ITaskGoal> genConditionGoal(ICanAct user) {
-		return Set.of(new TravelTaskGoal(targetLoc, true));
+	public ITaskGoal genConditionGoal(IHasKnowledge user) {
+		return new TravelTaskGoal(targetLoc, true);
 	}
 
 	@Override

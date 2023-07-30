@@ -1,5 +1,7 @@
 package main;
 
+import java.util.Map;
+
 /**
  * @Immutable
  * 
@@ -8,7 +10,7 @@ package main;
  * @param <A> first parameter type
  * @param <B> second parameter type
  */
-public class Pair<A, B> {
+public class Pair<A, B> implements Map.Entry<A, B> {
 
 	private A first;
 	private B second;
@@ -45,7 +47,39 @@ public class Pair<A, B> {
 
 	@Override
 	public String toString() {
-		return "pair<" + first + "," + second + ">";
+		return "<" + first + "," + second + ">";
+	}
+
+	@Override
+	public A getKey() {
+		return this.first;
+	}
+
+	@Override
+	public B getValue() {
+		return this.second;
+	}
+
+	@Override
+	public B setValue(B value) {
+		B s = second;
+		this.setSecond(value);
+		return s;
+	}
+
+	@Override
+	public int hashCode() {
+		return (first != null ? first.hashCode() : 0) + (second != null ? second.hashCode() : 0);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Pair pair) {
+			return (this.first != null ? pair.first != null && this.first.equals(pair.first) : pair.first == null)
+					&& (this.second != null ? pair.second != null && this.second.equals(pair.second)
+							: pair.second == null);
+		}
+		return super.equals(obj);
 	}
 
 }

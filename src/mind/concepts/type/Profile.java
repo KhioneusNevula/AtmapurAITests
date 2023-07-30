@@ -2,8 +2,12 @@ package mind.concepts.type;
 
 import java.util.UUID;
 
+import sim.interfaces.IUnique;
+
 /**
- * A class representing
+ * A class representing a profile. A profile is comparable to other profiles
+ * exclusively by means of its UUID; the other information in it is merely for
+ * display purposes
  * 
  * @author borah
  *
@@ -25,6 +29,14 @@ public class Profile implements IProfile {
 		this.uniqueName = "profile_" + type + ownerID;
 	}
 
+	public Profile(UUID holder) {
+		this(holder, "unit");
+	}
+
+	public Profile(IUnique unique) {
+		this(unique.getUUID(), unique.getUnitString());
+	}
+
 	@Override
 	public UUID getUUID() {
 		return ownerID;
@@ -36,16 +48,21 @@ public class Profile implements IProfile {
 	}
 
 	@Override
+	public String getUnitString() {
+		return type;
+	}
+
+	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof Profile))
-			return false;
-		Profile other = (Profile) obj;
-		return other.ownerID.equals(this.ownerID);
+		if (obj instanceof IProfile other) {
+			return other.getUUID().equals(this.ownerID);
+		}
+		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return this.ownerID.hashCode();
+		return this.ownerID.hashCode() * 2;
 	}
 
 	@Override

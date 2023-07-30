@@ -2,7 +2,7 @@ package mind.action;
 
 import java.util.Collection;
 
-import mind.ICanAct;
+import mind.IEntity;
 import mind.speech.IUtterance;
 import sim.Location;
 
@@ -14,7 +14,7 @@ public interface IInteractionInstance {
 	 * @param source
 	 * @param utterance
 	 */
-	public void addCommunication(ICanAct source, IUtterance utterance);
+	public void addCommunication(IEntity source, IUtterance utterance);
 
 	/**
 	 * If all individuals have left the interaction
@@ -31,14 +31,14 @@ public interface IInteractionInstance {
 	 * 
 	 * @param ender
 	 */
-	public void leave(ICanAct ender);
+	public void leave(IEntity ender);
 
 	/**
 	 * End the interaction instance
 	 * 
 	 * @param ender
 	 */
-	public void end(ICanAct ender);
+	public void end(IEntity ender);
 
 	/**
 	 * The type of the interaction
@@ -74,26 +74,26 @@ public interface IInteractionInstance {
 	 * @param participant
 	 * @return
 	 */
-	public IInteraction getAssociatedActionForParticipant(ICanAct participant);
+	public IInteraction getAssociatedActionForParticipant(IEntity participant);
 
 	/**
 	 * The entity which initiated this event
 	 * 
 	 * @return
 	 */
-	public ICanAct initiator();
+	public IEntity initiator();
 
 	/**
 	 * Those involved in this interaction event
 	 * 
 	 * @return
 	 */
-	public Collection<ICanAct> participants();
+	public Collection<IEntity> participants();
 
 	/**
 	 * Adds a participant and their associated interaction action to this instance
 	 * 
 	 * @param participants
 	 */
-	public void addParticipant(ICanAct participant, IInteraction action);
+	public void addParticipant(IEntity participant, IInteraction action);
 }

@@ -13,4 +13,9 @@ public class ActionKnowledgeTrend extends Trend {
 		return (IActionType<?>) super.getConcept();
 	}
 
+	@Override
+	public TrendType getType() {
+		return TrendType.ACTION_KNOWLEDGE;
+	}
+
 }

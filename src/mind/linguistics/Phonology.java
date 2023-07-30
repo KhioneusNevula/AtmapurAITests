@@ -39,6 +39,10 @@ public class Phonology implements IMeme {
 		this.uniqueName = "phono_" + name;
 	}
 
+	public IMemeType getMemeType() {
+		return MemeType.PHONOLOGY;
+	}
+
 	public String getUniqueName() {
 		return uniqueName;
 	}
@@ -462,6 +466,10 @@ public class Phonology implements IMeme {
 			this.representation = representation;
 		}
 
+		public IMemeType getMemeType() {
+			return MemeType.PHONEME;
+		}
+
 		@Override
 		public String getUniqueName() {
 			return "phoneme_" + representation;
@@ -841,6 +849,10 @@ public class Phonology implements IMeme {
 		private Context context;
 		private boolean vowelBased;
 		private boolean consonantBased;
+
+		public IMemeType getMemeType() {
+			return MemeType.PHONO_RULE;
+		}
 
 		private Rule(Context c) {
 			this.context = c;

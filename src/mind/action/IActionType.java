@@ -8,8 +8,10 @@ import mind.concepts.type.IMeme;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.memory.IHasKnowledge;
+import mind.memory.events.IEventType;
+import mind.thought_exp.actions.IActionThought;
 
-public interface IActionType<T extends IAction> extends IMeme {
+public interface IActionType<T extends IAction> extends IEventType {
 	/**
 	 * if this action type requires an actor to execute
 	 * 
@@ -31,6 +33,8 @@ public interface IActionType<T extends IAction> extends IMeme {
 	 * @return
 	 */
 	public T genAction(ITaskGoal fromNeed);
+
+	public IActionThought genActionThought(ITaskGoal fromNeed);
 
 	public String getName();
 
@@ -73,5 +77,12 @@ public interface IActionType<T extends IAction> extends IMeme {
 	default String getUniqueName() {
 		return "action_" + this.getName();
 	}
+
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.ACTION_TYPE;
+	}
+
+	public boolean isInteraction();
 
 }

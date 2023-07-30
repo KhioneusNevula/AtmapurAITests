@@ -1,6 +1,6 @@
 package mind.action;
 
-import mind.ICanAct;
+import mind.IEntity;
 import mind.speech.IUtterance;
 
 public interface IInteraction extends IAction {
@@ -28,7 +28,7 @@ public interface IInteraction extends IAction {
 	 * @param speaker
 	 * @param commu
 	 */
-	public void receiveCommunication(ICanAct listener, ICanAct speaker, IUtterance commu);
+	public void receiveCommunication(IEntity listener, IEntity speaker, IUtterance commu);
 
 	/**
 	 * The type of interaction this is; e.g. talking actions constitute a
@@ -44,6 +44,6 @@ public interface IInteraction extends IAction {
 	 * 
 	 * @param ender
 	 */
-	public void endInteraction(ICanAct ender);
+	public void endInteraction(IEntity ender);
 
 }

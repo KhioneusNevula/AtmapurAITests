@@ -1,8 +1,9 @@
 package phenomenon;
 
 import actor.ITemplate;
+import mind.memory.events.IEventType;
 
-public interface IPhenomenonType extends ITemplate {
+public interface IPhenomenonType extends ITemplate, IEventType {
 
 	public String name();
 
@@ -31,5 +32,10 @@ public interface IPhenomenonType extends ITemplate {
 	 * @return
 	 */
 	public boolean isTransformation();
+
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.PHENOMENON_TYPE;
+	}
 
 }

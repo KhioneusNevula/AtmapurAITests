@@ -1,7 +1,7 @@
 package mind.memory;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -15,29 +15,39 @@ import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 
+import main.MathHelp;
+import main.Pair;
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
+import mind.concepts.type.IMeme.MemeType;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
 import mind.linguistics.Language;
+import mind.memory.events.Consequence;
+import mind.memory.events.EventDescription;
 import mind.need.INeed;
 import mind.need.INeed.INeedType;
+import sim.interfaces.IUnique;
 
 public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	protected Profile self;
 	protected Table<Profile, Property, IPropertyData> infoTable;
-	// some way of forming associations and whatever among properties
 	protected Map<Property, PropertyController> propertyConcepts;
-	protected Map<UUID, Profile> profiles;
+
+	protected Map<Profile, Interest> profiles;
 	protected Set<IGoal> goals;
 	protected Multimap<INeedType, INeed> needs;
 	protected Multimap<ITaskHint, IActionType<?>> doableActions;
 	protected Language mainLanguage;
-	protected Set<Language> languages = new TreeSet<>();
+	protected Set<Language> languages = new TreeSet<>(Comparator.naturalOrder());
+	protected EventAssociationsMemory events = new EventAssociationsMemory();
+	protected Map<Profile, ILocationMeme> locationKnowledge;
 
 	public AbstractKnowledgeEntity(UUID selfID, String type) {
 		this.self = new Profile(selfID, type);
@@ -60,15 +70,23 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 		return self;
 	}
 
-	/**
-	 * Inits a properties instance for this profile and its properties; returns the
-	 * instance for editing -- OR returns an existing instance, if present
-	 * 
-	 * @param forProfile
-	 * @param prop
-	 * @return
-	 */
+	public Collection<Pair<Consequence, Float>> getAssociatedConsequence(EventDescription event) {
+		return events.getConsequences(event);
+	}
+
+	@Override
+	public void setProperty(Profile forProfile, Property prop, IPropertyData rp) {
+		if (!this.isKnown(forProfile.getUUID()))
+			this.recognizeProfile(forProfile);
+		if (prop.isOnlyPresence() && !rp.onlyMarksPresence())
+			throw new IllegalArgumentException(forProfile + " " + prop + " " + rp);
+		this.findInfoTable().put(forProfile, prop, rp);
+	}
+
+	@Override
 	public IPropertyData applyProperty(Profile forProfile, Property prop) {
+		if (!this.isKnown(forProfile.getUUID()))
+			this.recognizeProfile(forProfile);
 		IPropertyData ret = findInfoTable().get(forProfile, prop);
 		if (ret != null)
 			return ret;
@@ -134,7 +152,7 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 		if (entity.equals(self.getUUID()))
 			return self;
 		if (profiles != null)
-			prof = profiles.get(entity);
+			prof = profiles.keySet().stream().filter((a) -> a.getUUID().equals(entity)).findAny().orElse(null);
 
 		return prof;
 	}
@@ -143,21 +161,29 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	public boolean isKnown(IMeme concept) {
 
 		// TODO different kinds of concepts that may be known
-		if (concept instanceof Profile) {
-			return this.isKnown(((Profile) concept).getUUID());
-		} else if (concept instanceof Property) {
-			return (this.propertyConcepts == null ? false : propertyConcepts.containsKey(concept));
-		} else if (concept instanceof IActionType) {
-			return (this.doableActions == null ? false : this.doableActions.containsValue(concept));
-		} else if (concept instanceof Language) {
-			return (this.languages == null ? false : this.languages.contains(concept));
+		if (concept.getMemeType() instanceof MemeType) {
+			switch ((MemeType) concept.getMemeType()) {
+			case PROFILE:
+				return this.isKnown((IProfile) concept);
+			case PROPERTY:
+				if (concept == Property.ANY)
+					return true;
+				return (this.propertyConcepts == null ? false : propertyConcepts.containsKey(concept));
+			case ACTION_TYPE:
+				return (this.doableActions == null ? false : this.doableActions.containsValue(concept));
+			case LANGUAGE:
+				return (this.languages == null ? false : this.languages.contains(concept));
+
+			default:
+				return false;
+			}
 		}
 		return false;
 	}
 
 	@Override
-	public boolean isKnown(UUID unique) {
-		if (unique.equals(self.getUUID())) {
+	public boolean isKnown(IProfile unique) {
+		if (unique.equals(self)) {
 			return true;
 		}
 		if (profiles == null)
@@ -169,7 +195,22 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	}
 
 	@Override
+	public boolean isKnown(UUID unique) {
+		if (unique.equals(self.getUUID())) {
+			return true;
+		}
+		if (profiles == null)
+			return false;
+		if (profiles.containsKey(new Profile(unique))) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public IPropertyData getProperties(Profile prof, Property cat) {
+		if (cat == Property.ANY)
+			return IPropertyData.PRESENCE;
 		if (infoTable != null)
 			return infoTable.contains(prof, cat) ? infoTable.get(prof, cat) : IPropertyData.UNKNOWN;
 		return IPropertyData.UNKNOWN;
@@ -185,8 +226,17 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 		(this.propertyConcepts == null ? propertyConcepts = new TreeMap<>() : propertyConcepts).put(cat, associations);
 	}
 
+	public void learnLocation(Profile profile, ILocationMeme loc) {
+		if (!this.isKnown(profile.getUUID())) {
+			this.recognizeProfile(profile);
+		}
+		(this.locationKnowledge == null ? locationKnowledge = new TreeMap<>() : locationKnowledge).put(profile, loc);
+	}
+
 	@Override
 	public boolean hasProperty(Profile prof, Property cat) {
+		if (cat == Property.ANY)
+			return true;
 		if (this.getProperties(prof, cat).isPresent())
 			return true;
 		return false;
@@ -199,11 +249,11 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 
 	@Override
 	public Collection<Profile> getKnownProfiles() {
-		return this.profiles == null ? Set.of() : profiles.values();
+		return this.profiles == null ? Set.of() : profiles.keySet();
 	}
 
 	public void recognizeProfile(Profile prof) {
-		(this.profiles == null ? profiles = new TreeMap<>() : profiles).put(prof.getUUID(), prof);
+		(this.profiles == null ? profiles = new TreeMap<>() : profiles).put(prof, Interest.SHORT_TERM);
 	}
 
 	/**
@@ -215,12 +265,21 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	 */
 	public Profile recognizeProfile(UUID forEntity, String type) {
 		Profile prof = new Profile(forEntity, type);
-		(this.profiles == null ? profiles = new TreeMap<>() : profiles).put(forEntity, prof);
+		(this.profiles == null ? profiles = new TreeMap<>() : profiles).put(prof, Interest.SHORT_TERM);
+		return prof;
+	}
+
+	public Profile recognizeProfile(IUnique forEntity) {
+		Profile prof = new Profile(forEntity);
+		this.recognizeProfile(prof);
 		return prof;
 	}
 
 	@Override
 	public Collection<Profile> getProfilesWithProperty(Property prop) {
+		if (prop == Property.ANY) {
+			return infoTable == null ? Set.of() : infoTable.rowKeySet();
+		}
 		return this.infoTable == null ? Set.of() : this.infoTable.column(prop).keySet();
 	}
 
@@ -246,7 +305,8 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 				this.forgetGoal(ge.get());
 			}
 		}
-		(this.goals == null ? goals = new HashSet<>() : goals).add(goal);
+		(this.goals == null ? goals = new TreeSet<>((a, b) -> 2 * a.getPriority().compareTo(b.getPriority())
+				+ MathHelp.clamp(-1, 1, a.getUniqueName().compareTo(b.getUniqueName()))) : goals).add(goal);
 	}
 
 	public void forgetGoal(IGoal goal) {
@@ -255,6 +315,18 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 			if (goals.isEmpty())
 				goals = null;
 		}
+	}
+
+	@Override
+	public ILocationMeme getLocation(Profile prof) {
+		if (this.locationKnowledge == null)
+			return null;
+		return locationKnowledge.get(prof);
+	}
+
+	@Override
+	public boolean knowsLocation(Profile prof) {
+		return this.getLocation(prof) != null;
 	}
 
 	@Override
@@ -311,6 +383,8 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 
 	@Override
 	public boolean isSignificant(IMeme concept) {
+		if (concept.equals(this.self))
+			return true;
 		// TODO make an algorithm of significance
 		return true;
 	}

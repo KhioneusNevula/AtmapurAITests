@@ -1,20 +1,12 @@
 package mind.concepts;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
-
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.type.Property;
-import mind.goals.ITaskHint;
 
 public class PropertyController {
 
 	private Property property;
 	private IPropertyIdentifier identifier = IPropertyIdentifier.UNKNOWN;
-	private Collection<ITaskHint> purposes = Set.of();
 	// other associations?
 
 	public PropertyController(Property property) {
@@ -36,28 +28,17 @@ public class PropertyController {
 		return (CompositeIdentifier) identifier;
 	}
 
-	public Collection<ITaskHint> getPurposes() {
-		return purposes;
-	}
-
-	public PropertyController addPurpose(ITaskHint... purpose) {
-		this.purposes = ImmutableSet.<ITaskHint>builder().addAll(purposes).add(purpose).build();
-		return this;
-	}
-
-	public PropertyController removePurposes(ITaskHint... purpose) {
-		HashSet<ITaskHint> goals = new HashSet<>(purposes);
-		goals.removeAll(Set.of(purpose));
-		if (goals.isEmpty())
-			purposes = Set.of();
-		else
-			this.purposes = ImmutableSet.<ITaskHint>builder().addAll(goals).build();
-		return this;
+	@Override
+	public String toString() {
+		return "{i:" + this.identifier + "}";
 	}
 
 	@Override
-	public String toString() {
-		return "{i:" + this.identifier + ",p:" + this.purposes + "}";
+	public boolean equals(Object obj) {
+		if (obj instanceof PropertyController con) {
+			return this.property.equals(con.property) && this.identifier.equals(con.identifier);
+		}
+		return false;
 	}
 
 }

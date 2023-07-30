@@ -19,6 +19,8 @@ import mind.action.IAction;
 import mind.action.IActionType;
 import mind.action.IInteraction;
 import mind.action.IInteractionInstance;
+import mind.action.WillingnessMatrix;
+import mind.feeling.IFeeling.Axis;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
@@ -27,7 +29,6 @@ import mind.need.INeed;
 import mind.need.INeed.Degree;
 import mind.need.INeed.INeedType;
 import mind.relationships.IParty;
-import mind.relationships.Relationship;
 
 public class Will implements IWill {
 
@@ -42,10 +43,14 @@ public class Will implements IWill {
 	private Map<IPartAbility, IAction> utilizedParts;
 	private WeakHashMap<ActionQueue, Integer> executionAttempts; // number of attempts to execute each queue;
 	private Map<IAction, Integer> currentActions;
-	private Map<IAction, IInteractionInstance> currentInteractions;
+	private Map<IInteractionInstance, IAction> currentInteractions;
 
 	public Will(Mind owner) {
 		this.owner = owner;
+	}
+
+	public Mind getOwner() {
+		return owner;
 	}
 
 	/**
@@ -82,19 +87,91 @@ public class Will implements IWill {
 	}
 
 	@Override
+	public ActionQueue getQueueForGoal(IGoal goal) {
+		return goals != null ? goals.get(goal) : null;
+	}
+
+	@Override
 	public Collection<IAction> getCurrentActions() {
 		return currentActions == null ? Set.of() : currentActions.keySet();
 	}
 
 	@Override
-	public boolean considerInteraction(ICanAct offerer, IInteractionInstance interaction, IInteraction action,
+	public boolean considerInteraction(IEntity offerer, IInteractionInstance interaction, IInteraction action,
 			Priority priority) {
 		// TODO consider relationships or whatever idk
-		if (offerer instanceof IParty) {
-			Collection<Relationship> relations = this.owner.getMindMemory().getRelationshipsWith((IParty) offerer);
+		WillingnessMatrix matrix = willingness(action.getType(), action, null, offerer, offerer, Set.of());
 
+		boolean willdo = this.owner.rand().nextDouble() < matrix.getResult();
+		if (willdo) {
+			if (this.currentInteractions == null) {
+				currentInteractions = new HashMap<>();
+			}
+			currentInteractions.put(interaction, action);
 		}
-		return false;
+
+		return willdo;
+	}
+
+	/**
+	 * TODO update this with 1) personality factors, 2) fine tune relationship
+	 * factors
+	 */
+	@Override
+	public WillingnessMatrix willingness(IActionType<?> actionType, IAction action, IGoal goal, IParty mainCompany,
+			IParty offerer, Collection<Axis> importantAxes) {
+		return WillingnessMatrix.ONE;
+		/*
+		 * Float priority = (goal != null ? Float.valueOf((float) Math
+		 * .pow((Priority.values().length - goal.getPriority().ordinal()) /
+		 * (Priority.values().length), 2)) : null); IEmotions emotions =
+		 * this.owner.getEmotions(); float unwillingness = Math.min(0,
+		 * emotions.unwillingness()); IPersonalRelationship personal = null; boolean
+		 * promise = false; Profile beneProfile = mainCompany != null ?
+		 * this.owner.getMindMemory().getProfileFor(mainCompany) : null; if (beneProfile
+		 * != null) {
+		 * 
+		 * Relationship relationship = this.owner.getRelationship(beneProfile,
+		 * RelationType.FEEL); personal = relationship != null ?
+		 * relationship.getGoal().asPersonalRelationship() : null; if (goal != null) {
+		 * relationship = this.owner.getRelationship(beneProfile, RelationType.DO);
+		 * promise = relationship.getGoal().asTask().equivalent(goal); } } Profile
+		 * offererProfile = offerer != null ?
+		 * this.owner.getMindMemory().getProfileFor(offerer) : null;
+		 * IPersonalRelationship manda = null; if (offererProfile != null) {
+		 * Relationship relationship = this.owner.getRelationship(offererProfile,
+		 * RelationType.FEEL); manda = relationship != null ?
+		 * relationship.getGoal().asPersonalRelationship() : null; if (goal != null) {
+		 * relationship = this.owner.getRelationship(offererProfile, RelationType.DO);
+		 * promise = promise || relationship.getGoal().asTask().equivalent(goal); } }
+		 * Personality personality = owner.personality();
+		 * 
+		 * float general = priority != null ? Math.min(0, priority - (1 - priority) *
+		 * unwillingness) : unwillingness; float targethelp = 0; float generalFactor =
+		 * 1; float selfHelpFactor = 0; float otherFactor = 0; float submissionFactor =
+		 * 0; for (ITaskHint hint : actionType.getUsage()) { if (hint.helpsSelf())
+		 * selfHelpFactor += 2; if (hint.harmsSelf()) selfHelpFactor -= 2; if
+		 * (hint.helpsTarget()) targethelp++; if (hint.harmsTarget()) targethelp--; }
+		 * selfHelpFactor = MathHelp.clamp(-2, 2, selfHelpFactor);
+		 * 
+		 * if (personal != null) { Float love = personal.feeling().love(); Float
+		 * attraction = personal.feeling().attraction(); otherFactor += (love * 5); if
+		 * (attraction >= 0) { selfHelpFactor += attraction; } else { selfHelpFactor +=
+		 * 4 * attraction; } } if (manda != null) { Float obedience = manda.obedience();
+		 * if (obedience > 0) { submissionFactor += 40 * Math.pow(obedience, 5) + 0.9; }
+		 * else { submissionFactor += -1.3 * Math.sqrt(-obedience) + 0.9; } }
+		 * 
+		 * selfHelpFactor -= Math.abs(selfHelpFactor) Math.min(0,
+		 * personality.getTrait(BasicPersonalityTrait.SELFLESSNESS));
+		 * 
+		 * otherFactor += 1.5 * Math.abs(otherFactor) *
+		 * personality.getTrait(BasicPersonalityTrait.SELFLESSNESS);
+		 * 
+		 * return WillingnessMatrix.create().addFactor(Factor.PRIORITY, generalFactor,
+		 * general) .addFactor(Factor.PERSONAL_GAIN, 1, selfHelpFactor)
+		 * .addFactor(Factor.SELFLESS_GAIN, otherFactor, targethelp)
+		 * .addFactor(Factor.POWER_DYNAMIC, submissionFactor, 1).performCalculation();
+		 */
 	}
 
 	@Override
@@ -165,7 +242,6 @@ public class Will implements IWill {
 				if (complete)
 					goals.remove(goal);
 
-				breakpoint();
 				continue;
 			}
 			if (!queue.ready())
@@ -227,7 +303,6 @@ public class Will implements IWill {
 		for (Map.Entry<IAction, Integer> entry : Set.copyOf(this.currentActions.entrySet())) {
 			IAction action = entry.getKey();
 			Integer ticks = entry.getValue();
-			breakpoint();
 			if (ticks < 0) {
 				action.beginExecutingIndividual(owner);
 				entry.setValue(0);
@@ -330,12 +405,6 @@ public class Will implements IWill {
 				: utilizedParts;
 	}
 
-	private void breakpoint() {
-		if (this.owner.getOwner().getName().equals("bobzy")) {
-			System.out.print("");
-		}
-	}
-
 	/**
 	 * Generates goals from active needs TODO better prioritizing
 	 */
@@ -395,11 +464,8 @@ public class Will implements IWill {
 				if ((ofocus instanceof ITaskGoal)) {
 					ITaskGoal focus = (ITaskGoal) ofocus;
 
-					breakpoint();
 					if ((goals != null && goals.keySet().stream().anyMatch((a) -> {
 						boolean dumma = a.equivalent(ofocus);
-						if (dumma)
-							breakpoint();
 						return dumma;
 					})) || (focus.isComplete(owner)) || (focus.isInvalid(owner))) {
 						ActionQueue trashq = goals != null ? this.goals.get(focus) : null;
@@ -409,18 +475,15 @@ public class Will implements IWill {
 						}
 						owner.getMindMemory().forgetGoal(focus);
 
-						breakpoint();
 						i--;
 						continue;
 					}
-					breakpoint();
 					if (goals == null) {
 						goals = new TreeMap<>((a1, a2) -> a1.getPriority().compareTo(a2.getPriority()));
 					}
 					ActionQueue aq = null;
 					goals.put((ITaskGoal) focus, aq = new ActionQueue(focus));
 
-					breakpoint();
 				} else {
 					i--;
 					continue;
@@ -568,7 +631,15 @@ public class Will implements IWill {
 				return null;
 			}
 			if (action.canExecuteIndividual(owner, false)) {
-				return true;
+				WillingnessMatrix willingness = willingness(action.getType(), action, goal, action.target(), owner,
+						Set.of());
+				if (owner.rand().nextDouble() < willingness.getResult()) {
+					return true;
+				} else {
+					removeLatestAction();
+					tried(action.getType());
+					return null;
+				}
 			} else {
 				return false;
 			}
@@ -628,20 +699,23 @@ public class Will implements IWill {
 					this.removeLatestAction();
 				return;
 			}
-			Collection<ITaskGoal> goals = new HashSet<>();
-			for (int i = 0; i < 5 && goals.isEmpty(); i++) {
+			for (int i = 0; i < 5; i++) {
 
 				IAction action = potentialActions.stream().collect(Collectors.toList())
 						.get(Will.this.owner.rand().nextInt(potentialActions.size())).genAction(goal);
 				if (action.canExecuteIndividual(owner, true)) {
 					this.pushActionAndGoal(action, ITaskGoal.FINISHED);
+					System.out.print("");
+					break;
 				} else {
 					// TODO how to handle multiple actions/goals??
-					goals = action.genConditionGoal(owner);
-					if (goals.isEmpty()) {
-						continue;
+					ITaskGoal goala = action.genConditionGoal(owner);
+					if (goala == null) {
+						return;
 					}
-					this.pushActionAndGoal(action, goals.stream().findAny().get());
+					this.pushActionAndGoal(action, goala);
+					System.out.print("");
+					break;
 				}
 			}
 

@@ -7,6 +7,9 @@ import actor.IPartAbility;
 import mind.ICanAct;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
+import mind.memory.IHasKnowledge;
+import mind.relationships.IParty;
+import mind.thought_exp.IThought;
 
 /**
  * An instance of an action in memory
@@ -57,7 +60,7 @@ public interface IAction {
 	 *                  action's execution
 	 * @return
 	 */
-	public boolean canExecuteIndividual(ICanAct user, boolean pondering);
+	public boolean canExecuteIndividual(IHasKnowledge user, boolean pondering);
 
 	/**
 	 * {@link IAction#canExecuteIndividual}, but for a group
@@ -65,7 +68,7 @@ public interface IAction {
 	 * @param group
 	 * @return
 	 */
-	default boolean canExecuteGroup(ICanAct group, boolean pondering) {
+	default boolean canExecuteGroup(IHasKnowledge group, boolean pondering) {
 		return false;
 	}
 
@@ -74,14 +77,14 @@ public interface IAction {
 	 * 
 	 * @param forUser
 	 */
-	public void beginExecutingIndividual(ICanAct forUser);
+	public void beginExecutingIndividual(IHasKnowledge forUser);
 
 	/**
 	 * {@link IAction#beginExecutingIndividual} but for a group
 	 * 
 	 * @param forUser
 	 */
-	default void beginExecutingGroup(ICanAct group) {
+	default void beginExecutingGroup(IHasKnowledge group) {
 
 	}
 
@@ -91,11 +94,11 @@ public interface IAction {
 	 * @param individual
 	 * @return
 	 */
-	default boolean canContinueExecutingIndividual(ICanAct individual, int tick) {
+	default boolean canContinueExecutingIndividual(IHasKnowledge individual, int tick) {
 		return false;
 	}
 
-	default boolean canContinueExecutingGroup(ICanAct group, int tick) {
+	default boolean canContinueExecutingGroup(IHasKnowledge group, int tick) {
 		return false;
 	}
 
@@ -107,11 +110,19 @@ public interface IAction {
 	 * @param tick
 	 * @return
 	 */
-	default void executionTickIndividual(ICanAct individual, int tick) {
+	default void executionTickIndividual(IHasKnowledge individual, int tick) {
 
 	}
 
-	default void executionTickGroup(ICanAct group, int tick) {
+	default void executionTickGroup(IHasKnowledge group, int tick) {
+
+	}
+
+	default IThought getChildThought(IHasKnowledge owner, int tick) {
+		return null;
+	}
+
+	default void receiveChildThoughtInfo(IThought childThought, int tick, boolean interrupted) {
 
 	}
 
@@ -122,22 +133,21 @@ public interface IAction {
 	 * @param individual
 	 * @param tick
 	 */
-	default boolean finishActionIndividual(ICanAct individual, int tick) {
+	default boolean finishActionIndividual(IHasKnowledge individual, int tick) {
 		return true;
 	}
 
-	default boolean finishActionGroup(ICanAct group, int tick) {
+	default boolean finishActionGroup(IHasKnowledge group, int tick) {
 		return false;
 	}
 
 	/**
-	 * Generates goals representing the conditions the action needs in order to
-	 * successfully execute. Return an empty set if this action is generally failing
-	 * at life adn should stop being considered.
+	 * Generates goals representing the condition the action needs in order to
+	 * successfully execute. Return null if some error occurred
 	 * 
 	 * @return
 	 */
-	public Collection<ITaskGoal> genConditionGoal(ICanAct user);
+	public ITaskGoal genConditionGoal(IHasKnowledge user);
 
 	/**
 	 * Generates whatever action this needs to in order to work (e.g. for actions
@@ -145,7 +155,7 @@ public interface IAction {
 	 * 
 	 * @return
 	 */
-	default Collection<IAction> genExtraActions(ICanAct user) {
+	default Collection<IAction> genExtraActions(IHasKnowledge user) {
 		return Set.of();
 	}
 
@@ -197,7 +207,7 @@ public interface IAction {
 	 * 
 	 * @return
 	 */
-	default ICanAct interactionTarget() {
+	default IParty target() {
 		return null;
 	}
 
@@ -206,7 +216,7 @@ public interface IAction {
 	 * 
 	 * @return
 	 */
-	default Collection<ICanAct> interactionTargets() {
+	default Collection<IParty> targets() {
 		return Set.of();
 	}
 

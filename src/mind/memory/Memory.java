@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import com.google.common.collect.ImmutableMultimap;
@@ -13,32 +12,38 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
-import actor.Actor;
+import main.ImmutableCollection;
 import mind.Culture;
 import mind.Group;
-import mind.IGroup;
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
+import mind.feeling.Feeling;
+import mind.feeling.IFeeling;
 import mind.goals.ITaskHint;
 import mind.relationships.IParty;
+import mind.relationships.RelationType;
 import mind.relationships.Relationship;
-import sim.Location;
 
-public class Memory extends AbstractKnowledgeEntity {
+public class Memory extends AbstractKnowledgeEntity implements IMindMemory {
 
 	// some way of forming associations and whatever among properties
-	private Set<Culture> cultures = new TreeSet<>();
+	private Map<IProfile, Culture> cultures = new TreeMap<>();
 	/**
 	 * TODO maximum sensable things
 	 */
-	private SenseMemory<Actor> senses = new SenseMemory<>(100, true);
-	private SenseMemory<Profile> recognition = new SenseMemory<>(Integer.MAX_VALUE, false);
-	private SetMultimap<IParty, Relationship> agreements;
+	private SenseMemory senses = new SenseMemory(100, true);
+	private SenseMemory recognition = new SenseMemory(Integer.MAX_VALUE, false);
+	private MemoryEmotions emotions = new MemoryEmotions();
+	private Map<IMeme, IFeeling> feelings;
+	private SetMultimap<IProfile, Relationship> agreements;
 	private TreeMap<UUID, Relationship> agreementsById;
-	private HashMap<IGroup, Integer> partOfGroups;
+	private Map<IProfile, Float> trust;
+	private HashMap<IProfile, Integer> partOfGroups;
 	private boolean feelingCurious = true;
 	private boolean socializedRecently;
 
@@ -48,7 +53,7 @@ public class Memory extends AbstractKnowledgeEntity {
 
 	public Memory addCulture(Culture culture) {
 
-		cultures.add(culture);
+		cultures.put(culture.getSelfProfile(), culture);
 		if (this.mainLanguage == null)
 			this.mainLanguage = culture.mainLanguage;
 		this.languages.addAll(culture.getLanguages());
@@ -67,13 +72,51 @@ public class Memory extends AbstractKnowledgeEntity {
 		this.agreements = null;
 		this.agreementsById = null;
 		this.partOfGroups = null;
+		this.emotions.clear();
+		this.feelings = null;
+	}
+
+	public MemoryEmotions getEmotions() {
+		return emotions;
+	}
+
+	@Override
+	public IFeeling getAssociatedFeeling(IMeme concept) {
+		return this.feelings == null ? null : feelings.get(concept);
+	}
+
+	/**
+	 * Associates a feeling with this concept
+	 * 
+	 * @param concept
+	 * @param feeling
+	 */
+	public void associateFeeling(IMeme concept, IFeeling feeling) {
+		if (this.feelings == null)
+			feelings = new HashMap<>();
+		feelings.put(concept, feeling);
+	}
+
+	/**
+	 * Initializes a feeling to associate with a concept, and return it; or return
+	 * the existing feeling there
+	 * 
+	 * @param concept
+	 * @return
+	 */
+	public IFeeling initializeFeeling(IMeme concept) {
+		if (feelings != null && feelings.containsKey(concept))
+			return feelings.get(concept);
+		IFeeling feelin = new Feeling();
+		this.associateFeeling(concept, feelin);
+		return feelin;
 	}
 
 	@Override
 	public Profile getProfileFor(UUID entity) {
 		Profile prof = super.getProfileFor(entity);
 		if (prof == null) {
-			for (Culture cul : cultures) {
+			for (Culture cul : cultures.values()) {
 				prof = cul.getProfileFor(entity);
 				if (prof != null)
 					return prof;
@@ -85,7 +128,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	@Override
 	public boolean isKnown(IMeme concept) {
 		if (!super.isKnown(concept)) {
-			for (Culture cul : cultures) {
+			for (Culture cul : cultures.values()) {
 				if (cul.isKnown(concept))
 					return true;
 			}
@@ -97,7 +140,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	@Override
 	public boolean isKnown(UUID unique) {
 		if (!super.isKnown(unique)) {
-			for (Culture cul : this.cultures) {
+			for (Culture cul : this.cultures.values()) {
 				if (cul.isKnown(unique))
 					return true;
 			}
@@ -110,10 +153,11 @@ public class Memory extends AbstractKnowledgeEntity {
 	 * Returns the knowledge of the properties from the culture, since an individual
 	 * may have conflicting cultural AND individual info
 	 */
+	@Override
 	public Map<Culture, IPropertyData> getPropertiesFromCulture(Profile prof, Property cat) {
 
 		Map<Culture, IPropertyData> set = Map.of();
-		for (Culture cult : cultures) {
+		for (Culture cult : cultures.values()) {
 			IPropertyData dat2 = cult.getProperties(prof, cat);
 			if (dat2 != null && !dat2.isUnknown()) {
 				if (set.isEmpty())
@@ -127,9 +171,10 @@ public class Memory extends AbstractKnowledgeEntity {
 		return set;
 	}
 
+	@Override
 	public Map<Culture, PropertyController> getPropertyAssociationsFromCulture(Property prop) {
 		Map<Culture, PropertyController> set = Map.of();
-		for (Culture cult : cultures) {
+		for (Culture cult : cultures.values()) {
 			PropertyController dat2 = cult.getPropertyAssociations(prop);
 			if (dat2 != null) {
 				if (set.isEmpty())
@@ -143,9 +188,10 @@ public class Memory extends AbstractKnowledgeEntity {
 		return set;
 	}
 
+	@Override
 	public Multimap<Culture, IActionType<?>> getPossibleActionsFromCulture(ITaskHint hint) {
 		Multimap<Culture, IActionType<?>> map = MultimapBuilder.treeKeys().hashSetValues().build();
-		for (Culture cult : cultures) {
+		for (Culture cult : cultures.values()) {
 			for (IActionType<?> atype : cult.getPossibleActions(hint)) {
 				map.put(cult, atype);
 			}
@@ -167,7 +213,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	@Override
 	public boolean isPropertyKnown(Profile prof, Property cat) {
 		if (!super.isPropertyKnown(prof, cat)) {
-			for (Culture c : cultures)
+			for (Culture c : cultures.values())
 				if (c.isPropertyKnown(prof, cat))
 					return true;
 			return false;
@@ -176,17 +222,18 @@ public class Memory extends AbstractKnowledgeEntity {
 	}
 
 	@Override
-	public Location getLocation(Profile prof) {
-		Location loc = this.senses.getSensedLocation(prof);
+	public ILocationMeme getLocation(Profile prof) {
+		ILocationMeme loc = this.senses.getSensedLocation(prof);
 		if (loc == null)
-			loc = this.recognition.getSensedLocation(prof);
+			loc = this.locationKnowledge != null ? this.locationKnowledge.get(prof) : null;
 		return loc;
 	}
 
-	public Map<Culture, Location> getLocationsFromCulture(Profile prof) {
-		Map<Culture, Location> set = Map.of();
-		for (Culture c : cultures) {
-			Location a = c.getLocation(prof);
+	@Override
+	public Map<Culture, ILocationMeme> getLocationsFromCulture(Profile prof) {
+		Map<Culture, ILocationMeme> set = Map.of();
+		for (Culture c : cultures.values()) {
+			ILocationMeme a = c.getLocation(prof);
 			if (a != null) {
 				if (set.isEmpty())
 					set = new TreeMap<>();
@@ -199,8 +246,8 @@ public class Memory extends AbstractKnowledgeEntity {
 	@Override
 	public boolean knowsLocation(Profile prof) {
 		if (this.getLocation(prof) == null) {
-			for (Culture c : cultures) {
-				Location a = c.getLocation(prof);
+			for (Culture c : cultures.values()) {
+				ILocationMeme a = c.getLocation(prof);
 				if (a != null) {
 					return true;
 				}
@@ -214,7 +261,7 @@ public class Memory extends AbstractKnowledgeEntity {
 	 * 
 	 * @return
 	 */
-	public SenseMemory<Actor> getSenses() {
+	public SenseMemory getSenses() {
 		return senses;
 	}
 
@@ -224,13 +271,14 @@ public class Memory extends AbstractKnowledgeEntity {
 	 * 
 	 * @return
 	 */
-	public SenseMemory<Profile> getRecognition() {
+	public SenseMemory getRecognition() {
 		return recognition;
 	}
 
+	@Override
 	public Multimap<Culture, Profile> getProfilesWithPropertyFromCulture(Property prop) {
 		Multimap<Culture, Profile> profs = null;
-		for (Culture cult : this.cultures) {
+		for (Culture cult : this.cultures.values()) {
 			Collection<Profile> r = cult.getProfilesWithProperty(prop);
 			if (!r.isEmpty()) {
 				(profs == null ? profs = MultimapBuilder.treeKeys().treeSetValues().build() : profs).putAll(cult, r);
@@ -239,15 +287,22 @@ public class Memory extends AbstractKnowledgeEntity {
 		return profs == null ? ImmutableMultimap.of() : profs;
 	}
 
-	private SetMultimap<IParty, Relationship> findAgreements() {
+	private SetMultimap<IProfile, Relationship> findAgreements() {
 		return agreements == null ? agreements = MultimapBuilder.treeKeys().treeSetValues().build() : agreements;
 	}
 
-	public Collection<Relationship> getRelationshipsWith(IParty other) {
+	public Collection<Relationship> getRelationshipsWith(IProfile other) {
 		return agreements == null ? Set.of() : agreements.get(other);
 	}
 
-	public boolean isPartOf(IGroup group) {
+	public Relationship getRelationship(IProfile with, RelationType type) {
+		if (agreements != null) {
+			return agreements.get(with).stream().filter((a) -> a.getType() == type).findAny().orElse(null);
+		}
+		return null;
+	}
+
+	public boolean isPartOf(IProfile group) {
 		return partOfGroups == null ? null : partOfGroups.getOrDefault(group, 0) > 0;
 	}
 
@@ -255,7 +310,7 @@ public class Memory extends AbstractKnowledgeEntity {
 		return agreementsById == null ? null : agreementsById.get(agreementID);
 	}
 
-	public Collection<IParty> getAllPartiesWithRelationships() {
+	public Collection<IProfile> getAllPartiesWithRelationships() {
 		return agreements == null ? Set.of() : agreements.keySet();
 	}
 
@@ -263,19 +318,40 @@ public class Memory extends AbstractKnowledgeEntity {
 		return agreements == null ? Set.of() : agreements.values();
 	}
 
+	public float getTrust(IProfile with) {
+		return trust == null ? 0 : trust.getOrDefault(with, 0f);
+	}
+
+	private void changeTrust(IProfile with, float trust) {
+		if (this.trust == null)
+			this.trust = new HashMap<>();
+		this.trust.put(with, this.trust.getOrDefault(with, 0f) + trust);
+	}
+
 	public void establishRelationship(IParty with, Relationship agreement) {
-		this.findAgreements().put(with, agreement);
+		IProfile profile = this.recognizeProfile(with.getUUID(), with.toString());
+		if (agreement.getType().isSingular() && agreements != null) {
+			agreements.get(profile).forEach((a) -> {
+				if (a.getType() == agreement.getType())
+					agreementsById.remove(a.getAgreementID());
+			});
+			agreements.get(profile).removeIf((a) -> a.getType() == agreement.getType());
+		}
+		this.findAgreements().put(profile, agreement);
+
 		(this.agreementsById == null ? this.agreementsById = new TreeMap<>() : agreementsById)
 				.put(agreement.getAgreementID(), agreement);
 		if (agreement.getType().isMembership()) {
-			(partOfGroups == null ? partOfGroups = new HashMap<>() : partOfGroups).put((IGroup) with,
+			(partOfGroups == null ? partOfGroups = new HashMap<>() : partOfGroups).put(profile,
 					partOfGroups.getOrDefault(with, 0) + 1);
 			if (with instanceof Group)
 				this.addCulture(((Group) with).getCulture());
+		} else if (agreement.getType() == RelationType.FEEL) {
+			this.changeTrust(profile, agreement.getGoal().asPersonalRelationship().trust());
 		}
 	}
 
-	public void dissolveRelationship(IParty with, Relationship agreement) {
+	public void dissolveRelationship(IProfile with, Relationship agreement) {
 		if (this.agreements != null && this.agreements.remove(with, agreement)) {
 			if (this.agreementsById != null)
 				this.agreementsById.remove(agreement.getAgreementID());
@@ -283,17 +359,18 @@ public class Memory extends AbstractKnowledgeEntity {
 				int a = partOfGroups.getOrDefault(with, 0);
 				if (a == 1) {
 					partOfGroups.remove(with);
-					if (with instanceof Group)
-						this.cultures.remove(((Group) with).getCulture());
+					this.cultures.remove(with);
 				} else if (a <= 0)
 					throw new IllegalStateException("Group membership broken? with " + with);
 				else
-					partOfGroups.put((IGroup) with, a - 1);
+					partOfGroups.put(with, a - 1);
+			} else if (agreement.getType() == RelationType.FEEL) {
+				this.changeTrust(with, -agreement.getGoal().asPersonalRelationship().trust());
 			}
 		}
 	}
 
-	public boolean hasRelationshipsWith(IParty other) {
+	public boolean hasRelationshipsWith(IProfile other) {
 		return agreements == null ? false : !this.agreements.get(other).isEmpty();
 	}
 
@@ -315,8 +392,9 @@ public class Memory extends AbstractKnowledgeEntity {
 		return build.toString();
 	}
 
+	@Override
 	public Collection<Culture> cultures() {
-		return Set.copyOf(this.cultures);
+		return new ImmutableCollection<>(this.cultures.values());
 	}
 
 	/**
@@ -355,6 +433,11 @@ public class Memory extends AbstractKnowledgeEntity {
 
 	public void setSocializedRecently(boolean re) {
 		this.socializedRecently = re;
+	}
+
+	@Override
+	public String toString() {
+		return "memory_" + this.getSelfProfile();
 	}
 
 }

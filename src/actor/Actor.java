@@ -1,3 +1,4 @@
+
 package actor;
 
 import java.lang.ref.WeakReference;
@@ -28,10 +29,6 @@ import sim.interfaces.IPhysicalExistence;
 import sim.interfaces.IRenderable;
 
 public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalExistence, ISystemHolder {
-
-	public static enum PossessState {
-		NONE, HOLD, WEAR
-	}
 
 	private final static int STEP = 10;
 	private final static int REACH = 15;
@@ -257,7 +254,7 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	public boolean pickUp(Actor other) {
-		if (this.distance(other) <= REACH) {
+		if (this.reachable(other)) {
 			possess(other, PossessState.HOLD);
 			return true;
 		}
@@ -348,9 +345,17 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 			g.fill(0);
 
 		}
-		g.text(this.isLiving() && this.getAsLiving().getMind().getNameWord() != null
-				? this.getAsLiving().getMind().getNameWord().getDisplay()
-				: this.name, x, y);
+		if (this.isSentient()) {
+			g.text(this.getAsSentient().getMind().getNameWord() != null
+					? this.getAsSentient().getMind().getNameWord().getDisplay()
+					: this.name, x, y);
+		} else if (this.isUSentient()) {
+			g.text(this.getAsUpgradedSentient().getMind().getNameWord() != null
+					? this.getAsUpgradedSentient().getMind().getNameWord().getDisplay()
+					: this.name, x, y);
+		} else {
+			g.text(this.name, x, y);
+		}
 
 	}
 
@@ -418,7 +423,15 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return this instanceof MultipartActor;
 	}
 
-	public boolean isLiving() {
+	public boolean isUSentient() {
+		return this instanceof UpgradedSentientActor;
+	}
+
+	public UpgradedSentientActor getAsUpgradedSentient() {
+		return (UpgradedSentientActor) this;
+	}
+
+	public boolean isSentient() {
 		return this instanceof SentientActor;
 	}
 
@@ -426,7 +439,7 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return (MultipartActor) this;
 	}
 
-	public SentientActor getAsLiving() {
+	public SentientActor getAsSentient() {
 		return (SentientActor) this;
 	}
 

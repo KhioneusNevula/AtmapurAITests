@@ -21,4 +21,14 @@ public interface IGroup extends IParty {
 	 */
 	public boolean isMember(IParty other);
 
+	@Override
+	default boolean isGroup() {
+		return true;
+	}
+
+	@Override
+	default boolean isIndividual() {
+		return false;
+	}
+
 }

@@ -19,7 +19,7 @@ import mind.memory.IHasKnowledge;
 public class AcquireTaskGoal implements ITaskGoal {
 
 	private IMeme item;
-	private IProfile target;
+	private IProfile beneficiary;
 	private Set<IMeme> productSet;
 	private Priority priority = Priority.NORMAL;
 
@@ -27,11 +27,11 @@ public class AcquireTaskGoal implements ITaskGoal {
 		this(item, IProfile.SELF);
 	}
 
-	public AcquireTaskGoal(IMeme item, IProfile target) {
+	public AcquireTaskGoal(IMeme item, IProfile beneficiary) {
 		if (!(item instanceof Property || item instanceof Profile))
 			throw new IllegalArgumentException("" + item.getClass());
 		this.item = item;
-		this.target = target;
+		this.beneficiary = beneficiary;
 		this.productSet = ImmutableSet.of(item);
 	}
 
@@ -72,7 +72,7 @@ public class AcquireTaskGoal implements ITaskGoal {
 
 	@Override
 	public IProfile beneficiary() {
-		return target;
+		return beneficiary;
 	}
 
 	@Override

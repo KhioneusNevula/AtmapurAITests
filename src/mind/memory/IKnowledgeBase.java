@@ -1,24 +1,29 @@
 package mind.memory;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 import com.google.common.collect.Multimap;
 
 import mind.action.IActionType;
 import mind.concepts.PropertyController;
+import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
+import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
 import mind.linguistics.Language;
+import mind.memory.events.Consequence;
+import mind.memory.events.EventDescription;
 import mind.need.INeed;
 import mind.need.INeed.INeedType;
-import sim.Location;
 import sim.interfaces.IUnique;
 
-public interface IKnowledgeBase {
+public interface IKnowledgeBase extends IRecordable {
 
 	/**
 	 * Gets a remembered profile for a unique entity; allows for searching through
@@ -101,11 +106,29 @@ public interface IKnowledgeBase {
 		return isKnown(unique.getUUID());
 	}
 
+	boolean isKnown(IProfile profile);
+
+	/**
+	 * The feeling that someone has for this concept
+	 * 
+	 * @param concept
+	 * @return
+	 */
+	public IFeeling getAssociatedFeeling(IMeme concept);
+
+	/**
+	 * Consequences and their associated chance
+	 * 
+	 * @param event
+	 * @return
+	 */
+	public Collection<? extends Map.Entry<Consequence, Float>> getAssociatedConsequence(EventDescription event);
+
 	/**
 	 * Returns the locally known location of this profile or null if unknown; note
 	 * that for individuals this returns LOCAL not CULTURAL info
 	 */
-	public Location getLocation(Profile prof);
+	public ILocationMeme getLocation(Profile prof);
 
 	/**
 	 * Whether the location of this profile is known
@@ -118,7 +141,7 @@ public interface IKnowledgeBase {
 	 * 
 	 * @return
 	 */
-	public Collection<Profile> getKnownProfiles();
+	public Iterable<Profile> getKnownProfiles();
 
 	public Collection<Profile> getProfilesWithProperty(Property prop);
 
@@ -130,7 +153,8 @@ public interface IKnowledgeBase {
 	public Collection<Property> getRecognizedProperties();
 
 	/**
-	 * Gets the associations that this property is recognized to have
+	 * Gets the associations that this property is recognized to have; null if the
+	 * property is unknown
 	 * 
 	 * @return
 	 */
@@ -152,7 +176,8 @@ public interface IKnowledgeBase {
 	public Multimap<INeedType, INeed> getNeeds();
 
 	/**
-	 * Get the actions this entity knows for the possible task hint
+	 * Get the actions this entity or a member of it knows for the possible task
+	 * hint
 	 * 
 	 * @param forHint
 	 * @return
@@ -190,8 +215,44 @@ public interface IKnowledgeBase {
 	/**
 	 * The language this uses typically
 	 * 
+	 * @Override
 	 * @return
 	 */
 	public Language getMajorLanguage();
+
+	public static enum Interest {
+		/** indicate this memory/profile should never be forgotten by any means */
+		CORE_MEMORY,
+		/**
+		 * indicate this memory/profile will be remembered for a while but can be
+		 * forgotten
+		 */
+		REMEMBER,
+		/**
+		 * indicate this memory/profile will be remembered until the next sleep cycle
+		 */
+		SHORT_TERM,
+		/** indicate this is to be forgotten in a few ticks(?) */
+		FORGET
+	}
+
+	/**
+	 * Inits a properties instance for this profile and its properties; returns the
+	 * instance for editing -- OR returns an existing instance, if present
+	 * 
+	 * @param forProfile
+	 * @param prop
+	 * @return
+	 */
+	public IPropertyData applyProperty(Profile forProfile, Property prop);
+
+	/**
+	 * Sets the property data for this property
+	 * 
+	 * @param forProfile
+	 * @param prop
+	 * @param rp
+	 */
+	public void setProperty(Profile forProfile, Property prop, IPropertyData rp);
 
 }

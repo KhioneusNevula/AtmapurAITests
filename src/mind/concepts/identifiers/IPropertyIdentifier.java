@@ -3,6 +3,7 @@ package mind.concepts.identifiers;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Property;
+import mind.memory.IHasKnowledge;
 import mind.memory.IPropertyData;
 
 /**
@@ -15,7 +16,8 @@ public interface IPropertyIdentifier {
 
 	public static final IPropertyIdentifier UNKNOWN = new IPropertyIdentifier() {
 		@Override
-		public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage) {
+		public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage,
+				IHasKnowledge base) {
 			return IPropertyData.UNKNOWN;
 		}
 
@@ -23,6 +25,14 @@ public interface IPropertyIdentifier {
 		public String toString() {
 			return "identifier_UNKNOWN";
 		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof IPropertyIdentifier pi)
+				return pi.isUnknown();
+			return false;
+		}
+
 	};
 
 	/**
@@ -32,8 +42,14 @@ public interface IPropertyIdentifier {
 	 * 
 	 * @return
 	 */
-	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage);
+	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage,
+			IHasKnowledge knowledgeBase);
 
+	/**
+	 * If this identifier only ever returns UNKNOWN
+	 * 
+	 * @return
+	 */
 	default boolean isUnknown() {
 		return this == UNKNOWN;
 	}

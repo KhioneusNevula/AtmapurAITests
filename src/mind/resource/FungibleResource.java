@@ -7,12 +7,21 @@ import mind.goals.IResource;
 public class FungibleResource implements IResource {
 
 	private Property item;
-	private int count;
+	private Integer count;
 	private Priority priority = Priority.NORMAL;
+	private boolean approximate;
 
-	public FungibleResource(Property item, int count) {
+	/**
+	 * count is an optional value
+	 * 
+	 * @param item
+	 * @param count
+	 * @param approximate if the count is an approximation
+	 */
+	public FungibleResource(Property item, Integer count, boolean approximate) {
 		this.item = item;
 		this.count = count;
+		this.approximate = approximate;
 	}
 
 	public Priority getPriority() {
@@ -32,6 +41,11 @@ public class FungibleResource implements IResource {
 	@Override
 	public Integer count() {
 		return count;
+	}
+
+	@Override
+	public boolean isApproximate() {
+		return approximate;
 	}
 
 	@Override

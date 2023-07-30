@@ -1,17 +1,17 @@
 package actor;
 
-import biology.anatomy.Body;
 import biology.anatomy.ISpeciesTemplate;
 import biology.systems.ESystem;
 import mind.Culture;
-import mind.IMind;
+import mind.IIndividualMind;
 import mind.Mind;
 import mind.need.INeed;
+import mind.personality.Personality.BasicPersonalityTrait;
 import sim.World;
 
-public class SentientActor extends MultipartActor {
+public class SentientActor extends BodiedActor {
 
-	private IMind mind;
+	private IIndividualMind mind;
 
 	/**
 	 * 
@@ -31,16 +31,7 @@ public class SentientActor extends MultipartActor {
 		this.mind = new Mind(this);
 		Culture a = this.getWorld().getOrGenDefaultCulture(this.getSpecies());
 		this.mind.getMindMemory().addCulture(a);
-	}
-
-	protected void initBody() {
-		if (species == null)
-			this.body = new Body(this.getUUID());
-		else {
-			this.body = new Body(getUUID(), (ISpeciesTemplate) species);
-
-		}
-		((Body) this.body).buildBody();
+		mind.personality().randomizePersonality(rand, BasicPersonalityTrait.class);
 	}
 
 	/**
@@ -48,7 +39,7 @@ public class SentientActor extends MultipartActor {
 	 * 
 	 * @return
 	 */
-	public IMind getMind() {
+	public IIndividualMind getMind() {
 		return mind;
 	}
 
@@ -57,11 +48,11 @@ public class SentientActor extends MultipartActor {
 	 * 
 	 * @param newMind
 	 */
-	public void swapMind(IMind newMind) {
+	public void swapMind(IIndividualMind newMind) {
 		this.mind = newMind;
 	}
 
-	protected void setMind(IMind mind) {
+	protected void setMind(IIndividualMind mind) {
 		this.mind = mind;
 	}
 
@@ -101,16 +92,6 @@ public class SentientActor extends MultipartActor {
 	@Override
 	public void finalTick() {
 		super.finalTick();
-	}
-
-	@Override
-	public ISpeciesTemplate getSpecies() {
-		return (ISpeciesTemplate) super.getSpecies();
-	}
-
-	@Override
-	public Body getVisage() {
-		return (Body) super.getVisage();
 	}
 
 }

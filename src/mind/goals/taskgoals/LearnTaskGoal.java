@@ -71,7 +71,7 @@ public class LearnTaskGoal implements ITaskGoal {
 	 * May be null if the learning is just general curiosity
 	 */
 	@Override
-	public Question learnTarget() {
+	public Question learnInfo() {
 		return this.question;
 	}
 

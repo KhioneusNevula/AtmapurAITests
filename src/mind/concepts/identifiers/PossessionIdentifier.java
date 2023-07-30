@@ -8,6 +8,7 @@ import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
+import mind.memory.IHasKnowledge;
 import mind.memory.IPropertyData;
 import mind.memory.RememberedProperties;
 
@@ -16,7 +17,7 @@ public enum PossessionIdentifier implements IPropertyIdentifier {
 	IDENTIFIER;
 
 	@Override
-	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage) {
+	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IHasKnowledge ihk) {
 
 		if (forExistence instanceof Actor) {
 			IPropertyData data = new RememberedProperties(prop);
@@ -24,7 +25,7 @@ public enum PossessionIdentifier implements IPropertyIdentifier {
 			Collection<Actor> poss = actor.getPossessed();
 			if (!poss.isEmpty()) {
 				// TODO check for concealment, etc
-				data.addProfilesToList(poss.stream()
+				data.addConceptsToList(poss.stream()
 						.filter((a) -> a.getVisage() != null && !a.getVisage().isInvisible())
 						.map((a) -> new Profile(a.getUUID(), a.getName().toLowerCase())).collect(Collectors.toSet()));
 			}

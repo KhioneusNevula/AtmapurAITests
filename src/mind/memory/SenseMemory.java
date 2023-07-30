@@ -8,25 +8,15 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
 import actor.Actor;
-import actor.IComponentPart;
-import actor.IComponentType;
-import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.SenseProperty;
-import mind.concepts.type.SenseProperty.ActorReferentProperty;
-import mind.concepts.type.SenseProperty.IColor;
-import mind.concepts.type.SenseProperty.IShape;
-import mind.concepts.type.SenseProperty.ISmell;
-import mind.concepts.type.SenseProperty.ITexture;
-import mind.concepts.type.SenseProperty.UniqueProperty;
 import sim.Location;
 
 /**
@@ -38,15 +28,15 @@ import sim.Location;
  *            profile if it remembers profiles
  *
  */
-public class SenseMemory<T> {
+public class SenseMemory implements IRecordable {
 
-	private Map<UUID, Profile> sensedProfiles;
+	private Set<Profile> sensedProfiles;
 	private Map<Profile, WeakReference<Actor>> profilesToActors;
-	private Map<Profile, Location> sensedLocations;
+	private Map<Profile, Location> sensedLocations = new TreeMap<>();
 	/**
 	 * Sensed traits for actors
 	 */
-	private Map<Profile, TraitsMemory<T>> sensedTraits;
+	private Map<Profile, TraitsMemory> sensedTraits;
 
 	/**
 	 * Things that are randomly sensed -- random sounds, etc
@@ -66,7 +56,7 @@ public class SenseMemory<T> {
 	 * 
 	 * @param max
 	 * @param storeActors if this memory stores the actual actor along with its
-	 *                    traits
+	 *                    traits, or just profiles
 	 */
 	public SenseMemory(int max, boolean storeActors) {
 		this.max = max;
@@ -79,7 +69,7 @@ public class SenseMemory<T> {
 	 */
 	public void clearAll() {
 		sensedProfiles = null;
-		sensedLocations = null;
+		sensedLocations.clear();
 		sensedTraits = null;
 		randomlySensed = null;
 		this.profilesToActors.clear();
@@ -96,7 +86,7 @@ public class SenseMemory<T> {
 	}
 
 	public boolean isSensed(UUID id) {
-		return sensedProfiles == null ? false : sensedProfiles.containsKey(id);
+		return sensedProfiles == null ? false : sensedProfiles.contains(new Profile(id));
 	}
 
 	public Profile senseActor(Actor actor, boolean overrideMax) {
@@ -110,21 +100,26 @@ public class SenseMemory<T> {
 	public Profile addProfile(UUID forID, String type, boolean overrideMax) {
 		if (!overrideMax && maxedOut())
 			throw new RuntimeException("" + forID + type);
-		return (this.sensedProfiles == null ? sensedProfiles = new TreeMap<>() : sensedProfiles).computeIfAbsent(forID,
-				(u) -> new Profile(u, type));
+		Profile p = new Profile(forID, type);
+		findProfilesSet().add(p);
+		return p;
 	}
 
-	public TraitsMemory<T> obtainTraitsForProfile(Profile prof, boolean overrideMax) {
+	public TraitsMemory obtainTraitsForProfile(Profile prof, boolean overrideMax) {
 
-		TraitsMemory<T> a = this.getTraits(prof);
+		TraitsMemory a = this.getTraits(prof);
 		if (a == null) {
 			if (!overrideMax && maxedOut())
 				return null;
-			a = new TraitsMemory<>(prof);
-			(this.sensedProfiles == null ? sensedProfiles = new TreeMap<>() : sensedProfiles).put(prof.getUUID(), prof);
+			a = new TraitsMemory(prof);
+			findProfilesSet().add(prof);
 			(this.sensedTraits == null ? sensedTraits = new TreeMap<>() : sensedTraits).put(prof, a);
 		}
 		return a;
+	}
+
+	private Set<Profile> findProfilesSet() {
+		return (this.sensedProfiles == null ? sensedProfiles = new TreeSet<>() : sensedProfiles);
 	}
 
 	/**
@@ -141,22 +136,23 @@ public class SenseMemory<T> {
 	}
 
 	public Collection<Profile> getAllSensedProfiles() {
-		return this.sensedProfiles == null ? Set.of() : this.sensedProfiles.values();
+		return this.sensedProfiles == null ? Set.of() : this.sensedProfiles;
 	}
 
 	public void forget(Profile prof) {
 		if (this.sensedProfiles == null)
 			return;
-		if (this.sensedProfiles.remove(prof.getUUID()) != null) {
-			this.sensedTraits.remove(prof);
+		if (this.sensedProfiles.remove(prof)) {
+			if (sensedTraits != null)
+				this.sensedTraits.remove(prof);
 			this.sensedLocations.remove(prof);
-			if (sensedProfiles.isEmpty())
+			if (sensedProfiles != null && sensedProfiles.isEmpty())
 				sensedProfiles = null;
-			if (sensedTraits.isEmpty())
+			if (sensedTraits != null && sensedTraits.isEmpty())
 				sensedTraits = null;
-			if (sensedLocations.isEmpty())
-				sensedLocations = null;
-			this.profilesToActors.remove(prof);
+			if (profilesToActors != null) {
+				this.profilesToActors.remove(prof);
+			}
 		}
 	}
 
@@ -188,30 +184,27 @@ public class SenseMemory<T> {
 	 * @param otherMemory
 	 * @return false if there was nothing to transfer
 	 */
-	public boolean processMemory(Memory owner, SenseMemory<Actor> otherMemory, int passes) {
+	public boolean processMemory(Memory owner, SenseMemory otherMemory, int passes) {
 		if (passes <= 0)
 			throw new IllegalArgumentException("" + passes);
 		for (int i = 0; i < passes; i++) {
 			if (otherMemory.sensedProfiles == null)
 				return false;
-			Optional<Map.Entry<UUID, Profile>> op = otherMemory.sensedProfiles.entrySet().stream()
-					.filter((a) -> owner.isSignificant(a.getValue())).findAny();
+			Optional<Profile> op = otherMemory.sensedProfiles.stream().filter((a) -> owner.isSignificant(a)).findAny();
 			if (!op.isPresent()) {
 				return false;
 			}
-			(this.sensedProfiles == null ? sensedProfiles = new TreeMap<>() : sensedProfiles)
-					.computeIfAbsent(op.get().getKey(), (a) -> op.get().getValue());
-			TraitsMemory<?> otherTM = otherMemory.getTraits(op.get().getValue());
+			this.findProfilesSet().add(op.get());
+			TraitsMemory otherTM = otherMemory.getTraits(op.get());
 			if (otherTM != null) {
-				TraitsMemory<Profile> otherTMP = otherTM.convertActorProperties();
-				TraitsMemory<Profile> mem = (TraitsMemory<Profile>) this.obtainTraitsForProfile(op.get().getValue(),
-						true);
-				mem.acceptProperties(otherTMP);
+				TraitsMemory mem = (TraitsMemory) this.obtainTraitsForProfile(op.get(), true);
+				mem.acceptProperties(otherTM);
 			}
-			Location loc = otherMemory.getSensedLocation(op.get().getValue());
-			this.learnLocation(op.get().getValue(), loc);
-			owner.recognizeProfile(op.get().getValue());
-			otherMemory.forget(op.get().getValue());
+			Location loc = otherMemory.getSensedLocation(op.get());
+			if (loc != null)
+				owner.learnLocation(op.get(), loc);
+			owner.recognizeProfile(op.get());
+			otherMemory.forget(op.get());
 		}
 		return true;
 	}
@@ -242,16 +235,16 @@ public class SenseMemory<T> {
 	}
 
 	public void learnLocation(Profile forP, Location at) {
-		if (!this.isSensed(forP.getUUID()))
+		if (this.profilesToActors == null || !this.isSensed(forP.getUUID()))
 			throw new IllegalArgumentException("Please recognize this profile first " + forP);
-		(sensedLocations == null ? sensedLocations = new TreeMap<>() : sensedLocations).put(forP, at);
+		sensedLocations.put(forP, at);
 	}
 
 	public Location getSensedLocation(Profile location) {
-		return sensedLocations == null ? null : sensedLocations.get(location);
+		return sensedLocations.get(location);
 	}
 
-	public TraitsMemory<T> getTraits(Profile forP) {
+	public TraitsMemory getTraits(Profile forP) {
 		return sensedTraits == null ? null : sensedTraits.get(forP);
 	}
 
@@ -266,307 +259,6 @@ public class SenseMemory<T> {
 		str.append(this.profilesToActors);
 		str.append("}");
 		return str.toString();
-	}
-
-	/**
-	 *
-	 * @author borah
-	 *
-	 * @param <T>this is used to indicate the type of the "actor" properties --
-	 *                whether stored as profiles or as actors or whatever
-	 */
-	public static class TraitsMemory<AP> implements IMeme {
-
-		private String name;
-		private Profile profile;
-		private Traits<AP> generalTraits = new Traits<>();
-		private Map<IComponentPart, Traits<AP>> specificTraits = Map.of();
-		private Map<IComponentType, Traits<AP>> traits = Map.of();
-		private UUID recognize;
-		private boolean manyFaces = false;
-
-		public TraitsMemory(Profile of) {
-			name = "traits_" + of.getUniqueName();
-			this.profile = of;
-		}
-
-		@Override
-		public String getUniqueName() {
-			return name;
-		}
-
-		public Profile getProfile() {
-			return profile;
-		}
-
-		public TraitsMemory<Profile> convertActorProperties() {
-			TraitsMemory<Profile> newMem = new TraitsMemory<>(this.profile);
-			newMem.manyFaces = this.manyFaces;
-			newMem.recognize = this.recognize;
-			newMem.name = this.name;
-			newMem.generalTraits = this.generalTraits.convertActorProperties(newMem);
-			if (!specificTraits.isEmpty()) {
-				newMem.specificTraits = new TreeMap<>();
-				newMem.specificTraits.putAll(this.specificTraits.entrySet().stream()
-						.map((e) -> Map.entry(e.getKey(), e.getValue().convertActorProperties(newMem)))
-						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-			}
-			if (!traits.isEmpty()) {
-				newMem.traits = new TreeMap<>();
-				newMem.traits.putAll(this.traits.entrySet().stream()
-						.map((e) -> Map.entry(e.getKey(), e.getValue().convertActorProperties(newMem)))
-						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-
-			}
-			return newMem;
-		}
-
-		/**
-		 * peruses the given traits memory to update this entity's own memory with new
-		 * info
-		 * 
-		 * @param prof
-		 */
-		public void acceptProperties(TraitsMemory<AP> prof) {
-			TraitsMemory<AP>.Traits<AP> genT = prof.generalTraits;
-			this.generalTraits.learnTraits(genT);
-			for (Map.Entry<IComponentType, TraitsMemory<AP>.Traits<AP>> entry : prof.traits.entrySet()) {
-				this.getOrInitTraits(entry.getKey()).learnTraits(entry.getValue());
-			}
-			for (Map.Entry<IComponentPart, TraitsMemory<AP>.Traits<AP>> entry : prof.specificTraits.entrySet()) {
-				this.getOrInitTraits(entry.getKey()).learnTraits(entry.getValue());
-			}
-		}
-
-		public Traits<AP> getOrInitTraits(IComponentType c) {
-			Traits<AP> t;
-			if (traits.isEmpty()) {
-				traits = new TreeMap<>();
-				t = new Traits<>();
-				traits.put(c, t);
-			} else {
-				t = traits.get(c);
-				if (t == null) {
-					t = new Traits<>();
-					traits.put(c, t);
-				}
-			}
-			return t;
-		}
-
-		public Traits<AP> getOrInitTraits(IComponentPart c) {
-			Traits<AP> t;
-			if (specificTraits.isEmpty()) {
-				specificTraits = new TreeMap<>();
-				t = new Traits<>();
-				specificTraits.put(c, t);
-			} else {
-				t = specificTraits.get(c);
-				if (t == null) {
-					t = new Traits<>();
-					specificTraits.put(c, t);
-				}
-			}
-			return t;
-		}
-
-		public Traits<AP> getGeneralTraits() {
-			return generalTraits;
-		}
-
-		public Traits<AP> getTraits(IComponentPart c) {
-			return specificTraits.get(c);
-		}
-
-		public Traits<AP> getTraits(IComponentType t) {
-			return traits.get(t);
-		}
-
-		private void recognizeAs(UUID id) {
-			if (this.recognize == null) {
-				this.recognize = id;
-			} else {
-				if (!id.equals(this.recognize)) {
-					manyFaces = true;
-					recognize = null;
-				}
-			}
-		}
-
-		/**
-		 * If this entity, for whatever reason, presents as multiple recognizable
-		 * entities and is thusly unrecognizable
-		 */
-		public boolean ofManyFaces() {
-			return manyFaces;
-		}
-
-		/**
-		 * If this entity is recognizable as a singel entity
-		 * 
-		 * @return
-		 */
-		public boolean isRecognizable() {
-			return recognize != null;
-		}
-
-		/**
-		 * what id this entity is recognized as
-		 * 
-		 * @return
-		 */
-		public UUID recognizedAs() {
-			return recognize;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder str = new StringBuilder("{");
-			if (!this.generalTraits.toString().equals("{}")) {
-				str.append("-general:[");
-				str.append(generalTraits).append("];");
-			}
-			if (this.traits != null && !this.traits.isEmpty()) {
-				str.append(" -typed:[");
-				str.append(traits).append("];");
-			}
-			if (this.specificTraits != null && this.specificTraits.isEmpty()) {
-				str.append("\n\t -specific:[");
-				str.append(specificTraits).append("]");
-			}
-			if (this.isRecognizable()) {
-				str.append(",+recognizable");
-			}
-			if (this.manyFaces) {
-				str.append(",+manyFaces");
-			}
-			return str.append("}").toString();
-		}
-
-		/**
-		 * 
-		 * @author borah
-		 *
-		 * @param <T> this is used to indicate the type of the "actor" properties --
-		 *            whether stored as profiles or as actors or whatever
-		 */
-		public class Traits<T> {
-
-			private TreeMap<SenseProperty<?>, Object> senseProperties;
-			private TreeMap<ActorReferentProperty, T> actorRefSenseProperties;
-
-			public void learnTraits(Traits<T> traits) {
-				if (traits.senseProperties != null) {
-					(this.senseProperties == null ? senseProperties = new TreeMap<>() : senseProperties)
-							.putAll(traits.senseProperties);
-				}
-				if (traits.actorRefSenseProperties != null) {
-					(this.actorRefSenseProperties == null ? actorRefSenseProperties = new TreeMap<>()
-							: actorRefSenseProperties).putAll(traits.actorRefSenseProperties);
-				}
-			}
-
-			public void learnTrait(ActorReferentProperty trait, T value) {
-				(actorRefSenseProperties == null ? actorRefSenseProperties = new TreeMap<>() : actorRefSenseProperties)
-						.put(trait, value);
-			}
-
-			public <O> void learnTrait(SenseProperty<O> trait, Object value) {
-				if (trait instanceof ActorReferentProperty) {
-					learnTrait((ActorReferentProperty) trait, (T) value);
-					return;
-				}
-				if (!trait.getType().isAssignableFrom(value.getClass()))
-					throw new RuntimeException();
-				if (trait instanceof UniqueProperty)
-					TraitsMemory.this.recognizeAs((UUID) value);
-
-				(senseProperties == null ? senseProperties = new TreeMap<>() : senseProperties).put(trait, value);
-			}
-
-			/**
-			 * Returns a new Traits containing everything in this Traits but with all Actor
-			 * properties converted to profile ones; clears all contents of this Traits as
-			 * well
-			 * 
-			 * @return
-			 */
-			public TraitsMemory<Profile>.Traits<Profile> convertActorProperties(TraitsMemory<Profile> oth) {
-				TraitsMemory<Profile>.Traits<Profile> newTraits = oth.new Traits<Profile>();
-				newTraits.senseProperties = this.senseProperties;
-				this.senseProperties = null;
-				if (actorRefSenseProperties != null && !actorRefSenseProperties.isEmpty()) {
-					newTraits.actorRefSenseProperties = new TreeMap<>();
-					Stream<Map.Entry<ActorReferentProperty, T>> stream = actorRefSenseProperties.entrySet().stream();
-					if (!(stream.findAny().get().getValue() instanceof Actor))
-						throw new UnsupportedOperationException();
-					newTraits.actorRefSenseProperties
-							.putAll(stream
-									.map((a) -> Map.entry(a.getKey(),
-											new Profile(((Actor) a.getValue()).getUUID(),
-													((Actor) a).getName().toLowerCase())))
-									.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
-					this.actorRefSenseProperties = null;
-				}
-				return newTraits;
-			}
-
-			public T getTrait(ActorReferentProperty trait) {
-				return actorRefSenseProperties == null ? null : actorRefSenseProperties.get(trait);
-			}
-
-			/**
-			 * Do not use an actor-referent-property with this
-			 * 
-			 * @param <T>
-			 * @param trait
-			 * @return
-			 */
-			public <TE> TE getTrait(SenseProperty<TE> trait) {
-				if (trait instanceof ActorReferentProperty)
-					throw new IllegalArgumentException("use non-actor referent property");
-				return senseProperties == null ? null : (TE) senseProperties.get(trait);
-			}
-
-			public T getHolding() {
-				return getTrait(SenseProperty.HOLDING);
-			}
-
-			public IColor getColor() {
-				return getTrait(SenseProperty.COLOR);
-			}
-
-			public IShape getShape() {
-				return getTrait(SenseProperty.SHAPE);
-			}
-
-			public ITexture getTexture() {
-				return getTrait(SenseProperty.TEXTURE);
-			}
-
-			public ISmell getSmell() {
-				return getTrait(SenseProperty.SMELL);
-			}
-
-			public Boolean isTranslucent() {
-				return getTrait(SenseProperty.TRANSLUCENCE);
-			}
-
-			@Override
-			public String toString() {
-				StringBuilder builder = new StringBuilder("{");
-				if (senseProperties != null) {
-					builder.append("non-actor:");
-					builder.append(senseProperties).append(";");
-				}
-				if (actorRefSenseProperties != null) {
-					builder.append(" actor-referent:");
-					builder.append(actorRefSenseProperties);
-				}
-				builder.append("}");
-				return builder.toString();
-			}
-		}
 	}
 
 }

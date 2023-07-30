@@ -55,7 +55,23 @@ public class Triplet<A, B, C> {
 
 	@Override
 	public String toString() {
-		return "triplet<" + first + "," + second + "," + third + ">";
+		return "<" + first + "," + second + "," + third + ">";
+	}
+
+	@Override
+	public int hashCode() {
+		return (first != null ? first.hashCode() : 0) + (second != null ? second.hashCode() : 0)
+				+ (third != null ? third.hashCode() : 0);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Triplet tr) {
+			return (this.first != null ? tr.first != null && this.first.equals(tr.first) : tr.first == null)
+					&& (this.second != null ? tr.second != null && this.second.equals(tr.second) : tr.second == null)
+					&& (this.third != null ? tr.third != null && this.third.equals(tr.third) : tr.third == null);
+		}
+		return super.equals(obj);
 	}
 
 }

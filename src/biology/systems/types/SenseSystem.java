@@ -13,7 +13,6 @@ import actor.IComponentType;
 import actor.IMultipart;
 import actor.IVisage;
 import actor.MultipartActor;
-import actor.SentientActor;
 import biology.systems.ESystem;
 import biology.systems.SystemType;
 import mind.Culture;
@@ -26,18 +25,18 @@ import mind.concepts.type.SenseProperty.UniqueProperty;
 import mind.memory.IKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.memory.SenseMemory;
-import mind.memory.SenseMemory.TraitsMemory;
+import mind.memory.TraitsMemory;
 import sim.World;
 
 public class SenseSystem extends ESystem {
 
-	private SenseMemory<Actor> memory;
+	private SenseMemory memory;
 	private World world;
 	private Collection<ISensor> senses;
 	private int senseDistance;
 	private Collection<SenseProperty<?>> propertiesToSense = Set.of();
 
-	public SenseSystem(Actor owner, SenseMemory<Actor> memory, int senseDistance, ISensor... senses) {
+	public SenseSystem(Actor owner, SenseMemory memory, int senseDistance, ISensor... senses) {
 		super(SystemType.SENSE, owner);
 		this.memory = memory;
 		this.world = owner.getWorld();
@@ -51,7 +50,7 @@ public class SenseSystem extends ESystem {
 		return this;
 	}
 
-	public SenseMemory<Actor> getMemory() {
+	public SenseMemory getMemory() {
 		return memory;
 	}
 
@@ -77,7 +76,7 @@ public class SenseSystem extends ESystem {
 		if (this.memory.maxedOut())
 			return;
 		Profile self = memory.addProfile(this.getOwner().getUUID(), this.getOwner().getName(), false);
-		memory.learnLocation(self, this.getOwner().getLocation());
+		this.getOwner().getAsSentient().getMind().getMindMemory().learnLocation(self, this.getOwner().getLocation());
 
 		Actor focus = this.handleActorSensing();
 
@@ -108,7 +107,8 @@ public class SenseSystem extends ESystem {
 	 */
 	private IPropertyData getOrCreateIdentifier(Actor sensedActor, Property prop, PropertyController controller) {
 		if (controller != null) {
-			IPropertyData dat = controller.getIdentifier().identifyInfo(prop, sensedActor, sensedActor.getVisage());
+			IPropertyData dat = controller.getIdentifier().identifyInfo(prop, sensedActor, sensedActor.getVisage(),
+					this.getOwner().getAsSentient().getMind());
 			if (!dat.isUnknown()) {
 				return dat;
 			}
@@ -121,11 +121,15 @@ public class SenseSystem extends ESystem {
 				numer++;
 			}
 		}
+		if (controller == null) {
+			controller = this.getOwner().getAsSentient().getMind().getMindMemory().findPropertyAssociations(prop);
+		}
 		double chance = 0.9 * (numer / denom);
 		TemplateBasedIdentifier identifier = new TemplateBasedIdentifier(sensedActor.getSpecies(),
 				(a) -> a.getPropertyHint(prop), chance);
 		IPropertyData res = IPropertyData.UNKNOWN;
-		if (!(res = identifier.identifyInfo(prop, sensedActor, sensedActor.getVisage())).isUnknown()) {
+		if (!(res = identifier.identifyInfo(prop, sensedActor, sensedActor.getVisage(),
+				this.getOwner().getAsSentient().getMind())).isUnknown()) {
 			controller.editIdentifier().addIdentifier(identifier);
 			return res;
 		}
@@ -135,21 +139,21 @@ public class SenseSystem extends ESystem {
 
 	private void handlePropertyAssignment(Actor sensedActor) {
 		Collection<Property> props = new TreeSet<>(
-				this.getOwner().getAsLiving().getMind().getMindMemory().getRecognizedProperties());
-		this.getOwner().getAsLiving().getMind().getMindMemory().cultures()
+				this.getOwner().getAsSentient().getMind().getMindMemory().getRecognizedProperties());
+		this.getOwner().getAsSentient().getMind().getMindMemory().cultures()
 				.forEach((c) -> props.addAll(c.getRecognizedProperties()));
 		for (Property prop : props) {
 
-			PropertyController propc = this.getOwner().getAsLiving().getMind().getMindMemory()
+			PropertyController propc = this.getOwner().getAsSentient().getMind().getMindMemory()
 					.getPropertyAssociations(prop);
 			IPropertyData dat = null;
 			IKnowledgeBase key = null;
 			if (propc != null) {
 				dat = this.getOrCreateIdentifier(sensedActor, prop, propc);
-				key = ((SentientActor) this.getOwner()).getMind().getKnowledgeBase();
+				key = this.getOwner().getAsSentient().getMind().getKnowledgeBase();
 			}
 			if (dat == null || dat.isUnknown()) {
-				Map<Culture, PropertyController> assoc = (this.getOwner().getAsLiving().getMind().getMindMemory()
+				Map<Culture, PropertyController> assoc = (this.getOwner().getAsSentient().getMind().getMindMemory()
 						.getPropertyAssociationsFromCulture(prop));
 				for (Map.Entry<Culture, PropertyController> entry : assoc.entrySet()) {
 
@@ -183,7 +187,7 @@ public class SenseSystem extends ESystem {
 	 */
 	private boolean handleGeneralTraitSensing(Actor sensedActor, Profile prof) {
 
-		TraitsMemory<Actor> traits = memory.obtainTraitsForProfile(prof, sensedActor == this.getOwner());
+		TraitsMemory traits = memory.obtainTraitsForProfile(prof, sensedActor == this.getOwner());
 		if (traits == null)
 			return false;
 		IVisage visage = sensedActor.getVisage();
@@ -208,7 +212,9 @@ public class SenseSystem extends ESystem {
 	 */
 	private Actor handleActorSensing() {
 		Actor focus = null;
-		for (Actor sensedActor : world.getActors()) {
+		TreeSet<Actor> actors = new TreeSet<>(
+				(a, b) -> (int) (100 * (a.distance(this.getOwner()) - b.distance(this.getOwner()))));
+		for (Actor sensedActor : actors) {
 			if (this.memory.maxedOut() && sensedActor != this.getOwner())
 				return null;
 			if (sensedActor.distance(this.getOwner()) > this.senseDistance || sensedActor.getVisage() == null)
@@ -216,9 +222,9 @@ public class SenseSystem extends ESystem {
 			if (focus == null || sensedActor.distance(this.getOwner()) < focus.distance(this.getOwner()))
 				focus = sensedActor;
 			Profile prof = this.memory.senseActor(sensedActor, sensedActor == this.getOwner());
-			if (this.handleGeneralTraitSensing(sensedActor, prof)) {
-				memory.learnLocation(prof, sensedActor.getLocation());
-			}
+			this.handleGeneralTraitSensing(sensedActor, prof);
+			memory.learnLocation(prof, sensedActor.getLocation());
+
 			this.handlePropertyAssignment(sensedActor);
 		}
 		return focus;
@@ -226,7 +232,7 @@ public class SenseSystem extends ESystem {
 
 	private void handlePartByPartTraitSensing(Actor focus) {
 		Profile prof = this.memory.addProfile(focus.getUUID(), focus.getName().toLowerCase(), focus == this.getOwner());
-		TraitsMemory<Actor> traits = memory.obtainTraitsForProfile(prof, false);
+		TraitsMemory traits = memory.obtainTraitsForProfile(prof, false);
 		IVisage visage = focus.getVisage();
 		IMultipart body = null;
 		if (visage.isMultipart()) {
@@ -251,7 +257,7 @@ public class SenseSystem extends ESystem {
 						o = sense.getSpecificSensedTrait((MultipartActor) focus, prop, part, world, this,
 								this.getOwner());
 						if (o != null) {
-							TraitsMemory<Actor>.Traits<Actor> tra = traits.getOrInitTraits(part);
+							TraitsMemory.Traits tra = traits.getOrInitTraits(part);
 							tra.learnTrait(prop, o);
 						}
 					}
