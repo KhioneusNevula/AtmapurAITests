@@ -134,8 +134,10 @@ public class World implements IUniqueExistence, IRenderable {
 			int y = Math.max(0, Math.min(height, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));
 			if (i % 2 == 0)
 				this.spawnActor((idk = new Person(this, "baba" + i, Species.ELF, x, y, 10)));
-			else
-				this.spawnActor((idk = new UpgradedPerson(this, "ubaba" + i, Species.FAIRY, x, y, 10)));
+			/*
+			 * else this.spawnActor((idk = new UpgradedPerson(this, "ubaba" + i,
+			 * Species.FAIRY, x, y, 10)));
+			 */
 			(idk).setOptionalColor(Color.CYAN.getRGB());
 
 			x = Math.max(0, Math.min(width, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));

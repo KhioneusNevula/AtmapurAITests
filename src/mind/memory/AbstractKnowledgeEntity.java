@@ -352,12 +352,9 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 		if (this.doableActions == null) {
 			this.doableActions = MultimapBuilder.hashKeys().hashSetValues().build();
 		}
-		if (type.getUsage().contains(TaskHint.ALL)) {
-			doableActions.put(TaskHint.ALL, type);
-		} else {
-			for (ITaskHint hint : type.getUsage()) {
-				doableActions.put(hint, type);
-			}
+
+		for (ITaskHint hint : type.getUsage()) {
+			doableActions.put(hint, type);
 		}
 
 	}
@@ -372,7 +369,14 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 
 	@Override
 	public Collection<IActionType<?>> getPossibleActions(ITaskHint forHint) {
-		return this.doableActions == null ? Set.of() : doableActions.get(forHint);
+		if (doableActions == null)
+			return Set.of();
+		Collection<IActionType<?>> acs = doableActions.get(forHint);
+		Collection<IActionType<?>> allacs = doableActions.get(TaskHint.ALL);
+		Set<IActionType<?>> set = new TreeSet<>((a, b) -> a.getUniqueName().compareTo(b.getUniqueName()));
+		set.addAll(allacs);
+		set.addAll(acs);
+		return set;
 	}
 
 	public String report() {

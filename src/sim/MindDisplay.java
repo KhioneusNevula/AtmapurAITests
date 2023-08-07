@@ -93,7 +93,7 @@ public class MindDisplay implements IMindDisplay {
 			g.textSize(100);
 			String msg = containedMind.isNotViable() ? "NO MIND" : "ASLEEP";
 			float w = g.textWidth(msg);
-			g.text(msg, g.width / 2 - w / 2, g.height / 2);
+			g.text(msg, g.width() / 2 - w / 2, g.height() / 2);
 
 		}
 

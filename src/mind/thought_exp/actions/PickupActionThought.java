@@ -1,5 +1,7 @@
 package mind.thought_exp.actions;
 
+import java.util.Iterator;
+
 import actor.Actor;
 import main.Pair;
 import mind.action.ActionType;
@@ -24,12 +26,13 @@ public class PickupActionThought extends AbstractActionThought {
 	private Profile toAcquireProfile;
 	private Property property;
 	private Profile profile;
+	private boolean checkingUnreachableSensed;
 	private boolean checkProfileLocation;
 	private ILocationMeme goTo;
 	private int tries = 5;
 
 	public PickupActionThought(ITaskGoal goal) {
-		super(goal.getPriority());
+		super(goal);
 		this.toAcquireMeme = goal.transferItem();
 	}
 
@@ -67,7 +70,8 @@ public class PickupActionThought extends AbstractActionThought {
 			}
 		} else if (toAcquire != null) {
 			if (!memory.getAsHasActor().getActor().reachable(toAcquire) && this.getPendingCondition(memory) == null) {
-				goTo = toAcquire.getLocation();
+				if (goTo == null)
+					goTo = toAcquire.getLocation();
 				this.postConditionForExecution(new TravelTaskGoal(goTo, true));
 			}
 		}
@@ -77,13 +81,36 @@ public class PickupActionThought extends AbstractActionThought {
 	@Override
 	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
 		if (childThought instanceof CheckSensedActorsThought csat) {
-			if (!csat.getInformation().isEmpty()) {
-				this.toAcquire = csat.getInformation().iterator().next();
+			if (!checkingUnreachableSensed) {
+				if (!csat.getInformation().isEmpty()) {
+					this.toAcquire = csat.getInformation().iterator().next();
+				} else {
+					if (property != null) {
+						this.postChildThought(new CheckSensedActorsThought(property), ticks);
+						this.checkingUnreachableSensed = true;
+					} else if (this.profile != null) {
+						this.checkProfileLocation = true;
+					}
+				}
 			} else {
-				if (property != null) {
+				this.checkingUnreachableSensed = false;
+				if (!csat.getInformation().isEmpty()) {
+					if (profile != null) {
+						Iterator<Actor> ai = csat.getInformation().iterator();
+						while (ai.hasNext()) {
+							Actor a = ai.next();
+							if (a.getUUID().equals(profile.getUUID())) {
+								this.toAcquire = a;
+								this.goTo = a.getLocation();
+								break;
+							}
+						}
+					} else {
+						this.toAcquire = csat.getInformation().iterator().next();
+						this.goTo = toAcquire.getLocation();
+					}
+				} else {
 					this.postChildThought(new CheckKnownProfilesThought(property, true), ticks);
-				} else if (this.profile != null) {
-					this.checkProfileLocation = true;
 				}
 			}
 		} else if (childThought instanceof CheckKnownProfilesThought ckat) {

@@ -1,12 +1,14 @@
-package mind.thought_exp.info_thoughts;
+package mind.thought_exp.type;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
 import actor.IUniqueExistence;
+import humans.Food;
 import mind.Culture;
 import mind.concepts.PropertyController;
+import mind.concepts.type.BasicProperties;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
@@ -15,7 +17,6 @@ import mind.memory.IPropertyData;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;
-import mind.thought_exp.type.AbstractThought;
 
 public class ApplyPropertiesThought extends AbstractThought {
 
@@ -107,6 +108,9 @@ public class ApplyPropertiesThought extends AbstractThought {
 								actor.getVisage(), memory);
 						if (!datau.isUnknown() && datau.getKnownCount() > actor
 								.getPropertyData(entry.getKey(), property).getKnownCount()) {
+							if (property == BasicProperties.FOOD && actor.getSpecies() == Food.FOOD_TYPE) {
+								System.out.println(actor + " received food property");
+							}
 							actor.assignProperty(entry.getKey(), property, data = datau);
 							Profile aProf = memory.getKnowledgeBase().getProfileFor(actor);
 							if (aProf == null)

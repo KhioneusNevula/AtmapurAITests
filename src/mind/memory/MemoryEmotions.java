@@ -85,6 +85,10 @@ public class MemoryEmotions implements IEmotions {
 
 	@Override
 	public void add(IFeeling feeling, int time, IMeme cause) {
+		if (time < 0)
+			throw new IllegalArgumentException();
+		if (time == 0)
+			return;
 		this.feelingTime.put(cause, time);
 		if (cause != null)
 			this.feelingCauses.put(cause, feeling);

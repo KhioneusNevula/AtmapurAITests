@@ -1,5 +1,7 @@
 package mind.thought_exp.actions;
 
+import java.awt.Color;
+
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
 import mind.memory.IHasKnowledge;
@@ -15,7 +17,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	private boolean succeeded;
 	protected Priority priority;
 	private ITaskGoal pendingCondition;
-	private int actionTicks;
+	private int actionTicks = -1;
 	private boolean started;
 	private boolean ended;
 	private boolean shouldResume;
@@ -24,20 +26,26 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	private String failureReason;
 	private boolean preemptivelyFailed;
 
-	public AbstractActionThought(Priority priority) {
-		this.priority = priority;
+	public AbstractActionThought(ITaskGoal goal) {
+		this.priority = goal.getPriority();
+		this.goal = goal;
+	}
+
+	@Override
+	public ITaskGoal getGoal() {
+		return (ITaskGoal) super.getGoal();
 	}
 
 	public final Priority getPriority() {
 		return priority;
 	}
 
-	protected void setFailureReason(String failureReason) {
+	protected final void setFailureReason(String failureReason) {
 		this.failureReason = failureReason;
 	}
 
 	@Override
-	public String reasonForLastFailure() {
+	public final String reasonForLastFailure() {
 		return failureReason;
 	}
 
@@ -63,23 +71,34 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		if (this.shouldCancel)
 			return;
 		if (this.shouldInterrupt) {
-			this.succeeded = this.finishActionIndividual(memory, actionTicks, ticks, true);
+			this.succeeded = this.finishActionIndividual(memory, Math.max(actionTicks, 0), ticks, true);
+			if (this instanceof EatActionThought) {
+				System.out.print("");
+			}
 			this.shouldCancel = true;
 		} else {
-			if (this.actionTicks == 0) {
+			if (!this.started) {
 				if (this.failedPreemptively()) {
+					if (this instanceof EatActionThought) {
+						System.out.print("");
+					}
 					this.ended = true;
-				} else if (this.canExecuteIndividual(memory, ticks, worldTick)) {
-					this.beginExecutingIndividual(memory, ticks, worldTick);
-					this.started = true;
 				}
 			} else {
-				if (this.canContinueExecutingIndividual(memory, actionTicks, ticks)) {
-					this.executionTickIndividual(memory, actionTicks, ticks);
-					this.actionTicks++;
+				if (this.actionTicks < 0) {
+					this.beginExecutingIndividual(memory, ticks, worldTick);
+					this.actionTicks = 0;
 				} else {
-					this.succeeded = this.finishActionIndividual(memory, actionTicks, ticks, false);
-					this.ended = true;
+					if (this.canContinueExecutingIndividual(memory, actionTicks, ticks)) {
+						this.executionTickIndividual(memory, actionTicks, ticks);
+						this.actionTicks++;
+					} else {
+						this.succeeded = this.finishActionIndividual(memory, actionTicks, ticks, false);
+						if (this instanceof EatActionThought) {
+							System.out.print("");
+						}
+						this.ended = true;
+					}
 				}
 			}
 		}
@@ -99,7 +118,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	 * @param worldTick
 	 * @return
 	 */
-	protected void postConditionForExecution(ITaskGoal condition) {
+	protected final void postConditionForExecution(ITaskGoal condition) {
 		this.pendingCondition = condition;
 	}
 
@@ -115,14 +134,21 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	@Override
-	public boolean resume(ICanThink memory, int ticks, long worldTick) {
-		pendingCondition = null;
+	public final boolean resume(ICanThink memory, int ticks, long worldTick) {
+		if (shouldResume) {
+			pendingCondition = null;
+			this.uponResume(memory, ticks, worldTick);
+		}
 		return !shouldResume;
+	}
+
+	protected void uponResume(ICanThink mind, int ticks, long worldTick) {
+
 	}
 
 	@Override
 	public String displayText() {
-		return "doing action " + this.getType().getName();
+		return "action " + this.getType().getName();
 	}
 
 	@Override
@@ -159,6 +185,9 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	 */
 	@Override
 	public void cancel() {
+		if (this instanceof EatActionThought) {
+			System.out.print("");
+		}
 		if (!this.started) {
 			this.shouldCancel = true;
 		} else {
@@ -172,11 +201,11 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	@Override
-	public boolean failedPreemptively() {
+	public final boolean failedPreemptively() {
 		return preemptivelyFailed;
 	}
 
-	protected void failPreemptively() {
+	protected final void failPreemptively() {
 		this.preemptivelyFailed = true;
 	}
 
@@ -191,8 +220,20 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	@Override
+	public final void start() {
+		this.started = true;
+	}
+
+	@Override
 	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
 		return Interest.SHORT_TERM; // TODO action memory stuff
+	}
+
+	private static final Color BOX_COLOR = Color.cyan;
+
+	@Override
+	public Color getBoxColor() {
+		return BOX_COLOR;
 	}
 
 }

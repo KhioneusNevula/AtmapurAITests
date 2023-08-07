@@ -73,9 +73,11 @@ public class CheckSensedActorsThought extends AbstractInformationThought<Collect
 			if (property != null) {
 				IPropertyData dat = ITaskGoal.getProperty(actor, property, mind);
 				failure = "nothing with property";
-				if (dat.isPresent() && predicate.test(actor)) {
-					information.add(actor);
-				}
+
+				if (dat.isPresent())
+					if (predicate.test(actor)) {
+						information.add(actor);
+					}
 			} else {
 				/**
 				 * TODO use recognition abilities with this
@@ -90,6 +92,8 @@ public class CheckSensedActorsThought extends AbstractInformationThought<Collect
 		}
 		if (!information.isEmpty())
 			failure = "n/a";
+		else
+			failure = "nothing found";
 
 	}
 

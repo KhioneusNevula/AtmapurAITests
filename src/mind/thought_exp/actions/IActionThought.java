@@ -182,16 +182,6 @@ public interface IActionThought extends IThought {
 	}
 
 	/**
-	 * How many times this action should be attempted before written off as
-	 * undoable;
-	 * 
-	 * @return
-	 */
-	default int executionAttempts() {
-		return 3;
-	}
-
-	/**
 	 * The selected target of an action which involves two parties, like socializing
 	 * 
 	 * @return
@@ -212,7 +202,7 @@ public interface IActionThought extends IThought {
 	boolean succeeded();
 
 	/**
-	 * If this action should fail before it even started; should be called during a
+	 * If this action has failed before it even started; should be called during a
 	 * think-tick
 	 * 
 	 * @return
@@ -225,7 +215,7 @@ public interface IActionThought extends IThought {
 	void notifyShouldResume();
 
 	/**
-	 * Cancel this action before it starts
+	 * Cancel this action
 	 */
 	void cancel();
 
@@ -235,5 +225,10 @@ public interface IActionThought extends IThought {
 	 * @return
 	 */
 	boolean started();
+
+	/**
+	 * Start this action; assumes that preconditions of the action are met.
+	 */
+	public void start();
 
 }

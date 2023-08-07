@@ -26,6 +26,7 @@ import actor.IComponentType;
 import actor.IPartAbility;
 import actor.UpgradedSentientActor;
 import biology.systems.types.ISensor;
+import main.Pair;
 import mind.Culture;
 import mind.IHasActor;
 import mind.action.WillingnessMatrix;
@@ -35,6 +36,7 @@ import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.concepts.type.SenseProperty;
+import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
@@ -50,10 +52,10 @@ import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 import mind.thought_exp.IThought.IThoughtType;
 import mind.thought_exp.actions.IActionThought;
-import mind.thought_exp.info_thoughts.ApplyPropertiesThought;
-import mind.thought_exp.info_thoughts.InspirePropertyIdentifierThought;
 import mind.thought_exp.memory.UpgradedTraitsMemory;
-import mind.thought_exp.type.GoalIntentionThought;
+import mind.thought_exp.type.ApplyPropertiesThought;
+import mind.thought_exp.type.CompleteGoalThought;
+import mind.thought_exp.type.InspirePropertyIdentifierThought;
 import phenomenon.IPhenomenon;
 import sim.World;
 
@@ -473,15 +475,19 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 				this.insertOrPauseThought(new ApplyPropertiesThought(sensedPhenomena, properties), worldTicks);
 			}
 		}
+		// TODO make this person-specific after communication is implemented, but for
+		// now culture general
 		if (this.getActiveThoughtsOfType(ThoughtType.REFINE_BELIEFS).isEmpty()) {
 			for (IKnowledgeBase knowledge : Iterables.concat(Collections.singleton(memory), this.memory.cultures())) {
-				for (Property prop : knowledge.getRecognizedProperties()) {
+				Collection<Property> recoProps = new TreeSet<>((a, b) -> rand().nextBoolean() ? 1 : -1);
+				recoProps.addAll(knowledge.getRecognizedProperties());
+				for (Property prop : recoProps) {
 					PropertyController con = knowledge.getPropertyAssociations(prop);
 					if (con.getIdentifier().isUnknown()) {
 						if (worldTicks % 20 >= rand().nextInt(20)) {
 							this.insertThought(new InspirePropertyIdentifierThought(con, this.getActor().getWorld()),
 									worldTicks);
-							if (rand().nextInt(10) < 5) {
+							if (rand().nextInt(10) < 3) {
 								break;
 							}
 						}
@@ -505,7 +511,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 					if (!(g instanceof ITaskGoal))
 						continue;
 					ITaskGoal goal = g.asTask();
-					GoalIntentionThought thought = new GoalIntentionThought(goal);
+					CompleteGoalThought thought = new CompleteGoalThought(goal);
 					boolean unnecessary = false;
 					for (IThought comparison : this.getThoughtsByType(ThoughtType.INTENTION)) {
 						if (comparison.equivalent(thought)) {
@@ -651,6 +657,8 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 			WillingnessMatrix matrix = this.calculateForce(subsequentThought);
 			this.insertThought(subsequentThought, matrix.getResult());
 		}
+		Pair<IFeeling, Integer> feeling = thought.finalFeeling();
+		this.emotions().add(feeling.getFirst(), feeling.getSecond(), thought);
 	}
 
 	private void tickThought(IThought thought, int ticks, long worldTicks) {

@@ -17,7 +17,7 @@ public class WalkActionThought extends AbstractActionThought {
 	private boolean reached;
 
 	public WalkActionThought(ITaskGoal goal) {
-		super(goal.getPriority());
+		super(goal);
 		target = goal.targetLocation();
 		if (goal instanceof TravelTaskGoal ttg) {
 			this.onlyReach = ttg.onlyReachDistance();
@@ -45,7 +45,7 @@ public class WalkActionThought extends AbstractActionThought {
 		individual.getAsHasActor().getActor().moveToward(target.getGeneralLocation().getX(),
 				target.getGeneralLocation().getY(), individual.getAsHasActor().getActor().getStep());
 		reached = onlyReach ? individual.getAsHasActor().getActor().reachable(target.getGeneralLocation())
-				: individual.getAsHasActor().getActor().getLocation().equals(target);
+				: individual.getAsHasActor().getActor().getLocation().equals(target.getGeneralLocation());
 	}
 
 	@Override
@@ -71,7 +71,6 @@ public class WalkActionThought extends AbstractActionThought {
 
 	@Override
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
-
 	}
 
 	@Override

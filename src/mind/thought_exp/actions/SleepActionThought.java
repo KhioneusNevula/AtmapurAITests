@@ -16,7 +16,7 @@ import mind.thought_exp.IUpgradedMind;
 public class SleepActionThought extends AbstractActionThought {
 
 	public SleepActionThought(ITaskGoal goal) {
-		super(goal.getPriority());
+		super(goal);
 	}
 
 	@Override

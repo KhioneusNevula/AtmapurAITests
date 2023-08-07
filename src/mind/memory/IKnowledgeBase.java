@@ -177,7 +177,7 @@ public interface IKnowledgeBase extends IRecordable {
 
 	/**
 	 * Get the actions this entity or a member of it knows for the possible task
-	 * hint
+	 * hint TODO maybe sort by preference or somethin
 	 * 
 	 * @param forHint
 	 * @return

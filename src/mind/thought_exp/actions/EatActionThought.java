@@ -25,7 +25,7 @@ public class EatActionThought extends AbstractActionThought {
 	private boolean succeeded;
 
 	public EatActionThought(ITaskGoal goal) {
-		super(goal.getPriority());
+		super(goal);
 		IMeme foodType = goal.usedItem().stream().findAny()
 				.orElseThrow(() -> new IllegalArgumentException(goal + " lacks food type"));
 		this.foodType = foodType == null ? BasicProperties.FOOD : foodType;
@@ -40,7 +40,8 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
-		if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()) {
+		if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()
+				&& ticks % 5 >= memory.rand().nextInt(5)) {
 			this.postChildThought(foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType)
 					: new CheckHeldItemsThought((Property) foodType), ticks);
 		}
@@ -48,23 +49,22 @@ public class EatActionThought extends AbstractActionThought {
 			if (this.getPendingCondition(memory) == null) {
 				this.postConditionForExecution(new AcquireTaskGoal(foodType));
 			}
-			needFoodItem = false;
 		}
 	}
 
 	@Override
 	public boolean canExecuteIndividual(ICanThink user, int thoughtTicks, long worldTicks) {
-		return foodItem != null;
+		if (foodItem != null) {
+			return foodItem != null;
+		}
+		return false;
 	}
 
 	@Override
 	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks) {
 		Actor owner = forUser.getAsHasActor().getActor();
-		if (!owner.held(foodItem)) {
-			succeeded = false;
-		} else {
-			succeeded = owner.getSystem(SystemType.HUNGER).eat(foodItem) == 1;
-		}
+		succeeded = owner.getSystem(SystemType.HUNGER).eat(foodItem) == 1;
+
 	}
 
 	@Override

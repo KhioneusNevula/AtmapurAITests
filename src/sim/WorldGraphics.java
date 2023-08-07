@@ -56,6 +56,15 @@ public class WorldGraphics extends PApplet {
 		return this.displayHeight - BORDER;
 	}
 
+	public int width() {
+		return this.currentScreen == null ? width : width / 2;
+	}
+
+	public int height() {
+		return height;
+		// return this.currentScreen == null ? height : height / 2;
+	}
+
 	@Override
 	public void settings() {
 		super.settings();
@@ -74,11 +83,14 @@ public class WorldGraphics extends PApplet {
 	public void changeDisplay(IRenderable newScreen, Display newDisplay) {
 		this.currentDisplay = newDisplay;
 		this.currentScreen = newScreen;
+		this.windowResize(2 * (world.getWidth() + 2 * BORDER), (world.getHeight() + 2 * BORDER));
 	}
 
 	public void returnToWorldDisplay() {
 		this.currentDisplay = Display.WORLD;
 		this.currentScreen = null;
+		this.windowResize(world.getWidth() + 2 * BORDER, world.getHeight() + 2 * BORDER);
+
 	}
 
 	public float getFps() {
@@ -126,7 +138,7 @@ public class WorldGraphics extends PApplet {
 			}
 			System.out.println();
 		} else if (event.getKeyCode() == KeyEvent.VK_F) {
-			if (this.currentDisplay == Display.WORLD) {
+			/* if (this.currentDisplay == Display.WORLD) */ if (this.mouseX < world.getWidth() + BORDER) {
 				world.spawnActor(new Food(world, "nom" + this.mouseX + "_" + this.mouseY, world.clampX(mouseX - BORDER),
 						world.clampY(mouseY - BORDER), 5));
 			}
@@ -138,7 +150,7 @@ public class WorldGraphics extends PApplet {
 	public void mouseClicked(MouseEvent event) {
 		super.mouseClicked(event);
 		if (event.getButton() == RIGHT) {
-			if (this.currentDisplay == Display.WORLD) {
+			/* if (this.currentDisplay == Display.WORLD) */ if (event.getX() < world.getWidth() + BORDER) {
 				Actor a;
 				world.spawnActor(a = new Person(world, "baba" + event.getX() + "" + event.getY(), Species.IMP,
 						world.clampX(event.getX() - BORDER), world.clampY(event.getY() - BORDER), 5));
@@ -148,7 +160,8 @@ public class WorldGraphics extends PApplet {
 				// Relationship.include());
 			}
 		} else {
-			if (this.currentDisplay == Display.WORLD) {
+			/* if (this.currentDisplay == Display.WORLD) */
+			{
 
 				Actor l = world.getActors().stream()
 						.filter((a) -> a.distance(event.getX() - BORDER, event.getY() - BORDER) <= a.getRadius() + 5)
@@ -169,11 +182,13 @@ public class WorldGraphics extends PApplet {
 					}
 					System.out.println();
 				}
-			} else if (this.currentScreen instanceof UpgradedMindDisplay screen) {
+			}
+			/* else */ if (this.currentScreen instanceof UpgradedMindDisplay screen) {
+				int tX = event.getX() - width();
 				for (Map.Entry<IThought, Pair<Rectangle, Boolean>> entry : screen.getThoughtBoxes().entrySet()) {
 					if (screen.getFocusedThought() == null
-							&& event.getX() <= entry.getValue().getFirst().width + entry.getValue().getFirst().x
-							&& event.getX() >= entry.getValue().getFirst().x
+							&& tX <= entry.getValue().getFirst().width + entry.getValue().getFirst().x
+							&& tX >= entry.getValue().getFirst().x
 							&& event.getY() <= entry.getValue().getFirst().height + entry.getValue().getFirst().y
 							&& event.getY() >= entry.getValue().getFirst().y) {
 						screen.setFocusedThought(entry.getKey());
@@ -191,11 +206,16 @@ public class WorldGraphics extends PApplet {
 	@Override
 	public void draw() {
 		background(color(0, 100, 100));
-		world.worldTick();
-		if (this.currentScreen == null) {
+		synchronized (world) {
+			world.worldTick();
 			world.draw(this);
-		} else {
-			this.currentScreen.draw(this);
+			if (this.currentScreen == null) {
+			} else {
+				g.pushMatrix();
+				g.translate(width(), 0);
+				this.currentScreen.draw(this);
+				g.popMatrix();
+			}
 		}
 	}
 

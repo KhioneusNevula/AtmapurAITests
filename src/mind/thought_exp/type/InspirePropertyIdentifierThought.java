@@ -1,4 +1,4 @@
-package mind.thought_exp.info_thoughts;
+package mind.thought_exp.type;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,14 +9,15 @@ import com.google.common.collect.Iterators;
 import actor.ITemplate;
 import actor.IUniqueExistence;
 import biology.systems.types.ISensor;
+import humans.Food;
 import mind.concepts.PropertyController;
 import mind.concepts.identifiers.TemplateBasedIdentifier;
+import mind.concepts.type.BasicProperties;
 import mind.goals.IGoal.Priority;
 import mind.memory.IKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;
-import mind.thought_exp.type.AbstractThought;
 import sim.World;
 
 public class InspirePropertyIdentifierThought extends AbstractThought {
@@ -27,7 +28,7 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 	private World senseworld;
 	private PropertyController controller;
 	private Map<ITemplate, Integer> identifiers = new HashMap<>();
-	private int actorCount = 2;
+	private int actorCount = 1;
 
 	public InspirePropertyIdentifierThought(PropertyController property, World senseworld) {
 		this.controller = property;
@@ -75,10 +76,12 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 			for (int i = 0; i < memory.getMaxFocusObjects() && forEntities.hasNext(); i++) {
 				IUniqueExistence iue = forEntities.next();
 				ITemplate template = iue.getSpecies();
-				boolean senses = false;
+				if (this.controller.getProperty() == BasicProperties.FOOD && template == Food.FOOD_TYPE)
+					System.out.print("");
+				boolean senses = true;
 				for (ISensor sensor : template.getPreferredSensesForHint(controller.getProperty())) {
-					if (memory.getSenses().contains(sensor)) {
-						senses = true;
+					if (!memory.getSenses().contains(sensor)) {
+						senses = false;
 						break;
 					}
 				}
@@ -86,6 +89,7 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 				if (senses) {
 					int count = this.identifiers.getOrDefault(template, 0);
 					this.identifiers.put(template, ++count);
+					i -= 2;
 					if (count == actorCount) {
 						TemplateBasedIdentifier identifier = new TemplateBasedIdentifier(template,
 								(a) -> template.getPropertyHint(controller.getProperty()), 1f);

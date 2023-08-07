@@ -20,7 +20,7 @@ public class SearchActionThought extends AbstractActionThought {
 	private Integer vecY;
 
 	public SearchActionThought(ITaskGoal goal) {
-		super(goal.getPriority());
+		super(goal);
 		this.question = goal.learnInfo();
 		if (question.getType() != QuestionType.LOCATION) {
 			throw new IllegalArgumentException();

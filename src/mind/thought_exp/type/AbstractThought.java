@@ -157,4 +157,9 @@ public abstract class AbstractThought implements IThought {
 		return "thought_" + this.getClass().getSimpleName().toLowerCase();
 	}
 
+	@Override
+	public String toString() {
+		return this.getUniqueName() + " \"" + this.displayText() + "\"";
+	}
+
 }

@@ -1,11 +1,13 @@
 package sim;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.PrimitiveIterator.OfInt;
+import java.util.stream.IntStream;
 
 import main.Pair;
 import mind.thought_exp.IThought;
@@ -70,10 +72,16 @@ public class UpgradedMindDisplay implements IMindDisplay {
 		int attempts = 0;
 		int width = (int) (textWidth + border + 0.5);
 		int height = (int) (textHeight + border + 0.5);
-		OfInt xIter = this.containedMind.rand().ints(startX, g.width - width - border).distinct().iterator();
-		OfInt yIter = this.containedMind.rand().ints(startY, g.height - height - border).distinct().iterator();
+		int ubX = g.width() - width - border;
+		int ubY = g.height() - height - border;
+		if (startX >= ubX || startY >= ubY)
+			return null;
+		IntStream xis = this.containedMind.rand().ints(startX, ubX).distinct();
+		IntStream yis = this.containedMind.rand().ints(startY, ubY).distinct();
+		OfInt xIter = xis.iterator();
+		OfInt yIter = yis.iterator();
 
-		for (; (xIter.hasNext() && yIter.hasNext()) && attempts <= 100;) {
+		for (; attempts < Math.min(200, Math.min(ubX - startX, ubY - startY)); attempts++) {
 			int x = xIter.nextInt();
 			int y = yIter.nextInt();
 			Rectangle rect = new Rectangle(x, y, width, height);
@@ -111,11 +119,15 @@ public class UpgradedMindDisplay implements IMindDisplay {
 			int border, int vanishmentTicks, float textSize) {
 		float ratio = vanishmentTicks / ((float) vanishTime);
 		int alpha = vanishmentTicks == vanishTime ? 255 : (int) (255 * vanishmentTicks / (vanishTime * 1.3f));
+		float alpharatio = alpha / 255.0f;
 		g.textSize(textSize * ratio);
 		Rectangle ogBox = (Rectangle) box.clone();
-		box = new Rectangle(ogBox.x, ogBox.y + (int) ((1 - ratio) * (g.height - ogBox.y)), (int) (ogBox.width * ratio),
-				(int) (ogBox.height * ratio));
-		g.fill(paused ? g.color(50, alpha, 150, alpha) : g.color(0, alpha, 50, alpha));
+		box = new Rectangle(ogBox.x, ogBox.y + (int) ((1 - ratio) * (g.height() - ogBox.y)),
+				(int) (ogBox.width * ratio), (int) (ogBox.height * ratio));
+		Color color = thought.getBoxColor();
+		g.fill(paused ? g.color(50, alpha, 255, alpha)
+				: g.color((int) (color.getRed() * alpharatio), (int) (color.getGreen() * alpharatio),
+						(int) (color.getBlue() * alpharatio), alpha));
 		g.rectMode(WorldGraphics.CORNER);
 		g.rect((int) box.getMinX(), (int) box.getMinY(), (int) box.getWidth(), (int) box.getHeight());
 		g.fill(paused ? g.color(100, 100, 100, alpha) : g.color(0, alpha));
@@ -194,7 +206,7 @@ public class UpgradedMindDisplay implements IMindDisplay {
 	public void draw(WorldGraphics g) {
 		g.pushStyle();
 		if (containedMind.isActive()) {
-			if (g.getWorld().rand().nextInt(5) < g.getWorld().ticks % 5) {
+			if (g.random(5) < g.getWorld().ticks % 5) {
 				this.cleanUpThoughtBoxes();
 			}
 			g.fill(0);
@@ -202,7 +214,7 @@ public class UpgradedMindDisplay implements IMindDisplay {
 			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "")
 					+ (containedMind.getNameWord() != null ? " \"" + containedMind.getNameWord().getDisplay() + "\""
 							: "");
-			g.text(name, g.width / 2 - g.textWidth(name) / 2, g.textAscent() + 10);
+			g.text(name, g.width() / 2 - g.textWidth(name) / 2, g.textAscent() + 10);
 			// render all thoughts
 			this.renderAllThoughts(g);
 			// TODO render focused thought
@@ -210,10 +222,10 @@ public class UpgradedMindDisplay implements IMindDisplay {
 				if (!this.thoughtBoxes.containsKey(focusedThought)) {
 					focusedThought = null;
 				} else {
-					int leftX = g.width / 5;
-					int leftY = g.height / 4;
-					int width = g.width * 3 / 5;
-					int height = g.height / 2;
+					int leftX = g.width() / 5;
+					int leftY = g.height() / 4;
+					int width = g.width() * 3 / 5;
+					int height = g.height() / 2;
 					g.pushStyle();
 					g.fill(this.thoughtBoxes.get(focusedThought).getSecond() ? g.color(255, 100, 100)
 							: g.color(100, 100, 255));
@@ -235,7 +247,7 @@ public class UpgradedMindDisplay implements IMindDisplay {
 			g.textSize(100);
 			String msg = "NO MIND";
 			float w = g.textWidth(msg);
-			g.text(msg, g.width / 2 - w / 2, g.height / 2);
+			g.text(msg, g.width() / 2 - w / 2, g.height() / 2);
 
 		}
 

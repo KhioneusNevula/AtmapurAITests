@@ -1,7 +1,9 @@
 package mind.thought_exp;
 
+import java.awt.Color;
 import java.util.Collection;
 
+import main.Pair;
 import mind.concepts.type.IMeme;
 import mind.feeling.IFeeling;
 import mind.goals.IGoal;
@@ -280,12 +282,22 @@ public interface IThought extends IUnique, IMeme {
 	}
 
 	/**
-	 * Gets the feeling associated with this thought
+	 * Gets the feeling associated with this thought; this should be a static
+	 * feeling, as opposed to a dynamic one
 	 * 
 	 * @return
 	 */
 	public default IFeeling associatedFeeling() {
 		return IFeeling.NONE;
+	}
+
+	/**
+	 * Gets the feeling this thought creates once it ends and the time it lasts for
+	 * 
+	 * @return
+	 */
+	public default Pair<IFeeling, Integer> finalFeeling() {
+		return Pair.of(IFeeling.NONE, 0);
 	}
 
 	@Override
@@ -306,6 +318,17 @@ public interface IThought extends IUnique, IMeme {
 		float w = g.textWidth(tostr);
 		float h = g.textAscent() + g.textDescent();
 		g.text(tostr, boxWidth / 2 - w / 2, boxHeight / 2 + h / 2);
+	}
+
+	public static final Color DEFAULT_RENDER_COLOR = new Color(0, 255, 50);
+
+	/**
+	 * What color to show the thought box as in the general mind screen
+	 * 
+	 * @return
+	 */
+	public default Color getBoxColor() {
+		return DEFAULT_RENDER_COLOR;
 	}
 
 	/**
