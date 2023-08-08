@@ -54,7 +54,7 @@ import mind.thought_exp.IThought.IThoughtType;
 import mind.thought_exp.actions.IActionThought;
 import mind.thought_exp.memory.UpgradedTraitsMemory;
 import mind.thought_exp.type.ApplyPropertiesThought;
-import mind.thought_exp.type.CompleteGoalThought;
+import mind.thought_exp.type.GoalIntentionThought;
 import mind.thought_exp.type.InspirePropertyIdentifierThought;
 import phenomenon.IPhenomenon;
 import sim.World;
@@ -511,7 +511,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 					if (!(g instanceof ITaskGoal))
 						continue;
 					ITaskGoal goal = g.asTask();
-					CompleteGoalThought thought = new CompleteGoalThought(goal);
+					GoalIntentionThought thought = new GoalIntentionThought(goal);
 					boolean unnecessary = false;
 					for (IThought comparison : this.getThoughtsByType(ThoughtType.INTENTION)) {
 						if (comparison.equivalent(thought)) {

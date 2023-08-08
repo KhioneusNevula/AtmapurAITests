@@ -12,7 +12,8 @@ public class UpgradedPerson extends UpgradedSentientActor {
 		super(world, name, species, startX, startY, radius);
 		this.initMind();
 		this.initBody();
-		this.addSystems(new LifeSystem(this, 100), new HungerSystem(this, 200 + rand.nextGaussian() * 30, 1));
+		this.addSystems(new LifeSystem(this, 100),
+				new HungerSystem(this, Math.max(30 + rand.nextGaussian() * 30, 20), 1));
 	}
 
 }

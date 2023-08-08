@@ -1,3 +1,4 @@
+package mind.thought_exp.type;
 /*
  * package mind.thought_exp.type;
  * 

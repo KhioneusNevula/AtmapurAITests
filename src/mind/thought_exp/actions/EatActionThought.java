@@ -40,14 +40,17 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
-		if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()
-				&& ticks % 5 >= memory.rand().nextInt(5)) {
-			this.postChildThought(foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType)
-					: new CheckHeldItemsThought((Property) foodType), ticks);
-		}
-		if (this.needFoodItem) {
-			if (this.getPendingCondition(memory) == null) {
-				this.postConditionForExecution(new AcquireTaskGoal(foodType));
+		if (!this.started()) {
+			if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()
+					&& ticks % 5 >= memory.rand().nextInt(5)) {
+				this.postChildThought(foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType)
+						: new CheckHeldItemsThought((Property) foodType), ticks);
+			}
+			if (this.needFoodItem) {
+				if (this.getPendingCondition(memory) == null) {
+					this.postConditionForExecution(new AcquireTaskGoal(foodType));
+					this.needFoodItem = false;
+				}
 			}
 		}
 	}
@@ -63,8 +66,8 @@ public class EatActionThought extends AbstractActionThought {
 	@Override
 	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks) {
 		Actor owner = forUser.getAsHasActor().getActor();
-		succeeded = owner.getSystem(SystemType.HUNGER).eat(foodItem) == 1;
-
+		int numero = owner.getSystem(SystemType.HUNGER).eat(foodItem);
+		succeeded = numero == 1;
 	}
 
 	@Override

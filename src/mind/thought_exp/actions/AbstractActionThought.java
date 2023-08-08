@@ -148,7 +148,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 
 	@Override
 	public String displayText() {
-		return "action " + this.getType().getName();
+		return (started ? "doing " : "pondering ") + "action " + this.getType().getName();
 	}
 
 	@Override
@@ -229,11 +229,12 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		return Interest.SHORT_TERM; // TODO action memory stuff
 	}
 
-	private static final Color BOX_COLOR = Color.cyan;
+	private static final Color ACTIVE_BOX_COLOR = Color.cyan;
+	private static final Color THINKING_BOX_COLOR = new Color(115, 79, 150);
 
 	@Override
 	public Color getBoxColor() {
-		return BOX_COLOR;
+		return this.started ? ACTIVE_BOX_COLOR : THINKING_BOX_COLOR;
 	}
 
 }

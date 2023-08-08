@@ -147,7 +147,7 @@ public class World implements IUniqueExistence, IRenderable {
 		}
 	}
 
-	public void worldTick() {
+	public synchronized void worldTick() {
 
 		for (Actor e : Set.copyOf(actors.values())) {
 			if (e.isRemoved()) {
@@ -206,7 +206,7 @@ public class World implements IUniqueExistence, IRenderable {
 		}
 	}
 
-	public void draw(WorldGraphics graphics) {
+	public synchronized void draw(WorldGraphics graphics) {
 		graphics.pushMatrix();
 		graphics.pushStyle();
 		graphics.translate(WorldGraphics.BORDER, WorldGraphics.BORDER);

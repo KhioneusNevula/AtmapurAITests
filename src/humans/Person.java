@@ -17,7 +17,7 @@ public class Person extends SentientActor {
 		this.initBody();
 		this.addSystems(new LifeSystem(this, 100),
 				new SenseSystem(this, ((Mind) this.getMind()).getKnowledgeBase().getSenses(), 300, ISensor.SIGHT),
-				new HungerSystem(this, 200 + rand.nextGaussian() * 30, 1));
+				new HungerSystem(this, Math.max(90 + rand.nextGaussian() * 30, 20), 1));
 	}
 
 }

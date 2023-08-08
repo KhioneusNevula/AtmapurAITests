@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 import actor.Actor;
-import mind.concepts.type.BasicProperties;
+import humans.Food;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
@@ -60,10 +60,21 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 		failure = "nothing held";
 		for (int i = 0; actorIterator.hasNext() && i < mind.getMaxFocusObjects();) {
 			Actor actor = actorIterator.next();
-			IPropertyData dat = ITaskGoal.getProperty(actor, BasicProperties.HELD, mind);
-			if (dat.isPresent() && dat.getProfileProp().equals(mind.getKnowledgeBase().getSelfProfile())) {
+			if (actor instanceof Food && actor.getPossessor() != null) {
+				System.out.print("");
+			}
+			/*
+			 * TODO use the held property
+			 *//*
+				 * IPropertyData dat = ITaskGoal.getProperty(actor, BasicProperties.HELD, mind);
+				 */
+			if /*
+				 * (dat.isPresent() &&
+				 * dat.getProfileProp().equals(mind.getKnowledgeBase().getSelfProfile()))
+				 */
+			(actor.getPossessor() != null && actor.getPossessor().getUUID().equals(mind.getUUID())) {
 				if (property != null) {
-					dat = ITaskGoal.getProperty(actor, property, mind);
+					IPropertyData dat = ITaskGoal.getProperty(actor, property, mind);
 					failure = "not holding food";
 					if (dat.isPresent()) {
 						information.add(actor);

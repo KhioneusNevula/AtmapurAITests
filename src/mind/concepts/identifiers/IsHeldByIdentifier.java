@@ -23,9 +23,10 @@ public enum IsHeldByIdentifier implements IPropertyIdentifier {
 	@Override
 	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage,
 			IHasKnowledge base) {
-		return forExistence instanceof Actor a && a.getPossessState() == state && a.getPossessor() != null
-				? new RememberedProperties(property).setProfile(new Profile(a.getPossessor()))
-				: IPropertyData.ABSENCE;
+		if (forExistence instanceof Actor a && a.getPossessState() == state && a.getPossessor() != null) {
+			return new RememberedProperties(property).setProfile(new Profile(a.getPossessor()));
+		} else
+			return IPropertyData.ABSENCE;
 	}
 
 }

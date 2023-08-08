@@ -206,17 +206,16 @@ public class WorldGraphics extends PApplet {
 	@Override
 	public void draw() {
 		background(color(0, 100, 100));
-		synchronized (world) {
-			world.worldTick();
-			world.draw(this);
-			if (this.currentScreen == null) {
-			} else {
-				g.pushMatrix();
-				g.translate(width(), 0);
-				this.currentScreen.draw(this);
-				g.popMatrix();
-			}
+		world.worldTick();
+		world.draw(this);
+		if (this.currentScreen == null) {
+		} else {
+			g.pushMatrix();
+			g.translate(width(), 0);
+			this.currentScreen.draw(this);
+			g.popMatrix();
 		}
+
 	}
 
 }
