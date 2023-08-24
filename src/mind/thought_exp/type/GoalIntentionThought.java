@@ -10,6 +10,7 @@ import java.util.Stack;
 
 import com.google.common.collect.Iterators;
 
+import actor.IPartAbility;
 import mind.action.ActionType;
 import mind.action.IActionType;
 import mind.concepts.type.IMeme;
@@ -19,7 +20,9 @@ import mind.memory.IKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.actions.EatActionThought;
 import mind.thought_exp.actions.IActionThought;
+import sim.WorldGraphics;
 
 public class GoalIntentionThought extends AbstractThought {
 
@@ -27,6 +30,8 @@ public class GoalIntentionThought extends AbstractThought {
 	private Stack<IActionThought> actions = new Stack<>();
 	private Phase phase = Phase.PLANNING;
 	private IActionThought current;
+	private int dI = -1;
+	private IActionThought nextPush;
 
 	public GoalIntentionThought(ITaskGoal mainGoal) {
 		this.goal = mainGoal;
@@ -56,88 +61,112 @@ public class GoalIntentionThought extends AbstractThought {
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
 		switch (phase) {
 		case PLANNING:
-			IActionThought operativeAction = this.actions.empty() ? null : this.actions.peek();
-			ITaskGoal goal = operativeAction == null ? this.getGoal()
-					: (ITaskGoal) operativeAction.getPendingCondition(memory);
+			if (this.nextPush != null) {
+				if (this.childThoughts().contains(nextPush)) {
 
-			boolean complete = goal == null || goal.isComplete(memory);
-			// TODO eventually extend this to a more complicated cause/effect framework?
-			if (operativeAction != null && operativeAction.getType() == ActionType.EAT) {
-				System.out.print("");
-			}
-			if (!complete) {
-				Collection<IActionType<?>> aTypes = memory.getKnowledgeBase().getPossibleActions(goal.getActionHint());
-
-				Iterator<IActionType<?>> aIter = aTypes.iterator();
-				if (memory.isMindMemory()) {
-					aIter = Iterators.concat(aIter, memory.getMindMemory()
-							.getPossibleActionsFromCulture(goal.getActionHint()).values().iterator());
+					actions.push(nextPush);
+					nextPush = null;
+				} else {
+					nextPush = null;
+					throw new IllegalStateException();
 				}
-				List<IActionType<?>> potentialActions = new ArrayList<>();
-				for (int i = 0; i <= memory.getMaxFocusObjects() && aIter.hasNext(); i++) {
-					IActionType<?> act = aIter.next();
-					if (!act.isViable(memory, goal)) {
-						i--;
-						continue;
+			} else {
+				IActionThought operativeAction = this.actions.empty() ? null : this.actions.peek();
+				ITaskGoal goal = operativeAction == null ? this.getGoal()
+						: (ITaskGoal) operativeAction.getPendingCondition(memory);
+
+				boolean complete = goal == null || goal.isComplete(memory);
+				// TODO eventually extend this to a more complicated cause/effect framework?
+				if (operativeAction != null && operativeAction.getType() == ActionType.EAT) {
+					System.out.print("");
+				}
+				if (!complete) {
+					Collection<IActionType<?>> aTypes = memory.getKnowledgeBase()
+							.getPossibleActions(goal.getActionHint());
+
+					Iterator<IActionType<?>> aIter = aTypes.iterator();
+					if (memory.isMindMemory()) {
+						aIter = Iterators.concat(aIter, memory.getMindMemory()
+								.getPossibleActionsFromCulture(goal.getActionHint()).values().iterator());
 					}
-					for (IMeme con : act.requiredConcepts(goal)) {
-						if (!memory.getKnowledgeBase().isKnown(con)) {
+					List<IActionType<?>> potentialActions = new ArrayList<>();
+					for (int i = 0; i <= memory.getMaxFocusObjects() && aIter.hasNext(); i++) {
+						IActionType<?> act = aIter.next();
+						if (!act.isViable(memory, goal)) {
 							i--;
 							continue;
 						}
+						for (IMeme con : act.requiredConcepts(goal)) {
+							if (!memory.getKnowledgeBase().isKnown(con)) {
+								i--;
+								continue;
+							}
+						}
+						potentialActions.add(act);
 					}
-					potentialActions.add(act);
-				}
-				if (potentialActions.isEmpty()) {
-					this.ended = true;
+					if (potentialActions.isEmpty()) {
+						this.ended = true;
+					} else {
+						Collections.shuffle(potentialActions, memory.rand());
+						IActionType<?> selection = potentialActions.iterator().next();
+						IActionThought action = selection.genActionThought(goal);
+						this.postChildThought(action, ticks);
+						// this.actions.push(action);
+						nextPush = action;
+					}
 				} else {
-					Collections.shuffle(potentialActions, memory.rand());
-					IActionType<?> selection = potentialActions.iterator().next();
-					IActionThought action = selection.genActionThought(goal);
-					this.postChildThought(action, ticks);
-					this.actions.push(action);
-				}
-			} else {
-				if (goal == this.getGoal()) {
-					this.ended = true;
-				} else if (operativeAction != null) {
-					operativeAction.notifyShouldResume();
-					if (operativeAction.getType() == ActionType.EAT) {
-						System.out.print("");
-					}
-					if (operativeAction.canExecuteIndividual(memory, ticks, worldTick)) {
+					if (goal == this.getGoal()) {
+						this.ended = true;
+					} else if (operativeAction != null) {
+						operativeAction.notifyShouldResume();
+						if (operativeAction.getType() == ActionType.EAT) {
+							System.out.print("");
+						}
 
-						this.phase = Phase.ACTING;
-					} else if (operativeAction.failedPreemptively()) {
-						actions.pop();
+						if (operativeAction.canExecuteIndividual(memory, ticks, worldTick)) {
+
+							this.phase = Phase.ACTING;
+						} else if (operativeAction.failedPreemptively()) {
+							dI = actions.size() - 1;
+							actions.pop();
+							this.phase = Phase.REVIEW;
+						}
 					}
 				}
 			}
-
 			break;
 		case ACTING:
 			if (this.actions.isEmpty()) {
 				this.phase = Phase.PLANNING;
 			} else {
 				if (this.current == null) {
-					IActionThought latest = actions.pop();
-					latest.start();
-					this.current = latest;
+
+					this.current = actions.peek();
+					Collection<IPartAbility> reqs = memory.getRequiredAbilitySlots(current);
+					if (!memory.isAnySlotFull(reqs)) {
+						memory.reserveAbilitySlots(reqs, current);
+						current.start();
+					}
 				}
 			}
 			break;
 		case REVIEW:
-			int deleteFrom = -1;
+			int deleteFrom = dI;
 			for (int i = 0; i < actions.size(); i++) {
 				IActionThought action = actions.get(i);
-				if (action.getGoal().isComplete(memory)) {
+				if (i == dI || !this.childThoughts(ThoughtType.ACTION).contains(action)
+						|| action.getGoal().isComplete(memory)) {
 					deleteFrom = i;
 					break;
 				}
 			}
 			if (deleteFrom != -1) {
-				actions.subList(deleteFrom, actions.size()).clear();
+
+				List<IActionThought> acs = actions.subList(deleteFrom, actions.size());
+				acs.forEach((a) -> a.cancel());
+				acs.clear();
 			}
+			this.current = null;
 			if (actions.empty()) {
 				this.ended = true;
 			} else {
@@ -150,14 +179,47 @@ public class GoalIntentionThought extends AbstractThought {
 	@Override
 	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
 		if (childThought instanceof IActionThought iat) {
+			if (childThought instanceof EatActionThought) {
+				System.out.print("");
+			}
 			this.phase = Phase.REVIEW;
+			dI = actions.indexOf(iat);
+			this.actions.remove(iat);
 			this.current = null;
+		}
+	}
+
+	@Override
+	public void endChildThought(IThought thought) {
+		super.endChildThought(thought);
+		if (thought instanceof EatActionThought) {
+			System.out.print("");
 		}
 	}
 
 	@Override
 	public boolean isFinished(ICanThink memory, int ticks, long worldTick) {
 		return ended;
+	}
+
+	@Override
+	public void renderThoughtView(WorldGraphics g, int boxWidth, int boxHeight) {
+		g.textSize(20);
+		String phase = this.phase + "";
+		float w = g.textWidth(phase);
+		g.text(phase, boxWidth / 2 - w / 2, 30);
+		g.textSize(15);
+		float h = g.textAscent();
+		float border = g.textDescent() * 2;
+		if (!this.actions.empty()) {
+			float y = 30 + h + border;
+			for (IActionThought at : this.actions) {
+				String txt = at.displayText();
+				w = g.textWidth(txt);
+				g.text(txt, boxWidth / 2 - w / 2, y);
+				y += border + h;
+			}
+		}
 	}
 
 	@Override

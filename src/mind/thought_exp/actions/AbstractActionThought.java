@@ -68,8 +68,12 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 
 	@Override
 	public final void actionTick(ICanThink memory, int ticks, long worldTick) {
-		if (this.shouldCancel)
+		if (this.shouldCancel) {
+			if (this instanceof EatActionThought) {
+				System.out.print("");
+			}
 			return;
+		}
 		if (this.shouldInterrupt) {
 			this.succeeded = this.finishActionIndividual(memory, Math.max(actionTicks, 0), ticks, true);
 			if (this instanceof EatActionThought) {
@@ -97,6 +101,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 						if (this instanceof EatActionThought) {
 							System.out.print("");
 						}
+						memory.releaseAbilitySlots(this);
 						this.ended = true;
 					}
 				}
