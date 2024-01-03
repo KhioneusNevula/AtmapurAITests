@@ -114,12 +114,13 @@ public class Relationship implements Comparable<Relationship>, IMeme {
 		return this.relationshipID.compareTo(o.relationshipID);
 	}
 
-	/**
-	 * Use this to compare properties of the relationship
-	 */
 	@Override
 	public boolean equals(Object obj) {
+		if (!(obj instanceof Relationship))
+			return false;
 		Relationship other = (Relationship) obj;
+		if (other.relationshipID.equals(this.relationshipID))
+			return true;
 		return other.type == this.type && (this.goal == null ? other.goal == null : other.goal.equals(this.goal));
 	}
 

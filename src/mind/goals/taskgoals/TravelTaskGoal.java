@@ -7,7 +7,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import sim.interfaces.IPhysicalExistence;
 
 public class TravelTaskGoal implements ITaskGoal {
@@ -73,7 +73,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		if (reachDistance && !(knower instanceof Actor))
 			return true;
 		if (knower instanceof IPhysicalExistence)
@@ -82,7 +82,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return entity.getAsHasActor().getActor().distance(
 				location.getGeneralLocation()) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
 	}

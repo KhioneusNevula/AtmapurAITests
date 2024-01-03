@@ -5,8 +5,8 @@ import java.util.Collection;
 import actor.UpgradedSentientActor;
 import mind.action.WillingnessMatrix;
 import mind.memory.IEmotions;
-import mind.memory.IMindMemory;
 import mind.thought_exp.IThought.IThoughtType;
+import mind.thought_exp.memory.IBrainMemory;
 
 public interface IUpgradedMind extends ICanThink {
 
@@ -31,7 +31,7 @@ public interface IUpgradedMind extends ICanThink {
 	 */
 	public void tickUnconscious(long worldTicks);
 
-	public IMindMemory getMemory();
+	public IBrainMemory getMemory();
 
 	public IEmotions emotions();
 

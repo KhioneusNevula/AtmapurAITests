@@ -8,6 +8,7 @@ import actor.IComponentType;
 import actor.MultipartActor;
 import biology.systems.senses.SightSense;
 import mind.concepts.type.SenseProperty;
+import mind.thought_exp.ICanThink;
 import sim.World;
 
 public interface ISensor {
@@ -24,14 +25,13 @@ public interface ISensor {
 	 * @param byEntity
 	 * @return
 	 */
-	public <T> Collection<Object> getSensed(World inWorld, SenseProperty<T> property, SenseSystem bySystem,
-			Actor byEntity);
+	public <T> Collection<Object> getSensed(World inWorld, SenseProperty<T> property, ICanThink byMind, Actor byEntity);
 
 	/**
 	 * Gets a general property of the whole actor that can be sensed. Return null if
 	 * t (e.g. if the actor is out of sensory range)
 	 */
-	public <T> Object getGeneralTrait(SenseProperty<T> property, Actor target, World inWorld, SenseSystem bySystem,
+	public <T> Object getGeneralTrait(SenseProperty<T> property, Actor target, World inWorld, ICanThink byMind,
 			Actor byEntity);
 
 	/**
@@ -45,7 +45,7 @@ public interface ISensor {
 	 * @return
 	 */
 	public <T> Object getSensedTrait(MultipartActor target, SenseProperty<T> property, IComponentType component,
-			World inWorld, SenseSystem bySystem, Actor byEntity);
+			World inWorld, ICanThink byMind, Actor byEntity);
 
 	/**
 	 * Gets the part-specific sensed traits about this entity -- parts that don't
@@ -58,6 +58,6 @@ public interface ISensor {
 	 * @return
 	 */
 	public <T> Object getSpecificSensedTrait(MultipartActor target, SenseProperty<T> property,
-			IComponentPart componentPart, World inWorld, SenseSystem bySystem, Actor byEntity);
+			IComponentPart componentPart, World inWorld, ICanThink byMind, Actor byEntity);
 
 }

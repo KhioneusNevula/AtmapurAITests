@@ -7,7 +7,7 @@ package mind.thought_exp.type;
  * 
  * import mind.action.IActionType; import mind.concepts.type.IMeme; import
  * mind.goals.IGoal.Priority; import mind.goals.ITaskGoal; import
- * mind.goals.ITaskHint; import mind.memory.IKnowledgeBase.Interest; import
+ * mind.goals.ITaskHint; import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest; import
  * mind.thought_exp.ICanThink; import mind.thought_exp.IThought; import
  * mind.thought_exp.ThoughtType; import mind.thought_exp.actions.IActionThought;
  * import sim.WorldGraphics;

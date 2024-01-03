@@ -1,6 +1,7 @@
 package mind.memory.trend;
 
 import mind.concepts.type.IMeme;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 public interface ITrend extends IMeme, Cloneable {
 
@@ -15,15 +16,12 @@ public interface ITrend extends IMeme, Cloneable {
 
 	public TrendType getType();
 
-	/**
-	 * If this trend has been integrated into the culture
-	 */
 	boolean isIntegrated();
 
 	/**
-	 * Marks this trend as fully integrated into the culture
+	 * Changes the knowledge of this entity to reflect the integration of this trend
 	 */
-	void integrate();
+	void integrate(IUpgradedKnowledgeBase knowledge);
 
 	/**
 	 * Clones this trend and un-integrates it

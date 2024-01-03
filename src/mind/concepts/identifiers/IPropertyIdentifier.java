@@ -3,7 +3,7 @@ package mind.concepts.identifiers;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 
 /**
@@ -17,7 +17,7 @@ public interface IPropertyIdentifier {
 	public static final IPropertyIdentifier UNKNOWN = new IPropertyIdentifier() {
 		@Override
 		public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage,
-				IHasKnowledge base) {
+				IUpgradedHasKnowledge base) {
 			return IPropertyData.UNKNOWN;
 		}
 
@@ -43,7 +43,7 @@ public interface IPropertyIdentifier {
 	 * @return
 	 */
 	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage,
-			IHasKnowledge knowledgeBase);
+			IUpgradedHasKnowledge knowledgeBase);
 
 	/**
 	 * If this identifier only ever returns UNKNOWN

@@ -4,8 +4,9 @@ import mind.IIndividualMind;
 import mind.Will.ActionQueue;
 import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
+import sim.interfaces.IRenderable;
 
-public class MindDisplay implements IMindDisplay {
+public class MindDisplay implements IRenderable {
 
 	private IIndividualMind containedMind;
 

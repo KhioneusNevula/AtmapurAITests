@@ -8,7 +8,6 @@ import java.util.TreeMap;
 import biology.systems.types.BreathSystem;
 import biology.systems.types.HungerSystem;
 import biology.systems.types.LifeSystem;
-import biology.systems.types.SenseSystem;
 
 public class SystemType<T extends ESystem> implements Comparable<SystemType<?>> {
 	private static final Map<String, SystemType<?>> allTypes = new TreeMap<>();
@@ -18,8 +17,6 @@ public class SystemType<T extends ESystem> implements Comparable<SystemType<?>> 
 	public static final SystemType<HungerSystem> HUNGER = new SystemType<>("hunger", HungerSystem.class, LIFE);
 
 	public static final SystemType<BreathSystem> BREATH = new SystemType<>("breath", BreathSystem.class, HUNGER);
-
-	public static final SystemType<SenseSystem> SENSE = new SystemType<>("sense", SenseSystem.class);
 
 	String id;
 	private Class<T> type;

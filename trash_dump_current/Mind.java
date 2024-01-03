@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import actor.SentientActor;
 import mind.concepts.type.IProfile;
-import mind.linguistics.NameWord;
 import mind.memory.Memory;
 import mind.memory.MemoryEmotions;
 import mind.personality.Personality;
@@ -26,7 +25,6 @@ public class Mind implements IIndividualMind, IHasActor {
 	private boolean conscious = true;
 	private int timeAwake;
 	private int timeAsleep;
-	private NameWord name; // TODO make a better name system
 	/**
 	 * indicates whether the mind no longer exists for all intents and purposes
 	 */
@@ -35,7 +33,7 @@ public class Mind implements IIndividualMind, IHasActor {
 	 * All cultures this mind is isolated from
 	 */
 	private Set<Culture> isolatedFrom;
-	private Personality personality = new Personality(this);
+	private Personality personality = new Personality(this.owner.getName());
 	/**
 	 * Number of ticks before the sense memories are all cleared and actions are all
 	 * reset
@@ -61,13 +59,6 @@ public class Mind implements IIndividualMind, IHasActor {
 		// TODO mind ticks
 		if (tick % 5 == 0 && this.rand().nextInt(timeAwake) < 2) {
 			this.memory.prune(this.rand().nextInt(2) + 1);
-		}
-		if (this.name == null) {
-			if (this.memory.getMajorLanguage() != null) {
-				System.out.println("naming self - " + this.owner.getName());
-				this.name = this.memory.getMajorLanguage().name(this.memory.getSelfProfile(), this.rand(), Set.of());
-				System.out.println("named self " + name.getDisplay());
-			}
 		}
 		this.will.thinkTick(tick);
 
@@ -174,11 +165,6 @@ public class Mind implements IIndividualMind, IHasActor {
 	}
 
 	@Override
-	public Relationship getRelationshipByID(UUID agreementID) {
-		return memory.getRelationshipByID(agreementID);
-	}
-
-	@Override
 	public void establishRelationship(IParty with, Relationship agreement) {
 		memory.establishRelationship(with, agreement);
 	}
@@ -235,14 +221,8 @@ public class Mind implements IIndividualMind, IHasActor {
 	}
 
 	@Override
-	public NameWord getNameWord() {
-		return name;
-	}
-
-	@Override
 	public String report() {
-		StringBuilder builder = new StringBuilder((dead ? "DEAD_" : "") + "Mind_" + this.owner.getName()
-				+ (this.name != null ? "(\"" + this.name.getDisplay() + "\")" : "") + "->{");
+		StringBuilder builder = new StringBuilder((dead ? "DEAD_" : "") + "Mind_" + this.owner.getName() + "->{");
 		builder.append("\n\tpersonality:" + this.personality.report());
 		builder.append("\n\tMemory:" + this.memory.report());
 		builder.append("\n\t" + this.will.report());

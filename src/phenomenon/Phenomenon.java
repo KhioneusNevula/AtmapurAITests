@@ -7,7 +7,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 import mind.concepts.type.Property;
-import mind.memory.IKnowledgeBase;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
 import sim.World;
 
@@ -22,20 +22,20 @@ public abstract class Phenomenon implements IPhenomenon {
 	private World world;
 	private UUID id = UUID.randomUUID();
 	private IPhenomenonType type;
-	private Table<IKnowledgeBase, Property, IPropertyData> socialProperties;
+	private Table<IUpgradedKnowledgeBase, Property, IPropertyData> socialProperties;
 
 	public Phenomenon(IPhenomenonType type) {
 		this.type = type;
 	}
 
 	@Override
-	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
+	public void assignProperty(IUpgradedKnowledgeBase culture, Property property, IPropertyData data) {
 		(socialProperties == null ? socialProperties = HashBasedTable.create() : socialProperties).put(culture,
 				property, data);
 	}
 
 	@Override
-	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
 		return socialProperties == null ? IPropertyData.UNKNOWN : socialProperties.get(culture, property);
 	}
 

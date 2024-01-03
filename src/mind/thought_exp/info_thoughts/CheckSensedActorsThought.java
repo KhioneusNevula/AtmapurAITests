@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 import actor.Actor;
 import mind.concepts.type.IMeme;
-import mind.concepts.type.Profile;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
@@ -19,12 +19,12 @@ import mind.thought_exp.type.AbstractInformationThought;
 
 public class CheckSensedActorsThought extends AbstractInformationThought<Collection<Actor>> {
 
-	private Profile profile;
+	private IProfile profile;
 	private Property property;
 	private String failure;
 	private Predicate<Actor> predicate;
 
-	public CheckSensedActorsThought(Profile profile) {
+	public CheckSensedActorsThought(IProfile profile) {
 		this.profile = profile;
 	}
 

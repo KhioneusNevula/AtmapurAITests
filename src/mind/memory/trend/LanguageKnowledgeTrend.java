@@ -1,6 +1,7 @@
 package mind.memory.trend;
 
 import mind.linguistics.Language;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 public class LanguageKnowledgeTrend extends Trend {
 
@@ -27,6 +28,11 @@ public class LanguageKnowledgeTrend extends Trend {
 	@Override
 	public TrendType getType() {
 		return TrendType.LANGUAGE_KNOWLEDGE;
+	}
+
+	@Override
+	protected void integrateTrend(IUpgradedKnowledgeBase know) {
+		// TODO language trend
 	}
 
 }

@@ -7,11 +7,11 @@ import actor.IPartAbility;
 import mind.concepts.type.IMeme;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
-import mind.memory.IHasKnowledge;
 import mind.memory.events.IEventType;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.actions.IActionThought;
 
-public interface IActionType<T extends IAction> extends IEventType {
+public interface IActionType<T extends IActionThought> extends IEventType {
 	/**
 	 * if this action type requires an actor to execute
 	 * 
@@ -25,14 +25,6 @@ public interface IActionType<T extends IAction> extends IEventType {
 	 * @return
 	 */
 	public boolean isGenerated();
-
-	/**
-	 * generates an action Instance based on this goal
-	 * 
-	 * @param fromNeed
-	 * @return
-	 */
-	public T genAction(ITaskGoal fromNeed);
 
 	public IActionThought genActionThought(ITaskGoal fromNeed);
 
@@ -49,7 +41,7 @@ public interface IActionType<T extends IAction> extends IEventType {
 	 * @param user
 	 * @return
 	 */
-	public boolean isViable(IHasKnowledge user, ITaskGoal forGoal);
+	public boolean isViable(IUpgradedHasKnowledge user, ITaskGoal forGoal);
 
 	/**
 	 * Required known concepts for a given goal

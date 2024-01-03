@@ -6,9 +6,10 @@ import actor.Actor;
 import main.Pair;
 import mind.action.ActionType;
 import mind.action.IActionType;
+import mind.concepts.relations.ConceptRelationType;
 import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
-import mind.concepts.type.Profile;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Property;
 import mind.goals.ITaskGoal;
 import mind.goals.taskgoals.TravelTaskGoal;
@@ -23,9 +24,9 @@ public class PickupActionThought extends AbstractActionThought {
 
 	private IMeme toAcquireMeme;
 	private Actor toAcquire;
-	private Profile toAcquireProfile;
+	private IProfile toAcquireProfile;
 	private Property property;
-	private Profile profile;
+	private IProfile profile;
 	private boolean checkingUnreachableSensed;
 	private boolean checkProfileLocation;
 	private ILocationMeme goTo;
@@ -41,7 +42,7 @@ public class PickupActionThought extends AbstractActionThought {
 		if (toAcquireMeme instanceof Property) {
 			this.property = (Property) toAcquireMeme;
 		} else {
-			this.profile = (Profile) toAcquireMeme;
+			this.profile = (IProfile) toAcquireMeme;
 		}
 	}
 
@@ -49,8 +50,10 @@ public class PickupActionThought extends AbstractActionThought {
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
 		if (checkProfileLocation) {
 			checkProfileLocation = false;
-			this.goTo = memory.getKnowledgeBase().getLocation(profile);
+			this.goTo = memory.getKnowledgeBase()
+					.<ILocationMeme>getConceptsWithRelation(profile, ConceptRelationType.FOUND_AT).iterator().next();
 		}
+
 		if (this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty() && toAcquire == null) {
 			if (toAcquireProfile != null) {
 				this.postChildThought(new CheckSensedActorsThought(toAcquireProfile), ticks);
@@ -66,13 +69,23 @@ public class PickupActionThought extends AbstractActionThought {
 			tries--;
 			if (tries <= 0) {
 				this.setFailureReason("too many attempts");
+				if (memory.hasActor() && memory.getAsHasActor().getActor().getName().equals("bobzy"))
+					System.out.print(""); // TODO remove this dumbery
 				this.failPreemptively();
 			}
 		} else if (toAcquire != null) {
-			if (!memory.getAsHasActor().getActor().reachable(toAcquire) && this.getPendingCondition(memory) == null) {
-				if (goTo == null)
-					goTo = toAcquire.getLocation();
-				this.postConditionForExecution(new TravelTaskGoal(goTo, true));
+			if (toAcquire.isRemoved()
+					|| toAcquire.getHeld() != null && toAcquire.getHeld().equals(memory.getAsHasActor().getActor())) {
+				if (memory.hasActor() && memory.getAsHasActor().getActor().getName().equals("bobzy"))
+					System.out.print(""); // TODO remove this dumbery
+				this.failPreemptively();
+			} else {
+				if (!memory.getAsHasActor().getActor().reachable(toAcquire)
+						&& this.getPendingCondition(memory) == null) {
+					if (goTo == null)
+						goTo = toAcquire.getLocation();
+					this.postConditionForExecution(new TravelTaskGoal(goTo, true));
+				}
 			}
 		}
 	}
@@ -81,19 +94,21 @@ public class PickupActionThought extends AbstractActionThought {
 	@Override
 	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
 		if (childThought instanceof CheckSensedActorsThought csat) {
+
 			if (!checkingUnreachableSensed) {
+				this.checkingUnreachableSensed = true;
 				if (!csat.getInformation().isEmpty()) {
 					this.toAcquire = csat.getInformation().iterator().next();
 				} else {
 					if (property != null) {
 						this.postChildThought(new CheckSensedActorsThought(property), ticks);
-						this.checkingUnreachableSensed = true;
 					} else if (this.profile != null) {
 						this.checkProfileLocation = true;
 					}
 				}
-			} else {
-				this.checkingUnreachableSensed = false;
+			} else
+
+			{
 				if (!csat.getInformation().isEmpty()) {
 					if (profile != null) {
 						Iterator<Actor> ai = csat.getInformation().iterator();
@@ -115,10 +130,12 @@ public class PickupActionThought extends AbstractActionThought {
 			}
 		} else if (childThought instanceof CheckKnownProfilesThought ckat) {
 			if (!ckat.getInformation().isEmpty()) {
-				Pair<Profile, ILocationMeme> pair = ckat.getInformation().iterator().next();
+				Pair<IProfile, ILocationMeme> pair = ckat.getInformation().iterator().next();
 				this.toAcquireProfile = pair.getFirst();
 				this.goTo = pair.getSecond();
 				this.postConditionForExecution(new TravelTaskGoal(goTo, true));
+			} else {
+				tries--;
 			}
 		}
 	}
@@ -130,7 +147,9 @@ public class PickupActionThought extends AbstractActionThought {
 
 	@Override
 	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks) {
-		forUser.getAsHasActor().getActor().pickUp(toAcquire);
+		if (!toAcquire.isRemoved() && toAcquire.getHeld() == null) {
+			forUser.getAsHasActor().getActor().pickUp(toAcquire);
+		}
 	}
 
 	@Override

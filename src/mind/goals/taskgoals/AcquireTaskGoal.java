@@ -14,7 +14,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class AcquireTaskGoal implements ITaskGoal {
 
@@ -50,7 +50,7 @@ public class AcquireTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		if (item instanceof Property)
 			return ((entity.getAsHasActor().getActor()).getPossessed().stream()
 					.anyMatch((a) -> ITaskGoal.getProperty(a, (Property) item, entity).isPresent()));
@@ -91,7 +91,7 @@ public class AcquireTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 
 		return !(knower instanceof Actor);
 	}

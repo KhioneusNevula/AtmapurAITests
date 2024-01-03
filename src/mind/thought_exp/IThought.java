@@ -8,7 +8,7 @@ import mind.concepts.type.IMeme;
 import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Priority;
-import mind.memory.IKnowledgeBase.Interest;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.actions.IActionThought;
 import sim.WorldGraphics;
 import sim.interfaces.IUnique;
@@ -121,6 +121,21 @@ public interface IThought extends IUnique, IMeme {
 	 * @return
 	 */
 	public boolean isLightweight();
+
+	/**
+	 * whether this thought is paused
+	 * 
+	 * @return
+	 */
+	public boolean isPaused();
+
+	/**
+	 * Marks this action as paused; only for use by Mind class
+	 * 
+	 * @param paused
+	 * @return
+	 */
+	public void setPaused(boolean paused);
 
 	/**
 	 * If this thought has a goal, return the goal; else return null

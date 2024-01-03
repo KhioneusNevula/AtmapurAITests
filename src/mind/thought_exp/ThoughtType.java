@@ -4,7 +4,7 @@ import mind.thought_exp.IThought.IThoughtType;
 
 public enum ThoughtType implements IThoughtType {
 	/** thoughts for deciding to act on a motive */
-	INTENTION(1),
+	INTENTION(10),
 	/** a thought for planning for the future */
 	MAKE_PLAN(1),
 	/** a thought for planning an action */

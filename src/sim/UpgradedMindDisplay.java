@@ -12,8 +12,9 @@ import java.util.stream.IntStream;
 import main.Pair;
 import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedMind;
+import sim.interfaces.IRenderable;
 
-public class UpgradedMindDisplay implements IMindDisplay {
+public class UpgradedMindDisplay implements IRenderable {
 
 	private IUpgradedMind containedMind;
 	/** boolean -> true if paused */
@@ -211,9 +212,7 @@ public class UpgradedMindDisplay implements IMindDisplay {
 			}
 			g.fill(0);
 			g.textSize(20);
-			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "")
-					+ (containedMind.getNameWord() != null ? " \"" + containedMind.getNameWord().getDisplay() + "\""
-							: "");
+			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "");
 			g.text(name, g.width() / 2 - g.textWidth(name) / 2, g.textAscent() + 10);
 			// render all thoughts
 			this.renderAllThoughts(g);

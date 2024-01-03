@@ -6,17 +6,17 @@ import java.util.Map;
 
 import actor.IUniqueExistence;
 import humans.Food;
-import mind.Culture;
 import mind.concepts.PropertyController;
 import mind.concepts.type.BasicProperties;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
-import mind.memory.IKnowledgeBase.Interest;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.memory.IPropertyData;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.culture.UpgradedCulture;
 
 public class ApplyPropertiesThought extends AbstractThought {
 
@@ -78,7 +78,7 @@ public class ApplyPropertiesThought extends AbstractThought {
 			for (Property property : this.properties) {
 				PropertyController associations = memory.getKnowledgeBase().getPropertyAssociations(property);
 				if (associations == null && memory.isMindMemory()) {
-					for (Culture culture : memory.getMindMemory().cultures()) {
+					for (UpgradedCulture culture : memory.getMindMemory().cultures()) {
 						PropertyController assoc2 = culture.getPropertyAssociations(property);
 						if (associations == null && assoc2 != null) {
 							associations = assoc2;
@@ -101,9 +101,9 @@ public class ApplyPropertiesThought extends AbstractThought {
 					}
 				}
 				if (memory.isMindMemory()) {
-					Map<Culture, PropertyController> assoc = memory.getMindMemory()
+					Map<UpgradedCulture, PropertyController> assoc = memory.getMindMemory()
 							.getPropertyAssociationsFromCulture(property);
-					for (Map.Entry<Culture, PropertyController> entry : assoc.entrySet()) {
+					for (Map.Entry<UpgradedCulture, PropertyController> entry : assoc.entrySet()) {
 						IPropertyData datau = entry.getValue().getIdentifier().identifyInfo(property, actor,
 								actor.getVisage(), memory);
 						if (!datau.isUnknown() && datau.getKnownCount() > actor

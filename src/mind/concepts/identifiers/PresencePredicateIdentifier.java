@@ -2,13 +2,12 @@ package mind.concepts.identifiers;
 
 import java.util.function.Predicate;
 
+import actor.Actor;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import actor.MultipartActor;
-import actor.SentientActor;
-import actor.UpgradedSentientActor;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 
 /**
@@ -20,7 +19,7 @@ import mind.memory.IPropertyData;
 public class PresencePredicateIdentifier implements IPropertyIdentifier {
 
 	public static final PresencePredicateIdentifier IS_SENTIENT = new PresencePredicateIdentifier(
-			(a) -> a instanceof SentientActor || a instanceof UpgradedSentientActor);
+			(a) -> a instanceof Actor && ((Actor) a).isUSentient());
 	public static final PresencePredicateIdentifier HAS_MULTIPART = new PresencePredicateIdentifier(
 			(a) -> a instanceof MultipartActor);
 
@@ -32,7 +31,7 @@ public class PresencePredicateIdentifier implements IPropertyIdentifier {
 
 	@Override
 	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage,
-			IHasKnowledge prof) {
+			IUpgradedHasKnowledge prof) {
 		return predicate.test(forExistence) ? IPropertyData.PRESENCE : IPropertyData.ABSENCE;
 	}
 

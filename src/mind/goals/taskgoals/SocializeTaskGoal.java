@@ -6,7 +6,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class SocializeTaskGoal implements ITaskGoal {
 
@@ -47,8 +47,8 @@ public class SocializeTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
-		return entity.getMindMemory().socializedRecently();
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
+		return true; // TODO add a reason to socialize, social meter or whatever
 	}
 
 	@Override
@@ -77,7 +77,7 @@ public class SocializeTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		return !knower.isMindMemory();
 	}
 

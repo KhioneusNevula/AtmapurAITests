@@ -58,9 +58,8 @@ public class BasicProperties {
 	/**
 	 * to identify those that speak certain languages
 	 */
-	public static final Property SPEAKS_LANGUAGE = reg(
-			Property.builder("b_speaks_language").addConceptListProp().build(), (con) -> {
-			});
+	public static final Property SPEAKS_LANGUAGE = reg(Property.create("b_speaks_language"), (con) -> {
+	});
 	/**
 	 * The basic property for someone being part of the in-group
 	 */

@@ -6,7 +6,7 @@ import java.util.Set;
 
 import biology.systems.types.ISensor;
 import mind.concepts.type.Property;
-import mind.memory.IKnowledgeBase;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.memory.RememberedProperties;
 import sim.interfaces.IExistsInWorld;
@@ -20,11 +20,11 @@ import sim.interfaces.IUnique;
  */
 public interface IUniqueExistence extends IUnique, IExistsInWorld {
 
-	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property);
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property);
 
-	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data);
+	public void assignProperty(IUpgradedKnowledgeBase culture, Property property, IPropertyData data);
 
-	default void assignProperty(IKnowledgeBase culture, Property property) {
+	default void assignProperty(IUpgradedKnowledgeBase culture, Property property) {
 		if (property.isOnlyPresence()) {
 			this.assignProperty(culture, property, IPropertyData.PRESENCE);
 		} else {

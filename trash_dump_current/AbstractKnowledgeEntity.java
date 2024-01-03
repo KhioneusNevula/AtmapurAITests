@@ -1,7 +1,6 @@
 package mind.memory;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -28,7 +27,6 @@ import mind.concepts.type.Property;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.linguistics.Language;
 import mind.memory.events.Consequence;
 import mind.memory.events.EventDescription;
 import mind.need.INeed;
@@ -44,8 +42,6 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	protected Set<IGoal> goals;
 	protected Multimap<INeedType, INeed> needs;
 	protected Multimap<ITaskHint, IActionType<?>> doableActions;
-	protected Language mainLanguage;
-	protected Set<Language> languages = new TreeSet<>(Comparator.naturalOrder());
 	protected EventAssociationsMemory events = new EventAssociationsMemory();
 	protected Map<Profile, ILocationMeme> locationKnowledge;
 
@@ -78,7 +74,7 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	public void setProperty(Profile forProfile, Property prop, IPropertyData rp) {
 		if (!this.isKnown(forProfile.getUUID()))
 			this.recognizeProfile(forProfile);
-		if (prop.isOnlyPresence() && !rp.onlyMarksPresence())
+		if (prop.isOnlyPresence() && !rp.uneditable())
 			throw new IllegalArgumentException(forProfile + " " + prop + " " + rp);
 		this.findInfoTable().put(forProfile, prop, rp);
 	}
@@ -171,8 +167,6 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 				return (this.propertyConcepts == null ? false : propertyConcepts.containsKey(concept));
 			case ACTION_TYPE:
 				return (this.doableActions == null ? false : this.doableActions.containsValue(concept));
-			case LANGUAGE:
-				return (this.languages == null ? false : this.languages.contains(concept));
 
 			default:
 				return false;
@@ -396,16 +390,6 @@ public abstract class AbstractKnowledgeEntity implements IKnowledgeBase {
 	@Override
 	public boolean isLongTerm(IMeme concept) {
 		return true;
-	}
-
-	@Override
-	public Collection<Language> getLanguages() {
-		return this.languages;
-	}
-
-	@Override
-	public Language getMajorLanguage() {
-		return this.mainLanguage;
 	}
 
 }

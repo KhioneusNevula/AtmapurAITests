@@ -6,7 +6,7 @@ import actor.ITemplate;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 
 /**
@@ -28,7 +28,7 @@ public class TemplateBasedIdentifier implements IPropertyIdentifier {
 	}
 
 	@Override
-	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IHasKnowledge ihk) {
+	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IUpgradedHasKnowledge ihk) {
 
 		return (forExistence.getSpecies().equals(template) && forExistence.rand().nextDouble() <= chance
 				? func.apply(forExistence)

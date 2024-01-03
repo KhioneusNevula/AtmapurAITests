@@ -5,7 +5,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public enum RestTaskGoal implements ITaskGoal {
 
@@ -44,12 +44,12 @@ public enum RestTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
-		return !entity.getAsMind().isConscious();
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
+		return !entity.getAsMind().conscious();
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		return false;
 	}
 

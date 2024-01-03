@@ -1,7 +1,7 @@
 package mind.goals;
 
 import mind.concepts.type.IMeme;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * A type of physical (i.e., either physically creatable, destroyable, and
@@ -153,7 +153,7 @@ public interface IResource extends IGoal {
 	public boolean isApproximate();
 
 	@Override
-	default boolean isComplete(IHasKnowledge entity) {
+	default boolean isComplete(IUpgradedHasKnowledge entity) {
 		return false;
 	}
 

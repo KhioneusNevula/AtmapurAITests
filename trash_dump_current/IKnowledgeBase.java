@@ -16,7 +16,6 @@ import mind.concepts.type.Property;
 import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.ITaskHint;
-import mind.linguistics.Language;
 import mind.memory.events.Consequence;
 import mind.memory.events.EventDescription;
 import mind.need.INeed;
@@ -209,16 +208,6 @@ public interface IKnowledgeBase extends IRecordable {
 	public boolean isLongTerm(IMeme concept);
 
 	void addNeed(INeed goal);
-
-	public Collection<Language> getLanguages();
-
-	/**
-	 * The language this uses typically
-	 * 
-	 * @Override
-	 * @return
-	 */
-	public Language getMajorLanguage();
 
 	public static enum Interest {
 		/** indicate this memory/profile should never be forgotten by any means */

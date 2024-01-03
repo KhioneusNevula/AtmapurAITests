@@ -1,6 +1,7 @@
 package mind.memory.trend;
 
 import mind.concepts.type.IMeme;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 /**
  * A Trend in a culture; this will be stored in the culture and will spread
@@ -28,7 +29,8 @@ public abstract class Trend implements ITrend {
 	}
 
 	/**
-	 * Makes this trend a deletion trend
+	 * Makes this trend a deletion trend. If this cannot be directly converted to a
+	 * deletion trend, return the deletion variant of this trend from this method
 	 * 
 	 * @return
 	 */
@@ -70,13 +72,12 @@ public abstract class Trend implements ITrend {
 		return integrated;
 	}
 
-	/**
-	 * Marks this trend as fully integrated into the culture
-	 */
 	@Override
-	public void integrate() {
+	public final void integrate(IUpgradedKnowledgeBase know) {
 		this.integrated = true;
 	}
+
+	protected abstract void integrateTrend(IUpgradedKnowledgeBase know);
 
 	@Override
 	public Trend cloneUnintegrated() {

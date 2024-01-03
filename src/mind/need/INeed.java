@@ -2,9 +2,10 @@ package mind.need;
 
 import java.util.Set;
 
+import mind.concepts.type.IMeme;
 import mind.goals.IGoal;
 
-public interface INeed {
+public interface INeed extends IMeme {
 	public static enum Individuality {
 		INDIVIDUAL(true, false), INDIVIDUAL_OR_SOCIETAL(true, true), SOCIETAL(false, true);
 
@@ -51,6 +52,8 @@ public interface INeed {
 
 	public static interface INeedType {
 		public Individuality individuality();
+
+		public String uniqueName();
 	}
 
 	/**

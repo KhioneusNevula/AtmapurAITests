@@ -4,8 +4,8 @@ import java.awt.Color;
 
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
-import mind.memory.IHasKnowledge;
-import mind.memory.IKnowledgeBase.Interest;
+import mind.thought_exp.IUpgradedHasKnowledge;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;
@@ -69,16 +69,10 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	@Override
 	public final void actionTick(ICanThink memory, int ticks, long worldTick) {
 		if (this.shouldCancel) {
-			if (this instanceof EatActionThought) {
-				System.out.print("");
-			}
 			return;
 		}
 		if (this.shouldInterrupt) {
 			this.succeeded = this.finishActionIndividual(memory, Math.max(actionTicks, 0), ticks, true);
-			if (this instanceof EatActionThought) {
-				System.out.print("");
-			}
 			this.shouldCancel = true;
 		} else {
 			if (!this.started) {
@@ -99,7 +93,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 					} else {
 						this.succeeded = this.finishActionIndividual(memory, actionTicks, ticks, false);
 						if (this instanceof EatActionThought) {
-							System.out.print("");
+							System.out.print(""); // TODO remove this dumbery
 						}
 						memory.releaseAbilitySlots(this);
 						this.ended = true;
@@ -168,12 +162,12 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	@Override
-	public final ITaskGoal getPendingCondition(IHasKnowledge user) {
+	public final ITaskGoal getPendingCondition(IUpgradedHasKnowledge user) {
 		return pendingCondition;
 	}
 
 	@Override
-	public final boolean hasPendingCondition(IHasKnowledge user) {
+	public final boolean hasPendingCondition(IUpgradedHasKnowledge user) {
 		return pendingCondition != null;
 	}
 
@@ -190,7 +184,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	 */
 	@Override
 	public void cancel() {
-		if (this instanceof EatActionThought) {
+		if (this instanceof PickupActionThought) {
 			System.out.print("");
 		}
 		if (!this.started) {

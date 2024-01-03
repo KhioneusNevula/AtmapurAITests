@@ -4,18 +4,18 @@ import java.util.Collection;
 import java.util.Set;
 
 import actor.Actor;
-import mind.Culture;
 import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.question.Question;
-import mind.memory.IHasKnowledge;
-import mind.memory.IKnowledgeBase;
 import mind.memory.IPropertyData;
-import mind.memory.Memory;
 import mind.speech.IUtterance;
+import mind.thought_exp.IUpgradedHasKnowledge;
+import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.memory.IBrainMemory;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 public interface ITaskGoal extends IGoal {
 
@@ -60,12 +60,12 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
-		public boolean isComplete(IHasKnowledge entity) {
+		public boolean isComplete(IUpgradedHasKnowledge entity) {
 			return true;
 		}
 
 		@Override
-		public boolean isInvalid(IHasKnowledge knower) {
+		public boolean isInvalid(IUpgradedHasKnowledge knower) {
 			return false;
 		}
 
@@ -108,12 +108,12 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
-		public boolean isComplete(IHasKnowledge entity) {
+		public boolean isComplete(IUpgradedHasKnowledge entity) {
 			return false;
 		}
 
 		@Override
-		public boolean isInvalid(IHasKnowledge knower) {
+		public boolean isInvalid(IUpgradedHasKnowledge knower) {
 			return false;
 		}
 
@@ -231,7 +231,7 @@ public interface ITaskGoal extends IGoal {
 	 * 
 	 * @return
 	 */
-	public boolean isInvalid(IHasKnowledge knower);
+	public boolean isInvalid(IUpgradedHasKnowledge knower);
 
 	/**
 	 * An item or set of items that is produced in the task, if it is a task which
@@ -267,20 +267,20 @@ public interface ITaskGoal extends IGoal {
 	 * @param entity
 	 * @return
 	 */
-	public static IPropertyData getProperty(Actor actor, Property property, IHasKnowledge entity) {
-		IKnowledgeBase knowledge = entity.getKnowledgeBase();
+	public static IPropertyData getProperty(Actor actor, Property property, IUpgradedHasKnowledge entity) {
+		IUpgradedKnowledgeBase knowledge = entity.getKnowledgeBase();
 		IPropertyData dat = actor.getPropertyData(knowledge, property);
-		IPropertyData dat2 = knowledge.getProperties(new Profile(actor), property);
+		IPropertyData dat2 = knowledge.getPropertyData(new Profile(actor), property);
 		if (dat2.getKnownCount() > dat.getKnownCount()) {
 			dat = dat2;
 		}
-		if (knowledge instanceof Memory) {
-			for (Culture cult : ((Memory) knowledge).cultures()) {
+		if (knowledge instanceof IBrainMemory) {
+			for (UpgradedCulture cult : ((IBrainMemory) knowledge).cultures()) {
 				IPropertyData twa = actor.getPropertyData(cult, property);
 				if (twa.getKnownCount() > dat.getKnownCount())
 					dat = twa;
 
-				twa = cult.getProperties(new Profile(actor), property);
+				twa = cult.getPropertyData(new Profile(actor), property);
 				if (twa.getKnownCount() > dat.getKnownCount())
 					dat = twa;
 			}

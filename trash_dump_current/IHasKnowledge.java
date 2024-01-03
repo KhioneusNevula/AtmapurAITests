@@ -4,7 +4,6 @@ import mind.Culture;
 import mind.Group;
 import mind.IHasActor;
 import mind.IIndividualMind;
-import mind.linguistics.NameWord;
 
 public interface IHasKnowledge {
 
@@ -55,8 +54,6 @@ public interface IHasKnowledge {
 	}
 
 	public String report();
-
-	public NameWord getNameWord();
 
 	public void kill();
 

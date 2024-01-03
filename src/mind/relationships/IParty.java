@@ -1,7 +1,6 @@
 package mind.relationships;
 
 import java.util.Collection;
-import java.util.UUID;
 
 import mind.concepts.type.IProfile;
 import sim.interfaces.IUnique;
@@ -30,14 +29,6 @@ public interface IParty extends IUnique {
 	 * relationship
 	 */
 	public Relationship getRelationship(IProfile with, RelationType type);
-
-	/**
-	 * Gets agreement by the given ID
-	 * 
-	 * @param agreementID
-	 * @return
-	 */
-	public Relationship getRelationshipByID(UUID agreementID);
 
 	/**
 	 * establish an agreement with the given party

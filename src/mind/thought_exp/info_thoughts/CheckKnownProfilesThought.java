@@ -1,5 +1,6 @@
 package mind.thought_exp.info_thoughts;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -7,8 +8,9 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 
 import main.Pair;
+import mind.concepts.relations.ConceptRelationType;
 import mind.concepts.type.ILocationMeme;
-import mind.concepts.type.Profile;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
 import mind.memory.IPropertyData;
@@ -21,13 +23,13 @@ import mind.thought_exp.type.AbstractInformationThought;
  * Gets the location of a set of profiles matching the given property from
  * memory, not senses. May lose focus
  */
-public class CheckKnownProfilesThought extends AbstractInformationThought<Set<Pair<Profile, ILocationMeme>>> {
+public class CheckKnownProfilesThought extends AbstractInformationThought<Set<Pair<IProfile, ILocationMeme>>> {
 	private Property property;
 	private String failure;
 	private boolean done;
-	private BiPredicate<Profile, IPropertyData> predicate;
-	private Iterator<Profile> profiles;
-	private Set<Profile> tested = new HashSet<>();
+	private BiPredicate<IProfile, IPropertyData> predicate;
+	private Iterator<IProfile> profiles;
+	private Set<IProfile> tested = new HashSet<>();
 	private boolean onlyIfLocationKnown;
 
 	/**
@@ -35,7 +37,7 @@ public class CheckKnownProfilesThought extends AbstractInformationThought<Set<Pa
 	 * @param profile
 	 * @param onlyIfLocationKnown only select profiles if their location is knonw
 	 */
-	public CheckKnownProfilesThought(Property profile, BiPredicate<Profile, IPropertyData> predicate,
+	public CheckKnownProfilesThought(Property profile, BiPredicate<IProfile, IPropertyData> predicate,
 			boolean onlyIfLocationKnown) {
 		this.property = profile;
 		this.predicate = predicate;
@@ -88,13 +90,17 @@ public class CheckKnownProfilesThought extends AbstractInformationThought<Set<Pa
 				return;
 			}
 			for (int i = 0; i < memory.getMaxFocusObjects() && profiles.hasNext(); i++) {
-				Profile profile = profiles.next();
+				IProfile profile = profiles.next();
 
-				IPropertyData dat = memory.getKnowledgeBase().getProperties(profile, property);
-				ILocationMeme location = memory.getKnowledgeBase().getLocation(profile);
-				if (dat.isPresent() && this.predicate.test(profile, dat) && !tested.contains(profile)
-						&& (onlyIfLocationKnown ? location != null : true)) {
-					this.information.add(Pair.of(profile, location));
+				IPropertyData dat = memory.getKnowledgeBase().getPropertyData(profile, property);
+				Collection<ILocationMeme> locations = memory.getKnowledgeBase().getConceptsWithRelation(profile,
+						ConceptRelationType.FOUND_AT);
+				for (ILocationMeme location : locations) {
+					if (dat.isPresent() && this.predicate.test(profile, dat) && !tested.contains(profile)
+							&& (onlyIfLocationKnown ? location != null : true)) {
+						this.information.add(Pair.of(profile, location));
+						break;
+					}
 				}
 			}
 		} else {

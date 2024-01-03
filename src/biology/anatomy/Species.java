@@ -9,9 +9,11 @@ import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableMap;
 
-import mind.Culture;
 import mind.action.ActionType;
 import mind.action.IActionType;
+import mind.concepts.type.Profile;
+import mind.thought_exp.culture.UpgradedCulture;
+import sim.World;
 
 public enum Species implements ISpeciesTemplate {
 	HUMAN(Set.of(TissueType.BONE, TissueType.BLOOD, TissueType.MUSCLE, TissueType.SKIN, TissueType.FAT, TissueType.HAIR,
@@ -36,7 +38,7 @@ public enum Species implements ISpeciesTemplate {
 			(c) -> {
 				for (IActionType<?> type : Set.of(ActionType.EAT, ActionType.WALK, ActionType.SLEEP, ActionType.PICK_UP,
 						ActionType.WANDER, ActionType.SEARCH)) {
-					c.addDoableAction(type);
+					c.learnConcept(type);
 				}
 			}),
 	ELF(HUMAN, Set.of(), Set.of(), Set.of(), Set.of("moustache", "beard"), c -> {
@@ -53,7 +55,7 @@ public enum Species implements ISpeciesTemplate {
 
 	private Map<String, ITissueLayerType> tissue = ImmutableMap.of();
 	private Map<String, IBodyPartType> parts = ImmutableMap.of();
-	private Consumer<Culture> genCulture;
+	private Consumer<UpgradedCulture> genCulture;
 
 	/**
 	 * Copy a previous template and either replace existing bodyparts/tissuelayers
@@ -64,7 +66,7 @@ public enum Species implements ISpeciesTemplate {
 	 * @param parts
 	 */
 	private Species(Species other, Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts,
-			Collection<String> deleteTissue, Collection<String> deleteParts, Consumer<Culture> gdc) {
+			Collection<String> deleteTissue, Collection<String> deleteParts, Consumer<UpgradedCulture> gdc) {
 		Map<String, ITissueLayerType> tiss = new TreeMap<>(other.tissueTypes());
 		Map<String, IBodyPartType> par = new TreeMap<>(other.partTypes());
 		for (String del : deleteTissue)
@@ -90,7 +92,8 @@ public enum Species implements ISpeciesTemplate {
 		this.genCulture = other.genCulture.andThen(gdc);
 	}
 
-	private Species(Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts, Consumer<Culture> gdc) {
+	private Species(Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts,
+			Consumer<UpgradedCulture> gdc) {
 		ImmutableMap.Builder<String, ITissueLayerType> tissueL = ImmutableMap.builder();
 		ImmutableMap.Builder<String, IBodyPartType> partL = ImmutableMap.builder();
 		for (ITissueLayerType tl : tissue)
@@ -118,8 +121,9 @@ public enum Species implements ISpeciesTemplate {
 	}
 
 	@Override
-	public Culture genDefaultCulture() {
-		Culture newc = new Culture(UUID.randomUUID(), "bio", this.name().toLowerCase());
+	public UpgradedCulture genDefaultCulture(World world) {
+		UpgradedCulture newc = new UpgradedCulture(new Profile(UUID.randomUUID(), "species"),
+				"bio_" + this.name().toLowerCase(), world.rand());
 		this.genCulture.accept(newc);
 		newc.usualInit();
 		newc.makeStatic();

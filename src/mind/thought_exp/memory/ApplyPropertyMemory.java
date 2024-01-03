@@ -1,20 +1,33 @@
 package mind.thought_exp.memory;
 
-import java.util.Collection;
-
 import mind.concepts.type.Profile;
+import mind.concepts.type.Property;
 import mind.thought_exp.IUpgradedMind;
 
 public class ApplyPropertyMemory extends AbstractMemory {
 
-	public ApplyPropertyMemory(Collection<Profile> profiles) {
-		// TODO Auto-generated constructor stub
+	private Profile toProfile;
+
+	public ApplyPropertyMemory(Profile toProfile, Property theProperty) {
+		this.setTopic(theProperty);
+		this.toProfile = toProfile;
+	}
+
+	@Override
+	public Property getTopic() {
+		return (Property) super.getTopic();
 	}
 
 	@Override
 	public boolean apply(IUpgradedMind toMind) {
-		// TODO Auto-generated method stub
+		// TODO apply property memory
+
 		return false;
+	}
+
+	@Override
+	public Type getType() {
+		return Type.AFFECT_PROPERTY;
 	}
 
 }

@@ -9,7 +9,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.speech.IUtterance;
 
 public class TalkTaskGoal implements ITaskGoal {
@@ -45,7 +45,7 @@ public class TalkTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		// TODO check if a communication goal is complete
 		return false;
 	}
@@ -75,7 +75,7 @@ public class TalkTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		return false;
 	}
 

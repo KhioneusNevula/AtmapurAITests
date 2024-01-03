@@ -4,15 +4,14 @@ import java.util.Collection;
 import java.util.Set;
 
 import actor.IPartAbility;
-import mind.Group;
-import mind.action.IAction;
 import mind.action.IActionType;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.relationships.IParty;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.culture.UpgradedGroup;
 
 /**
  * An instance of an action in memory
@@ -72,7 +71,7 @@ public interface IActionThought extends IThought {
 	 * @param group
 	 * @return
 	 */
-	default boolean canExecuteGroup(Group group, long worldTicks) {
+	default boolean canExecuteGroup(UpgradedGroup group, long worldTicks) {
 		return false;
 	}
 
@@ -88,7 +87,7 @@ public interface IActionThought extends IThought {
 	 * 
 	 * @param forUser
 	 */
-	default void beginExecutingGroup(Group group, long worldTicks) {
+	default void beginExecutingGroup(UpgradedGroup group, long worldTicks) {
 
 	}
 
@@ -102,7 +101,7 @@ public interface IActionThought extends IThought {
 		return false;
 	}
 
-	default boolean canContinueExecutingGroup(Group group, int actionTick) {
+	default boolean canContinueExecutingGroup(UpgradedGroup group, int actionTick) {
 		return false;
 	}
 
@@ -118,7 +117,7 @@ public interface IActionThought extends IThought {
 
 	}
 
-	default void executionTickGroup(Group group, int tick) {
+	default void executionTickGroup(UpgradedGroup group, int tick) {
 
 	}
 
@@ -131,10 +130,10 @@ public interface IActionThought extends IThought {
 	 */
 	public default boolean finishActionIndividual(ICanThink individual, int actionTick, int thoughtTick,
 			boolean interruption) {
-		return succeeded() && !failedPreemptively();
+		return !failedPreemptively();
 	}
 
-	default boolean finishActionGroup(Group group, int tick) {
+	default boolean finishActionGroup(UpgradedGroup group, int tick) {
 		return false;
 	}
 
@@ -144,7 +143,7 @@ public interface IActionThought extends IThought {
 	 * 
 	 * @return
 	 */
-	public ITaskGoal getPendingCondition(IHasKnowledge user);
+	public ITaskGoal getPendingCondition(IUpgradedHasKnowledge user);
 
 	/**
 	 * Return true if this action has pending conditions to be fulfilled before
@@ -154,7 +153,7 @@ public interface IActionThought extends IThought {
 	 * @param user
 	 * @return
 	 */
-	public boolean hasPendingCondition(IHasKnowledge user);
+	public boolean hasPendingCondition(IUpgradedHasKnowledge user);
 
 	/**
 	 * Gets the type of action -- eating, moving, etc

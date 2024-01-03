@@ -2,6 +2,7 @@ package mind.memory.trend;
 
 import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.Profile;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 public class LocationTrend extends Trend {
 
@@ -30,6 +31,11 @@ public class LocationTrend extends Trend {
 	@Override
 	public String toString() {
 		return super.toString() + "_" + this.location;
+	}
+
+	@Override
+	protected void integrateTrend(IUpgradedKnowledgeBase know) {
+		// TODO location trend
 	}
 
 }

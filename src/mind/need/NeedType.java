@@ -239,4 +239,9 @@ public enum NeedType implements INeedType {
 	public Individuality individuality() {
 		return individuality;
 	}
+
+	@Override
+	public String uniqueName() {
+		return "basic_" + toString() + "_need";
+	}
 }

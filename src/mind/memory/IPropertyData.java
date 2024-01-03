@@ -89,7 +89,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public boolean onlyMarksPresence() {
+		public boolean uneditable() {
 			return true;
 		}
 
@@ -200,7 +200,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public boolean onlyMarksPresence() {
+		public boolean uneditable() {
 			return true;
 		}
 
@@ -292,7 +292,7 @@ public interface IPropertyData {
 		}
 
 		@Override
-		public boolean onlyMarksPresence() {
+		public boolean uneditable() {
 			return true;
 		}
 
@@ -370,11 +370,12 @@ public interface IPropertyData {
 	}
 
 	/**
-	 * Returns true if this property data is only a marker of presence or absence
+	 * Returns true if this property data is only a marker of presence or absence or
+	 * knownness, i.e. it has nothing editable
 	 * 
 	 * @return
 	 */
-	default boolean onlyMarksPresence() {
+	default boolean uneditable() {
 		return false;
 	}
 

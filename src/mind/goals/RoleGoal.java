@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class RoleGoal implements IRoleGoal {
 
@@ -51,7 +51,7 @@ public class RoleGoal implements IRoleGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return complete;
 	}
 

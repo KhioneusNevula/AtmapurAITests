@@ -8,7 +8,6 @@ import java.util.TreeMap;
 import java.util.function.ToDoubleFunction;
 
 import main.MathHelp;
-import mind.memory.IHasKnowledge;
 
 /**
  * Average values are 0 TODO allow culture to influence personality (math D:)
@@ -155,9 +154,9 @@ public class Personality {
 
 	@SuppressWarnings({ "rawtypes" })
 	private Map values = Map.of();
-	private IHasKnowledge owner;
+	private String owner;
 
-	public Personality(IHasKnowledge owner) {
+	public Personality(String owner) {
 		this.owner = owner;
 	}
 

@@ -9,6 +9,7 @@ public abstract class AbstractMemory implements IThoughtMemory {
 
 	private IFeeling feeling = Feeling.NONE;
 	private IMeme topic;
+	private int feelingDuration = 0;
 
 	public AbstractMemory() {
 	}
@@ -21,9 +22,18 @@ public abstract class AbstractMemory implements IThoughtMemory {
 		this.topic = topic;
 	}
 
+	protected void setFeelingDuration(int duration) {
+		this.feelingDuration = duration;
+	}
+
 	@Override
 	public IFeeling getFeeling() {
 		return feeling;
+	}
+
+	@Override
+	public int getFeelingDuration() {
+		return feelingDuration;
 	}
 
 	@Override

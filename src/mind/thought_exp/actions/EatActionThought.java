@@ -41,8 +41,9 @@ public class EatActionThought extends AbstractActionThought {
 	@Override
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
 		if (!this.started()) {
-			if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()
-					&& ticks % 5 >= memory.rand().nextInt(5)) {
+
+			if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()) {
+				// && ticks % 5 >= memory.rand().nextInt(5)) {
 				this.postChildThought(foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType)
 						: new CheckHeldItemsThought((Property) foodType), ticks);
 			}
@@ -57,17 +58,17 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public boolean canExecuteIndividual(ICanThink user, int thoughtTicks, long worldTicks) {
-		if (foodItem != null) {
-			return foodItem != null;
-		}
-		return false;
+		return foodItem != null;
 	}
 
 	@Override
 	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks) {
 		Actor owner = forUser.getAsHasActor().getActor();
 		int numero = owner.getSystem(SystemType.HUNGER).eat(foodItem);
-		succeeded = numero == 1;
+		succeeded = (numero == 1);
+		if (forUser.getAsHasActor().getActor().getName().equals("bobzy")) {
+			System.out.print("");
+		}
 	}
 
 	@Override
@@ -82,6 +83,7 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public boolean finishActionIndividual(ICanThink individual, int actionTick, int thoughtTick, boolean interruption) {
+
 		return succeeded;
 	}
 

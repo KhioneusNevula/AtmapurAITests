@@ -9,8 +9,8 @@ import actor.IMultipart;
 import actor.IVisage;
 import actor.MultipartActor;
 import biology.systems.types.ISensor;
-import biology.systems.types.SenseSystem;
 import mind.concepts.type.SenseProperty;
+import mind.thought_exp.ICanThink;
 import sim.World;
 
 public class SightSense implements ISensor {
@@ -19,7 +19,7 @@ public class SightSense implements ISensor {
 	}
 
 	@Override
-	public <T> Object getGeneralTrait(SenseProperty<T> property, Actor target, World inWorld, SenseSystem bySystem,
+	public <T> Object getGeneralTrait(SenseProperty<T> property, Actor target, World inWorld, ICanThink bySystem,
 			Actor byEntity) {
 		IVisage visage = target.getVisage();
 		// TODO check sight line, etc
@@ -28,14 +28,14 @@ public class SightSense implements ISensor {
 	}
 
 	@Override
-	public <T> Collection<Object> getSensed(World inWorld, SenseProperty<T> property, SenseSystem bySystem,
+	public <T> Collection<Object> getSensed(World inWorld, SenseProperty<T> property, ICanThink bySystem,
 			Actor byEntity) {
 		return null;
 	}
 
 	@Override
 	public <T> Object getSensedTrait(MultipartActor target, SenseProperty<T> property, IComponentType component,
-			World inWorld, SenseSystem bySystem, Actor byEntity) {
+			World inWorld, ICanThink bySystem, Actor byEntity) {
 		IMultipart body = target.getBody();
 		if (!body.getOutermostParts().values().stream()
 				.anyMatch((a) -> a.getType().getName().equals(component.getName())))
@@ -45,7 +45,7 @@ public class SightSense implements ISensor {
 
 	@Override
 	public <T> Object getSpecificSensedTrait(MultipartActor target, SenseProperty<T> property,
-			IComponentPart componentPart, World inWorld, SenseSystem bySystem, Actor byEntity) {
+			IComponentPart componentPart, World inWorld, ICanThink bySystem, Actor byEntity) {
 		IMultipart body = target.getBody();
 		if (!body.getOutermostParts().values().stream().anyMatch((a) -> a.getId().equals(componentPart.getId())))
 			return null;

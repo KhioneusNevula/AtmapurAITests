@@ -6,7 +6,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class StowTaskGoal implements ITaskGoal {
 
@@ -35,7 +35,7 @@ public class StowTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 
 		return entity.getAsHasActor().getActor().getHeld() == null;
 	}
@@ -56,7 +56,7 @@ public class StowTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 
 		return !(knower instanceof Actor) || knower.getAsHasActor().getActor().getHeld() == null;
 	}

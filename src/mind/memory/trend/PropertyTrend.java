@@ -2,6 +2,7 @@ package mind.memory.trend;
 
 import mind.concepts.PropertyController;
 import mind.concepts.type.Property;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 /**
  * A trend about a property; may have an empty data object if only awareness of
@@ -41,5 +42,11 @@ public class PropertyTrend extends Trend {
 	@Override
 	public String toString() {
 		return super.toString() + "_" + this.associations;
+	}
+
+	@Override
+	protected void integrateTrend(IUpgradedKnowledgeBase know) {
+		// TODO property trend
+
 	}
 }

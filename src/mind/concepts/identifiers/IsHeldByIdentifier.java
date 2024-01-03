@@ -6,7 +6,7 @@ import actor.IVisage;
 import actor.PossessState;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 import mind.memory.RememberedProperties;
 
@@ -22,7 +22,7 @@ public enum IsHeldByIdentifier implements IPropertyIdentifier {
 
 	@Override
 	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage,
-			IHasKnowledge base) {
+			IUpgradedHasKnowledge base) {
 		if (forExistence instanceof Actor a && a.getPossessState() == state && a.getPossessor() != null) {
 			return new RememberedProperties(property).setProfile(new Profile(a.getPossessor()));
 		} else

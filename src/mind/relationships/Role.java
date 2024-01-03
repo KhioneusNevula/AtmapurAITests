@@ -2,18 +2,16 @@ package mind.relationships;
 
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
-import mind.Group;
 import mind.IGroup;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
+import mind.thought_exp.culture.UpgradedGroup;
 
 /**
  * Formally, roles only have agreements with other roles and with groups.
@@ -33,12 +31,11 @@ public class Role implements IGroup {
 	/** the name of this role */
 	private String identifier;
 	private UUID id;
-	private Group owner;
+	private UpgradedGroup owner;
 	private int memberCount;
 	private int maxMemberCount = Integer.MAX_VALUE;
 	private int minMemberCount = 1;
 	private SetMultimap<IProfile, Relationship> agreements = MultimapBuilder.hashKeys().hashSetValues().build();
-	private Map<UUID, Relationship> agreementsById = new TreeMap<>();
 	private Profile self;
 	private boolean active = true;
 	/**
@@ -67,13 +64,13 @@ public class Role implements IGroup {
 	 * @param owner
 	 * @return
 	 */
-	public Role setOwner(Group owner) {
+	public Role setOwner(UpgradedGroup owner) {
 		if (this.owner != null)
 			throw new IllegalStateException("Owner already present");
 		if (owner == this.owner)
 			throw new IllegalStateException("owner is the same");
 		this.owner = owner;
-		agreements.put(owner.getCulture().getSelfProfile(), Relationship.governedBy());
+		agreements.put(owner.getCulture().getSelf(), Relationship.governedBy());
 		return this;
 	}
 
@@ -147,11 +144,6 @@ public class Role implements IGroup {
 	}
 
 	@Override
-	public Relationship getRelationshipByID(UUID agreementID) {
-		return agreementsById.get(agreementID);
-	}
-
-	@Override
 	public String getUnitString() {
 		return "role";
 	}
@@ -162,11 +154,9 @@ public class Role implements IGroup {
 		if (!allowedRelationTypes.contains(agreement.getType()))
 			throw new IllegalArgumentException(agreement.getType() + "");
 		if (agreement.getType().isSingular()) {
-			this.agreementsById.values().removeAll(agreements.get(profile));
 			this.agreements.get(profile).clear();
 		}
 		this.agreements.put(profile, agreement);
-		this.agreementsById.put(agreement.getAgreementID(), agreement);
 	}
 
 	/**
@@ -244,8 +234,7 @@ public class Role implements IGroup {
 	@Override
 	public void dissolveRelationship(IProfile with, Relationship agreement) {
 		if (this.agreements.remove(with, agreement)) {
-			this.agreementsById.remove(agreement.getAgreementID());
-			if (this.owner != null && owner.getCulture().getSelfProfile().equals(with)) {
+			if (this.owner != null && owner.getCulture().getSelf().equals(with)) {
 				throw new IllegalArgumentException(
 						"Tried to remove role relationship between " + this + " and its owner " + owner);
 			}

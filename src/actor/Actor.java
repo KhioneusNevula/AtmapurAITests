@@ -18,7 +18,7 @@ import biology.systems.SystemType;
 import biology.systems.types.ISensor;
 import biology.systems.types.LifeSystem;
 import mind.concepts.type.Property;
-import mind.memory.IKnowledgeBase;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
 import processing.core.PApplet;
 import sim.Location;
@@ -61,7 +61,7 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 
 	private UUID uuid = UUID.randomUUID();
 
-	private Table<IKnowledgeBase, Property, IPropertyData> socialProperties;
+	private Table<IUpgradedKnowledgeBase, Property, IPropertyData> socialProperties;
 
 	protected ITemplate species;
 
@@ -345,14 +345,8 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 			g.fill(0);
 
 		}
-		if (this.isSentient()) {
-			g.text(this.getAsSentient().getMind().getNameWord() != null
-					? this.getAsSentient().getMind().getNameWord().getDisplay()
-					: this.name, x, y);
-		} else if (this.isUSentient()) {
-			g.text(this.getAsUpgradedSentient().getMind().getNameWord() != null
-					? this.getAsUpgradedSentient().getMind().getNameWord().getDisplay()
-					: this.name, x, y);
+		if (this.isUSentient()) {
+			g.text(this.name, x, y);
 		} else {
 			g.text(this.name, x, y);
 		}
@@ -402,7 +396,7 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	@Override
-	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
 		if (this.socialProperties == null)
 			return IPropertyData.UNKNOWN;
 		return socialProperties.contains(culture, property) ? socialProperties.get(culture, property)
@@ -410,12 +404,12 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	}
 
 	@Override
-	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
+	public void assignProperty(IUpgradedKnowledgeBase culture, Property property, IPropertyData data) {
 		(socialProperties == null ? socialProperties = HashBasedTable.create() : socialProperties).put(culture,
 				property, data);
 	}
 
-	public Map<IKnowledgeBase, Map<Property, IPropertyData>> getSocialProperties() {
+	public Map<IUpgradedKnowledgeBase, Map<Property, IPropertyData>> getSocialProperties() {
 		return socialProperties == null ? Map.of() : socialProperties.rowMap();
 	}
 
@@ -431,16 +425,8 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return (UpgradedSentientActor) this;
 	}
 
-	public boolean isSentient() {
-		return this instanceof SentientActor;
-	}
-
 	public MultipartActor getAsMultipart() {
 		return (MultipartActor) this;
-	}
-
-	public SentientActor getAsSentient() {
-		return (SentientActor) this;
 	}
 
 	public boolean isRemoved() {

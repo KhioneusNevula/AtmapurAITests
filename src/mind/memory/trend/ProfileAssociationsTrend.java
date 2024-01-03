@@ -5,6 +5,7 @@ import java.util.Map;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.memory.IPropertyData;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 /**
  * A trend of spreading profile associations. Alternatively, if no associations
@@ -49,6 +50,15 @@ public class ProfileAssociationsTrend extends Trend {
 	@Override
 	public String toString() {
 		return super.toString() + ":" + this.props;
+	}
+
+	@Override
+	protected void integrateTrend(IUpgradedKnowledgeBase know) {
+		for (Map.Entry<Property, IPropertyData> entry : props.entrySet()) {
+			IPropertyData propDat = know.getPropertyData(getConcept(), entry.getKey());
+			know.learnPropertyData(getConcept(), entry.getKey(), entry.getValue());
+
+		}
 	}
 
 }

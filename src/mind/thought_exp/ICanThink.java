@@ -8,7 +8,6 @@ import actor.IPartAbility;
 import biology.systems.types.ISensor;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.SenseProperty;
-import mind.memory.IHasKnowledge;
 import mind.personality.Personality;
 import mind.relationships.IParty;
 import mind.thought_exp.IThought.IThoughtType;
@@ -17,7 +16,7 @@ import mind.thought_exp.memory.UpgradedTraitsMemory;
 import phenomenon.IPhenomenon;
 import sim.World;
 
-public interface ICanThink extends IHasKnowledge, IParty {
+public interface ICanThink extends IUpgradedHasKnowledge, IParty {
 
 	/**
 	 * Releases all ability slots owned by this thought
@@ -259,5 +258,7 @@ public interface ICanThink extends IHasKnowledge, IParty {
 	 * @return
 	 */
 	boolean hasThought(IThought thought);
+
+	public void kill();
 
 }

@@ -27,11 +27,11 @@ import actor.IPartAbility;
 import actor.UpgradedSentientActor;
 import biology.systems.types.ISensor;
 import main.Pair;
-import mind.Culture;
 import mind.IHasActor;
 import mind.action.WillingnessMatrix;
 import mind.action.WillingnessMatrix.Factor;
 import mind.concepts.PropertyController;
+import mind.concepts.type.IMeme.MemeType;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
@@ -40,10 +40,8 @@ import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
-import mind.linguistics.NameWord;
 import mind.memory.IEmotions;
-import mind.memory.IKnowledgeBase;
-import mind.memory.Memory;
+import mind.memory.MemoryEmotions;
 import mind.need.INeed;
 import mind.personality.Personality;
 import mind.personality.Personality.BasicPersonalityTrait;
@@ -52,9 +50,11 @@ import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 import mind.thought_exp.IThought.IThoughtType;
 import mind.thought_exp.actions.IActionThought;
+import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
+import mind.thought_exp.memory.UpgradedBrain;
 import mind.thought_exp.memory.UpgradedTraitsMemory;
 import mind.thought_exp.type.ApplyPropertiesThought;
-import mind.thought_exp.type.GoalIntentionThought;
 import mind.thought_exp.type.InspirePropertyIdentifierThought;
 import phenomenon.IPhenomenon;
 import sim.World;
@@ -79,14 +79,14 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	private Multiset<IThoughtType> maxThoughts = TreeMultiset.create((a, b) -> a.ordinalNumber() - b.ordinalNumber());
 	private float defaultLoseFocusChance;
 	private float loseFocusChance;
-	private Memory memory;
+	private UpgradedBrain memory;
 	private Personality personality;
 	private UUID id;
-	private NameWord name;
 	private Random rand;
 	private int maxFocusObjects = 8;
 	private Collection<ISensor> senses = Set.of();
 	private Map<IProfile, Actor> sensedActors;
+	private MemoryEmotions emotions;
 	private Map<IProfile, UpgradedTraitsMemory> sensedTraits;
 	private Map<SenseProperty<?>, ?> environmentallySensed;
 	private Map<IProfile, IPhenomenon> sensedPhenomena;
@@ -108,9 +108,10 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		this.defaultLoseFocusChance = 0.1f;
 		this.loseFocusChance = this.defaultLoseFocusChance;
 		this.id = id;
-		this.memory = new Memory(id, unitString);
-		this.personality = new Personality(this);
+		this.memory = new UpgradedBrain(id, unitString);
+		this.personality = new Personality(this.owner.getName());
 		this.rand = new Random(id.getLeastSignificantBits());
+		this.emotions = new MemoryEmotions();
 	}
 
 	public UpgradedMindImpl addSenses(Collection<ISensor> senses) {
@@ -267,6 +268,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public void forgetThought(IThought thought) {
+
 		if (thought.parentThought() != null) {
 			thought.parentThought().endChildThought(thought);
 		}
@@ -396,13 +398,6 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	private void nameSelf() {
-		if (this.name == null) {
-			if (this.memory.getMajorLanguage() != null) {
-				System.out.print("naming self - " + this.owner.getName() + "...");
-				this.name = this.memory.getMajorLanguage().name(this.memory.getSelfProfile(), this.rand(), Set.of());
-				System.out.println("named self " + name.getDisplay());
-			}
-		}
 	}
 
 	@Override
@@ -460,15 +455,15 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	private void evaluateProperties(long worldTicks) {
 		Collection<Actor> sensedActors = this.senseActors(this.getActor().getWorld(), worldTicks);
 		Collection<IPhenomenon> sensedPhenomena = this.sensePhenomena(this.getActor().getWorld(), worldTicks);
-		Collection<Property> properties = this.memory.getRecognizedProperties();
+		Collection<Property> properties = this.memory.getKnownConceptsOfType(MemeType.PROPERTY);
 		IThought thought = new ApplyPropertiesThought(sensedActors, properties);
 		this.insertOrPauseThought(thought, worldTicks);
 
 		if (!sensedPhenomena.isEmpty()) {
 			this.insertOrPauseThought(new ApplyPropertiesThought(sensedPhenomena, properties), worldTicks);
 		}
-		for (Culture culture : this.memory.cultures()) {
-			properties = culture.getRecognizedProperties();
+		for (UpgradedCulture culture : this.memory.cultures()) {
+			properties = culture.getKnownConceptsOfType(MemeType.PROPERTY);
 			thought = new ApplyPropertiesThought(sensedActors, properties);
 			this.insertOrPauseThought(thought, worldTicks);
 			if (!sensedPhenomena.isEmpty()) {
@@ -478,9 +473,10 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		// TODO make this person-specific after communication is implemented, but for
 		// now culture general
 		if (this.getActiveThoughtsOfType(ThoughtType.REFINE_BELIEFS).isEmpty()) {
-			for (IKnowledgeBase knowledge : Iterables.concat(Collections.singleton(memory), this.memory.cultures())) {
+			for (IUpgradedKnowledgeBase knowledge : Iterables.concat(Collections.singleton(memory),
+					this.memory.cultures())) {
 				Collection<Property> recoProps = new TreeSet<>((a, b) -> rand().nextBoolean() ? 1 : -1);
-				recoProps.addAll(knowledge.getRecognizedProperties());
+				recoProps.addAll(knowledge.getKnownConceptsOfType(MemeType.PROPERTY));
 				for (Property prop : recoProps) {
 					PropertyController con = knowledge.getPropertyAssociations(prop);
 					if (con.getIdentifier().isUnknown()) {
@@ -541,14 +537,14 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	private void produceGoalsFromNeeds(long worldTicks) {
-		Iterator<INeed> needs = Set.copyOf(this.memory.getNeeds().values()).iterator();
+		Iterator<INeed> needs = Set.copyOf(this.memory.getNeeds()).iterator();
 		if (needs.hasNext()) {
 			int max = 4;
 			while (needs.hasNext() && max > 0) {
 				INeed need = needs.next();
 				Iterable<IGoal> pGoal = need.genIndividualGoals();
 				for (IGoal goal : pGoal) {
-					this.memory.addGoal(goal);
+					this.memory.learnGoal(goal);
 
 				}
 				memory.forgetNeed(need);
@@ -584,6 +580,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 				this.findMultimap(true).put(thought.getThoughtType(), thought);
 				thoughtIter.remove();
 				this.pausedThoughts.values().removeAll(Collections.singleton(thought));
+				thought.setPaused(false);
 			}
 			toResume = null;
 		}
@@ -604,9 +601,6 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 				}
 			}
-			if (this.pausedThoughts.isEmpty()) {
-				pausedThoughts = null;
-			}
 		}
 		if (toPause != null) {
 			Iterator<IThought> iterator = toPause.iterator();
@@ -617,6 +611,14 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 			}
 			toPause = null;
 		}
+		if (toInterrupt != null) {
+			Iterator<IThought> iterator = toInterrupt.iterator();
+			while (iterator.hasNext()) {
+				IThought thought = iterator.next();
+				iterator.remove();
+				this.finishThought(thought, worldTicks, tickMap.getOrDefault(thought, 0), true);
+			}
+		}
 	}
 
 	private void tickActiveThoughts(long worldTicks) {
@@ -625,15 +627,18 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 				int tickCount = tickMap.getOrDefault(thought, 0);
 				boolean finished = this.toFinish != null && this.toFinish.contains(thought);
 				boolean interrupted = this.toInterrupt != null && this.toInterrupt.contains(thought);
+				if (interrupted && this.owner.getName().equals("bobzy")) {
+					System.out.print("");
+				}
 				if (finished || interrupted || thought.isFinished(this, tickCount, worldTicks)) {
 					this.finishThought(thought, worldTicks, tickCount, interrupted);
 				} else {
 					if (thought.shouldPause(this, tickCount, worldTicks)) {
 						(toPause == null ? toPause = new HashSet<>() : toPause).add(thought);
+
 					} else {
 						this.tickThought(thought, tickCount, worldTicks);
 						tickMap.put(thought, tickCount + 1);
-						System.out.print("");
 					}
 				}
 
@@ -642,6 +647,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	private void finishThought(IThought thought, long worldTicks, int ticks, boolean interrupted) {
+
 		if (interrupted) {
 			thought.interruptThought(this, ticks, worldTicks);
 			this.toInterrupt.remove(thought);
@@ -652,6 +658,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 			thought.parentThought().getInfoFromChild(thought, interrupted, ticks);
 		}
 		this.forgetThought(thought);
+
 		IThought subsequentThought = thought.getSubsequentThought(interrupted);
 		if (subsequentThought != null) {
 			WillingnessMatrix matrix = this.calculateForce(subsequentThought);
@@ -682,6 +689,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 			(this.toInterrupt == null ? this.toInterrupt = new HashSet<>() : toInterrupt).add(thought);
 		} else {
 			this.findMultimap(false).put(thought.getThoughtType(), thought);
+			thought.setPaused(true);
 		}
 		this.activeThoughts.remove(thought.getThoughtType(), thought);
 		this.releaseAbilitySlots(thought);
@@ -763,12 +771,12 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	@Override
-	public Memory getMemory() {
+	public UpgradedBrain getMemory() {
 		return this.memory;
 	}
 
 	@Override
-	public IKnowledgeBase getKnowledgeBase() {
+	public IUpgradedKnowledgeBase getKnowledgeBase() {
 		return this.memory;
 	}
 
@@ -785,7 +793,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public IEmotions emotions() {
-		return this.memory.getEmotions();
+		return this.emotions;
 	}
 
 	@Override
@@ -800,7 +808,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public boolean isPaused(IThought thought) {
-		return pausedThoughts == null ? false : this.pausedThoughts.containsValue(thought);
+		return thought.isPaused();
 	}
 
 	@Override
@@ -913,11 +921,6 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	@Override
-	public Relationship getRelationshipByID(UUID agreementID) {
-		return this.memory.getRelationshipByID(agreementID);
-	}
-
-	@Override
 	public Collection<Relationship> getRelationshipsOfTypeWith(IProfile other, RelationType type) {
 		return this.memory.getRelationshipsWith(other).stream().filter((a) -> a.getType() == type)
 				.collect(Collectors.toSet());
@@ -944,11 +947,6 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	@Override
-	public NameWord getNameWord() {
-		return name;
-	}
-
-	@Override
 	public Actor getActor() {
 		return this.owner;
 	}
@@ -959,7 +957,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	}
 
 	@Override
-	public Collection<Actor> senseActors(World world, long worldTick) {
+	public Collection<Actor> senseActors(World world, long worldTick) { // TODO make ths use the senses more properly
 		if (sensedActors != null)
 			return sensedActors.values();
 

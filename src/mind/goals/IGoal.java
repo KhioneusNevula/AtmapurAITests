@@ -1,7 +1,7 @@
 package mind.goals;
 
 import mind.concepts.type.IMeme;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * a potential goal; something that is needed by an individual or society and
@@ -97,7 +97,7 @@ public interface IGoal extends IMeme {
 	 * Checks whether the goal is complete for a certain entity, by the action if
 	 * applicable
 	 */
-	boolean isComplete(IHasKnowledge entity);
+	boolean isComplete(IUpgradedHasKnowledge entity);
 
 	/**
 	 * Whether these two goals are functionally equivalent. Note that the first goal

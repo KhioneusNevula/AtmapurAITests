@@ -11,6 +11,17 @@ import mind.feeling.IFeeling;
  */
 public interface IThoughtMemory {
 
+	public static enum Type {
+		RECENT_THOUGHT(10), RECENT_ACTION(10), AFFECT_PROPERTY(3), AFFECT_RELATION(3), EVENT(20);
+
+		/** the default max for short-term memories of this kind, or -1 if no cap */
+		public final int usualCap;
+
+		private Type(int usualCap) {
+			this.usualCap = usualCap;
+		}
+	}
+
 	/**
 	 * Applies appropriate memory changes to this mind; return true if the memory
 	 * object itself should be stored as an object in the mind
@@ -27,11 +38,20 @@ public interface IThoughtMemory {
 	public IFeeling getFeeling();
 
 	/**
+	 * -1 if the feeling just lasts for an indefinite time
+	 * 
+	 * @return
+	 */
+	public int getFeelingDuration();
+
+	/**
 	 * Gets the main topic of this memory, if applicable (and, logically, the target
 	 * of its associated feelings)
 	 * 
 	 * @return
 	 */
 	public IMeme getTopic();
+
+	public Type getType();
 
 }

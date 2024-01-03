@@ -15,20 +15,18 @@ import actor.Actor;
 import actor.ITemplate;
 import actor.IUniqueExistence;
 import actor.IVisage;
-import actor.SentientActor;
 import actor.UpgradedSentientActor;
 import biology.anatomy.ISpeciesTemplate;
 import biology.anatomy.Species;
 import humans.Food;
-import humans.Person;
 import humans.UpgradedPerson;
 import main.ImmutableCollection;
-import mind.Culture;
-import mind.Group;
 import mind.concepts.type.Property;
-import mind.memory.IKnowledgeBase;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.relationships.Relationship;
+import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.culture.UpgradedGroup;
 import sim.interfaces.IRenderable;
 
 /**
@@ -43,13 +41,13 @@ public class World implements IUniqueExistence, IRenderable {
 
 	private final int width, height;
 	private UpgradedSentientActor testActor;
-	private Group testGroup;
+	private UpgradedGroup testGroup;
 	private Random rand = new Random();
 	protected long ticks = 0;
 	private ImmutableCollection<Actor> actorCollection = new ImmutableCollection<>(actors.values());
 	private UUID id = UUID.randomUUID();
-	private Map<String, Group> groups;
-	private Map<ISpeciesTemplate, Culture> defaultCultures;
+	private Map<String, UpgradedGroup> groups;
+	private Map<ISpeciesTemplate, UpgradedCulture> defaultCultures;
 
 	public World(int width, int height) {
 		this.width = width;
@@ -72,29 +70,29 @@ public class World implements IUniqueExistence, IRenderable {
 		return a;
 	}
 
-	public Group makeGroup(String identifier) {
-		Group group = new Group(identifier, this);
+	public UpgradedGroup makeGroup(String identifier) {
+		UpgradedGroup group = new UpgradedGroup(identifier, this.rand);
 		(this.groups == null ? groups = new TreeMap<>() : groups).put(identifier, group);
 		return group;
 	}
 
-	public Culture getDefaultCulture(ISpeciesTemplate forSp) {
+	public UpgradedCulture getDefaultCulture(ISpeciesTemplate forSp) {
 		return defaultCultures == null ? null : defaultCultures.get(forSp);
 	}
 
-	public Culture getOrGenDefaultCulture(ISpeciesTemplate forSp) {
-		Culture a = this.getDefaultCulture(forSp);
+	public UpgradedCulture getOrGenDefaultCulture(ISpeciesTemplate forSp) {
+		UpgradedCulture a = this.getDefaultCulture(forSp);
 		if (a == null) {
 			a = this.putDefaultCulture(forSp);
 		}
 		return a;
 	}
 
-	protected Culture putDefaultCulture(ISpeciesTemplate forSp) {
+	protected UpgradedCulture putDefaultCulture(ISpeciesTemplate forSp) {
 		if (this.defaultCultures == null)
 			defaultCultures = new HashMap<>();
-		Culture c = null;
-		this.defaultCultures.put(forSp, c = forSp.genDefaultCulture());
+		UpgradedCulture c;
+		this.defaultCultures.put(forSp, c = forSp.genDefaultCulture(this));
 		return c;
 	}
 
@@ -126,14 +124,14 @@ public class World implements IUniqueExistence, IRenderable {
 		System.out.println("setting up");
 		testGroup = this.makeGroup("TheGroup");
 		testGroup.getCulture().usualInit();
-		testGroup.getCulture().languageInit(this.rand);
+		// testGroup.getCulture().languageInit(this.rand);
 		this.makeTestActor();
 		Actor idk = null;
 		for (int i = 0; i < 100; i++) {
 			int x = Math.max(0, Math.min(width, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));
 			int y = Math.max(0, Math.min(height, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));
 			if (i % 2 == 0)
-				this.spawnActor((idk = new Person(this, "baba" + i, Species.ELF, x, y, 10)));
+				this.spawnActor((idk = new UpgradedPerson(this, "baba" + i, Species.ELF, x, y, 10)));
 			/*
 			 * else this.spawnActor((idk = new UpgradedPerson(this, "ubaba" + i,
 			 * Species.FAIRY, x, y, 10)));
@@ -151,9 +149,7 @@ public class World implements IUniqueExistence, IRenderable {
 
 		for (Actor e : Set.copyOf(actors.values())) {
 			if (e.isRemoved()) {
-				if (e instanceof SentientActor sa) {
-					sa.getMind().kill();
-				} else if (e instanceof UpgradedSentientActor sa) {
+				if (e instanceof UpgradedSentientActor sa) {
 					sa.getMind().kill();
 				}
 				actors.remove(e.getUUID());
@@ -170,7 +166,7 @@ public class World implements IUniqueExistence, IRenderable {
 			e.actionTick();
 			e.finalTick();
 		}
-		for (Group g : groups.values()) {
+		for (UpgradedGroup g : groups.values()) {
 			g.tick(this.ticks);
 		}
 		doTestThings();
@@ -249,11 +245,11 @@ public class World implements IUniqueExistence, IRenderable {
 		return testActor;
 	}
 
-	public Group getTestGroup() {
+	public UpgradedGroup getTestGroup() {
 		return testGroup;
 	}
 
-	public Map<String, Group> getGroups() {
+	public Map<String, UpgradedGroup> getGroups() {
 		return groups;
 	}
 
@@ -280,13 +276,13 @@ public class World implements IUniqueExistence, IRenderable {
 	}
 
 	@Override
-	public void assignProperty(IKnowledgeBase culture, Property property, IPropertyData data) {
+	public void assignProperty(IUpgradedKnowledgeBase culture, Property property, IPropertyData data) {
 		// TODO assign property to world
 
 	}
 
 	@Override
-	public IPropertyData getPropertyData(IKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
 		return IPropertyData.UNKNOWN;
 	}
 

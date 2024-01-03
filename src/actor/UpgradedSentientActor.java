@@ -6,12 +6,12 @@ import java.util.Set;
 import biology.anatomy.ISpeciesTemplate;
 import biology.systems.ESystem;
 import biology.systems.types.ISensor;
-import mind.Culture;
 import mind.need.INeed;
 import mind.personality.Personality.BasicPersonalityTrait;
 import mind.thought_exp.IUpgradedMind;
 import mind.thought_exp.ThoughtType;
 import mind.thought_exp.UpgradedMindImpl;
+import mind.thought_exp.culture.UpgradedCulture;
 import sim.World;
 
 public class UpgradedSentientActor extends BodiedActor {
@@ -37,7 +37,7 @@ public class UpgradedSentientActor extends BodiedActor {
 		this.mind = new UpgradedMindImpl(this).addSenses(Set.of(ISensor.SIGHT));
 
 		mind.init(EnumSet.allOf(ThoughtType.class));
-		Culture a = this.getWorld().getOrGenDefaultCulture(this.getSpecies());
+		UpgradedCulture a = this.getWorld().getOrGenDefaultCulture(this.getSpecies());
 		this.mind.getMemory().addCulture(a);
 
 		mind.personality().randomizePersonality(rand, BasicPersonalityTrait.class);
@@ -72,7 +72,7 @@ public class UpgradedSentientActor extends BodiedActor {
 			for (ESystem sys : this.getSystems()) {
 				if (!sys.getNeeds().isEmpty()) {
 					for (INeed need : sys.getNeeds().values()) {
-						if (!mind.getKnowledgeBase().getNeeds().get(need.getType()).contains(need))
+						if (!mind.getKnowledgeBase().getNeeds(need.getType()).contains(need))
 							this.mind.getKnowledgeBase().addNeed(need);
 					}
 				}

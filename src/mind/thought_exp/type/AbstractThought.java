@@ -20,6 +20,7 @@ public abstract class AbstractThought implements IThought {
 	private int lastChildThoughtPostedTick = -23;
 
 	protected IThought parent;
+	private boolean paused;
 
 	protected IGoal goal;
 	protected UUID uuid;
@@ -106,6 +107,16 @@ public abstract class AbstractThought implements IThought {
 		}
 		(this.pendingChildren == null ? pendingChildren = new LinkedList<>() : pendingChildren).add(thought);
 		this.lastChildThoughtPostedTick = tick;
+	}
+
+	@Override
+	public final boolean isPaused() {
+		return paused;
+	}
+
+	@Override
+	public final void setPaused(boolean paused) {
+		this.paused = paused;
 	}
 
 	@Override

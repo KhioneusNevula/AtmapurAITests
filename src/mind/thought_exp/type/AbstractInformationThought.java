@@ -2,7 +2,7 @@ package mind.thought_exp.type;
 
 import java.awt.Color;
 
-import mind.memory.IKnowledgeBase.Interest;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 
 public abstract class AbstractInformationThought<T> extends AbstractThought {

@@ -1,11 +1,11 @@
 package mind.need;
 
-import mind.Group;
 import mind.goals.IGoal;
+import mind.thought_exp.culture.UpgradedGroup;
 
 public class PowerNeed extends AbstractNeed {
 
-	private Group group;
+	private UpgradedGroup group;
 
 	/**
 	 * Optional group to indicate within which group the power is desired
@@ -13,12 +13,12 @@ public class PowerNeed extends AbstractNeed {
 	 * @param degree
 	 * @param group
 	 */
-	public PowerNeed(Degree degree, Group group) {
+	public PowerNeed(Degree degree, UpgradedGroup group) {
 		super(NeedType.POWER, degree);
 		this.group = group;
 	}
 
-	public Group getGroup() {
+	public UpgradedGroup getGroup() {
 		return group;
 	}
 

@@ -5,7 +5,7 @@ package mind.thought_exp.type;
  * import java.util.Map; import java.util.TreeMap;
  * 
  * import mind.action.IActionType; import mind.goals.IGoal.Priority; import
- * mind.goals.ITaskGoal; import mind.memory.IKnowledgeBase.Interest; import
+ * mind.goals.ITaskGoal; import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest; import
  * mind.thought_exp.ICanThink; import mind.thought_exp.IThought; import
  * mind.thought_exp.ThoughtType;
  * 

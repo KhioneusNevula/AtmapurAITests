@@ -1,25 +1,25 @@
-package mind;
+package mind.thought_exp.culture;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SetMultimap;
 
+import mind.IGroup;
 import mind.concepts.type.IProfile;
-import mind.linguistics.NameWord;
-import mind.memory.IHasKnowledge;
+import mind.concepts.type.Profile;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.relationships.IParty;
 import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 import mind.relationships.Role;
-import sim.World;
 
 /**
  * Note that a group can only have one kind of membership relationship with
@@ -28,37 +28,29 @@ import sim.World;
  * @author borah
  *
  */
-public class Group implements IGroup, IEntity {
+public class UpgradedGroup implements IGroup, IParty {
 
 	private String identifier;
 	private UUID id;
 	private Map<IProfile, IParty> members;
-	private Map<IProfile, Group> subGroups;
+	private Map<IProfile, UpgradedGroup> subGroups;
 	private int memberCount = 0;
-	private Group parentGroup;
+	private UpgradedGroup parentGroup;
 	private Map<IProfile, Role> roles;
 	private SetMultimap<IProfile, Relationship> agreements;
-	private Map<UUID, Relationship> agreementsById;
 	private Map<IProfile, Float> trust;
-	private Culture culture;
-	private World world;
+	private UpgradedCulture culture;
 	private static final int TYPICAL_MEMORY_PASS_COUNT = 10;
 	private boolean active = true;
 
-	public Group(String identifier, World world) {
+	public UpgradedGroup(String identifier, Random rand) {
 		this.identifier = identifier;
 		this.id = UUID.randomUUID();
-		this.culture = new Culture(this, "group");
-		this.world = world;
+		this.culture = new UpgradedCulture(new Profile(this), "group_" + identifier, rand);
 	}
 
 	public String getIdentifier() {
 		return identifier;
-	}
-
-	@Override
-	public NameWord getNameWord() {
-		return this.culture.getNameWord();
 	}
 
 	/**
@@ -92,7 +84,7 @@ public class Group implements IGroup, IEntity {
 		if (members != null)
 			memberCount += this.members.size();
 		if (subGroups != null) {
-			for (Group g : this.subGroups.values()) {
+			for (UpgradedGroup g : this.subGroups.values()) {
 				memberCount += g.memberCount;
 			}
 		}
@@ -121,12 +113,7 @@ public class Group implements IGroup, IEntity {
 
 	@Override
 	public boolean isMember(IParty other) {
-		return !other.getRelationshipsOfTypeWith(this.getKnowledgeBase().getSelfProfile(), RelationType.BE).isEmpty();
-	}
-
-	@Override
-	public Relationship getRelationshipByID(UUID agreementID) {
-		return agreementsById == null ? null : agreementsById.get(agreementID);
+		return !other.getRelationshipsOfTypeWith(this.getKnowledgeBase().getSelf(), RelationType.BE).isEmpty();
 	}
 
 	@Override
@@ -137,7 +124,7 @@ public class Group implements IGroup, IEntity {
 				: Set.of();
 	}
 
-	public Group getParentGroup() {
+	public UpgradedGroup getParentGroup() {
 		return parentGroup;
 	}
 
@@ -155,12 +142,9 @@ public class Group implements IGroup, IEntity {
 	 */
 	@Override
 	public void establishRelationship(IParty with, Relationship agreement) {
-		IProfile profile = this.culture.recognizeProfile(with);
+		Profile profile;
+		this.culture.learnProfile(profile = new Profile(with));
 		if (agreement.getType().isSingular() && agreements != null) {
-			agreements.get(profile).forEach((r) -> {
-				if (r.getType() == agreement.getType())
-					agreementsById.remove(r.getAgreementID());
-			});
 			agreements.get(profile).removeIf((r) -> r.getType() == agreement.getType());
 
 		}
@@ -170,16 +154,17 @@ public class Group implements IGroup, IEntity {
 					(this.members == null ? members = new HashMap<>() : members).put(profile, with);
 				} else if (with instanceof Role) {
 					(this.roles == null ? roles = new HashMap<>() : roles).put(profile, (Role) with);
-				} else if (with instanceof Group) {
-					(this.subGroups == null ? subGroups = new HashMap<>() : subGroups).put(profile, (Group) with);
+				} else if (with instanceof UpgradedGroup) {
+					(this.subGroups == null ? subGroups = new HashMap<>() : subGroups).put(profile,
+							(UpgradedGroup) with);
 				} else {
 					throw new IllegalArgumentException(
 							"type of party: " + with.getClass().getSimpleName() + " for agreement with " + this + "??");
 				}
 				this.updateMemberCount();
 			} else if (agreement.getType().provides()) {
-				if (with instanceof Group) {
-					this.parentGroup = (Group) with;
+				if (with instanceof UpgradedGroup) {
+					this.parentGroup = (UpgradedGroup) with;
 				} else {
 					throw new IllegalArgumentException(
 							"type of party: " + with.getClass().getSimpleName() + " for agreement with " + this + "??");
@@ -189,8 +174,6 @@ public class Group implements IGroup, IEntity {
 			this.changeTrust(profile, agreement.getGoal().asPersonalRelationship().trust());
 		}
 		this.findAgreements().put(profile, agreement);
-		(this.agreementsById == null ? agreementsById = new TreeMap<>() : agreementsById)
-				.put(agreement.getAgreementID(), agreement);
 	}
 
 	@Override
@@ -211,10 +194,9 @@ public class Group implements IGroup, IEntity {
 
 	@Override
 	public void dissolveRelationship(IProfile with, Relationship agreement) {
-		if (agreements == null || this.agreementsById == null)
+		if (agreements == null)
 			return;
 		if (this.agreements.remove(with, agreement)) {
-			this.agreementsById.remove(agreement.getAgreementID());
 			if (agreement.getType().isMembership()) {
 				if (agreement.getType().benefits()) {
 					if (members != null)
@@ -224,7 +206,7 @@ public class Group implements IGroup, IEntity {
 					if (subGroups != null)
 						this.subGroups.remove(with);
 				} else if (agreement.getType().provides()) {
-					if (this.parentGroup != null && with.equals(this.parentGroup.culture.getSelfProfile()))
+					if (this.parentGroup != null && with.equals(this.parentGroup.culture.getSelf()))
 						this.parentGroup = null;
 				}
 
@@ -241,10 +223,9 @@ public class Group implements IGroup, IEntity {
 
 	/**
 	 * same thing as {@link Group#getCulture()}, just for the purposes of filling
-	 * the {@link IHasKnowledge} class template
+	 * the {@link IUpgradedHasKnowledge} class template
 	 */
-	@Override
-	public Culture getKnowledgeBase() {
+	public UpgradedCulture getKnowledgeBase() {
 		return culture;
 	}
 
@@ -267,7 +248,7 @@ public class Group implements IGroup, IEntity {
 
 	@Override
 	public String toString() {
-		return "Group(" + this.identifier + ",\"" + this.culture.getNameWord().getDisplay() + "\")";
+		return "Group(" + this.identifier + ",\"" + "\")";
 	}
 
 	@Override
@@ -280,12 +261,6 @@ public class Group implements IGroup, IEntity {
 		return "group";
 	}
 
-	@Override
-	public IWill getWill() {
-		// TODO create a Will for groups
-		return null;
-	}
-
 	public void tick(long worldTicks) {
 		if (members != null) {
 			IParty mind = null;
@@ -296,9 +271,10 @@ public class Group implements IGroup, IEntity {
 				}
 			}
 		}
-		if (worldTicks % 20 < 3 || this.world.rand().nextInt(20) < 3) {
-			this.culture.prune(TYPICAL_MEMORY_PASS_COUNT);
-		}
+		/*
+		 * if (worldTicks % 20 < 3 || this.world.rand().nextInt(20) < 3) {
+		 * this.culture.prune(TYPICAL_MEMORY_PASS_COUNT); }
+		 */ // memory pruning
 	}
 
 	public void deactivate() {
@@ -310,9 +286,8 @@ public class Group implements IGroup, IEntity {
 		return !active;
 	}
 
-	@Override
-	public void kill() {
-		this.deactivate();
+	public UpgradedCulture getCulture() {
+		return this.culture;
 	}
 
 }

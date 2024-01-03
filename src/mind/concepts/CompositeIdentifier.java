@@ -9,7 +9,7 @@ import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 
 public class CompositeIdentifier implements IPropertyIdentifier {
@@ -30,7 +30,7 @@ public class CompositeIdentifier implements IPropertyIdentifier {
 
 	@Override
 	public IPropertyData identifyInfo(Property property, IUniqueExistence forExistence, IVisage visage,
-			IHasKnowledge ihk) {
+			IUpgradedHasKnowledge ihk) {
 
 		IPropertyData dat = IPropertyData.UNKNOWN;
 		for (IPropertyIdentifier id : idens) {

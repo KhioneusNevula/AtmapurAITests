@@ -3,7 +3,8 @@ package biology.anatomy;
 import java.util.Map;
 
 import actor.IBlueprintTemplate;
-import mind.Culture;
+import mind.thought_exp.culture.UpgradedCulture;
+import sim.World;
 
 public interface ISpeciesTemplate extends IBlueprintTemplate {
 
@@ -30,6 +31,6 @@ public interface ISpeciesTemplate extends IBlueprintTemplate {
 	 * 
 	 * @return
 	 */
-	public Culture genDefaultCulture();
+	public UpgradedCulture genDefaultCulture(World world);
 
 }

@@ -13,7 +13,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * The Task goal for eating to sustain
@@ -80,7 +80,7 @@ public class EatTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return (((ISystemHolder) entity.getAsHasActor().getActor()).getSystem(SystemType.HUNGER)
 				.getPercent() > percent);
 	}
@@ -96,7 +96,7 @@ public class EatTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		return knower.hasActor() ? !(knower.getAsHasActor().getActor() instanceof ISystemHolder) : true;
 	}
 

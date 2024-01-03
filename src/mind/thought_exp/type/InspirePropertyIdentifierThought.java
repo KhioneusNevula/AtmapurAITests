@@ -14,7 +14,7 @@ import mind.concepts.PropertyController;
 import mind.concepts.identifiers.TemplateBasedIdentifier;
 import mind.concepts.type.BasicProperties;
 import mind.goals.IGoal.Priority;
-import mind.memory.IKnowledgeBase.Interest;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.ThoughtType;

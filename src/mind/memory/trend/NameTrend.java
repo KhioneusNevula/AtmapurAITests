@@ -4,6 +4,7 @@ import main.Pair;
 import mind.concepts.type.IMeme;
 import mind.linguistics.Language;
 import mind.linguistics.NameWord;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 public class NameTrend extends Trend {
 
@@ -22,6 +23,12 @@ public class NameTrend extends Trend {
 	@Override
 	public TrendType getType() {
 		return TrendType.NAME;
+	}
+
+	@Override
+	protected void integrateTrend(IUpgradedKnowledgeBase know) {
+		// TODO NAmTrend
+
 	}
 
 }

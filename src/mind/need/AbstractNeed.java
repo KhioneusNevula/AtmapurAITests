@@ -23,4 +23,14 @@ public abstract class AbstractNeed implements INeed {
 		return this.getClass().getSimpleName() + "{" + this.type.toString() + "," + degree + "}";
 	}
 
+	@Override
+	public IMemeType getMemeType() {
+		return MemeType.NEED;
+	}
+
+	@Override
+	public String getUniqueName() {
+		return toString();
+	}
+
 }

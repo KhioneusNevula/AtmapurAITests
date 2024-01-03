@@ -15,17 +15,13 @@ import mind.concepts.type.BasicProperties;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.Property;
 import mind.feeling.IFeeling;
-import mind.linguistics.Language;
-import mind.linguistics.NameWord;
 import mind.memory.AbstractKnowledgeEntity;
 import mind.memory.IPropertyData;
 import mind.memory.trend.ActionKnowledgeTrend;
 import mind.memory.trend.GoalTrend;
 import mind.memory.trend.ITrend;
 import mind.memory.trend.ITrend.TrendType;
-import mind.memory.trend.LanguageKnowledgeTrend;
 import mind.memory.trend.LocationTrend;
-import mind.memory.trend.NameTrend;
 import mind.memory.trend.ProfileAssociationsTrend;
 import mind.memory.trend.PropertyTrend;
 
@@ -40,7 +36,6 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 	private Map<IMeme, IFeeling> feelings;
 	private boolean isStatic;
 	private String groupName;
-	private NameWord nameWord;
 	private Group group;
 	/**
 	 * Key - trend. Value - <amount of people who know the trend, chance a random
@@ -65,10 +60,6 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 	}
 
 	public Culture languageInit(Random rand) {
-		this.mainLanguage = new Language(this.groupName); // TODO idk allow using existing languages? idfk
-		this.mainLanguage.generate(rand);
-		this.languages.add(mainLanguage);
-		nameWord = mainLanguage.name(getSelfProfile(), new Random(), Set.of(this));
 		return this;
 	}
 
@@ -118,18 +109,13 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 		return this.feelings == null ? null : feelings.get(concept);
 	}
 
-	public NameWord getNameWord() {
-		return nameWord;
-	}
-
 	@Override
 	public int compareTo(Culture o) {
 		return this.self.compareTo(o.self);
 	}
 
 	public String report() {
-		StringBuilder builder = new StringBuilder("Culture-" + this.groupName
-				+ (this.nameWord != null ? " \"" + this.nameWord.getDisplay() + "\"" : this.nameWord) + "{");
+		StringBuilder builder = new StringBuilder("Culture-" + this.groupName + "{");
 		if (this.locationKnowledge != null)
 			builder.append("\n\tlocations:" + this.locationKnowledge);
 
@@ -149,7 +135,7 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 
 	@Override
 	public String toString() {
-		return "culture_" + this.groupName + (this.nameWord != null ? "_" + nameWord.getDisplay() : "");
+		return "culture_" + this.groupName;
 	}
 
 	/**
@@ -299,31 +285,6 @@ public class Culture extends AbstractKnowledgeEntity implements Comparable<Cultu
 				this.forgetAssociations(trend.getConcept());
 			} else
 				this.learnProperty(trend.getConcept(), trend.getData());
-			break;
-		}
-		case LANGUAGE_KNOWLEDGE: {
-			LanguageKnowledgeTrend trend = (LanguageKnowledgeTrend) usingTrend;
-			if (trend.isDeletion()) {
-				languages.remove(trend.getConcept());
-				if (mainLanguage == trend.getConcept()) {
-					mainLanguage = languages.stream().findFirst().orElse(null);
-				}
-			} else {
-				if (trend.isMainLanguage()) {
-					this.mainLanguage = trend.getConcept();
-				}
-				this.languages.add(trend.getConcept());
-			}
-			break;
-		}
-		case NAME: {
-			NameTrend trend = (NameTrend) usingTrend;
-			if (trend.isDeletion()) {
-				this.languages.add(trend.getData().getFirst());
-				Set<Culture> culset = trend.getData().getFirst().getWord(trend.getConcept()) == null ? Set.of()
-						: Set.of(this);
-				trend.getData().getFirst().name(trend.getConcept(), trend.getData().getSecond(), culset);
-			}
 			break;
 		}
 		}

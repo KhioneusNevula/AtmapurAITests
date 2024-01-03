@@ -5,7 +5,6 @@ import java.util.Random;
 
 import actor.IUniqueExistence;
 import mind.concepts.type.IProfile;
-import mind.linguistics.NameWord;
 import mind.memory.IEmotions;
 import mind.memory.IMindMemory;
 import mind.personality.Personality;
@@ -86,8 +85,6 @@ public interface IIndividualMind extends IEntity {
 	void actionTicks(long tick);
 
 	public Collection<Culture> cultures();
-
-	public NameWord getNameWord();
 
 	public boolean hasEmotions();
 

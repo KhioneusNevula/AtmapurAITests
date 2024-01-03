@@ -8,7 +8,7 @@ import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 import mind.memory.RememberedProperties;
 
@@ -17,7 +17,7 @@ public enum PossessionIdentifier implements IPropertyIdentifier {
 	IDENTIFIER;
 
 	@Override
-	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IHasKnowledge ihk) {
+	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IUpgradedHasKnowledge ihk) {
 
 		if (forExistence instanceof Actor) {
 			IPropertyData data = new RememberedProperties(prop);

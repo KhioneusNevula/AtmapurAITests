@@ -1,17 +1,19 @@
 package mind.goals.question;
 
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.Map;
 
-import actor.Actor;
+import com.google.common.collect.Iterators;
+
+import mind.concepts.relations.ConceptRelationType;
 import mind.concepts.type.IMeme;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
-import mind.goals.ITaskGoal;
 import mind.linguistics.Language;
-import mind.memory.IHasKnowledge;
-import mind.memory.IKnowledgeBase;
+import mind.thought_exp.IUpgradedHasKnowledge;
+import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 
 /**
  * A Question is a "request for information" so to speak
@@ -61,51 +63,50 @@ public class Question implements IMeme {
 		this.arguments = Map.copyOf(args);
 	}
 
-	public boolean isAnswered(IHasKnowledge ihk) {
-		IKnowledgeBase knowledge = ihk.getKnowledgeBase();
+	public boolean isAnswered(IUpgradedHasKnowledge ihk) {
+		IUpgradedKnowledgeBase knowledge = ihk.getKnowledgeBase();
 		if (!knowledge.isKnown(topic))
 			throw new IllegalStateException(ihk + " does not know about " + topic);
 		switch (type) {
 		case LOCATION:
 			if (topic instanceof Profile)
-				return knowledge.knowsLocation((Profile) topic);
+				return knowledge.hasRelation(topic, topic, null);
 			else if (topic instanceof Property) {
 				// System.out.println("Checking location question for " + ihk + " with topic " +
 				// topic + "--");
-				Collection<Profile> check = new LinkedList<>(knowledge.getProfilesWithProperty((Property) topic));
+				Iterator<IProfile> check = knowledge.getProfilesWithProperty((Property) topic);
 				if (ihk.isMindMemory()) {
-					check.addAll(ihk.getMindMemory().getProfilesWithPropertyFromCulture((Property) topic).values());
+					for (UpgradedCulture culture : ihk.getMindMemory().cultures()) {
+						check = Iterators.concat(check, culture.getProfilesWithProperty((Property) topic));
+					}
 				}
-				for (Profile prof : check) {
+
+				while (check.hasNext()) {
+					IProfile prof = check.next();
 					// System.out.print("Checking " + topic + " at " + prof + "--");
-					if (knowledge.knowsLocation(prof)) {
+					if (knowledge.hasDirectionalRelationOfType(prof, ConceptRelationType.FOUND_AT)) {
 						// System.out.println("Location known for " + topic + " at " + prof);
 						return true;
 					}
 				}
 				// System.out.println();
-				if (ihk.isMindMemory()) {
-					// System.out.println("Checking senses");
-					check = ihk.getMindMemory().getSenses().getAllSensedProfiles();
-					for (Profile prof : check) {
-						Actor a = ihk.getMindMemory().getSenses().getActorFor(prof);
-						if (a == null)
-							continue;
-						// System.out.print("Checking " + topic + " at " + prof + "--");
-						if (ITaskGoal.getProperty(a, (Property) topic, ihk).isPresent()
-								&& ihk.getMindMemory().getSenses().getSensedLocation(prof) != null) {
-							// System.out.println("Location known for " + topic + " at " + prof);
-							return true;
-
-						}
-
-					}
-				}
+				/*
+				 * if (ihk.isMindMemory()) { check =
+				 * ihk.getMindMemory().getSenses().getAllSensedProfiles(); for (Profile prof :
+				 * check) { Actor a = ihk.getMindMemory().getSenses().getActorFor(prof); if (a
+				 * == null) continue; if (ITaskGoal.getProperty(a, (Property) topic,
+				 * ihk).isPresent() && ihk.getMindMemory().getSenses().getSensedLocation(prof)
+				 * != null) { return true;
+				 * 
+				 * }
+				 * 
+				 * } }
+				 */
 				// TODO also constructs
 			}
 			return false;
 		case PROPERTY:
-			return !knowledge.getProperties((Profile) topic, (Property) arguments.get("property")).isUnknown();
+			return !knowledge.getPropertyData((Profile) topic, (Property) arguments.get("property")).isUnknown();
 		case RELATIONSHIP:
 			// TODO relationship knowledge check
 		case LANGUAGE:

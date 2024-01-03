@@ -5,7 +5,6 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 import actor.Actor;
-import humans.Food;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
@@ -53,6 +52,9 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 		Collection<Actor> actors = mind.senseActors(mind.getAsHasActor().getActor().getWorld(), worldTick);
 		if (actors.isEmpty()) {
 			failure = "no actors sensed";
+			if (mind.getAsHasActor().getActor().getName().equals("bobzy")) {
+				System.out.print("");
+			}
 			return;
 		}
 
@@ -60,9 +62,11 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 		failure = "nothing held";
 		for (int i = 0; actorIterator.hasNext() && i < mind.getMaxFocusObjects();) {
 			Actor actor = actorIterator.next();
-			if (actor instanceof Food && actor.getPossessor() != null) {
-				System.out.print("");
-			}
+			/*
+			 * if (actor instanceof Food && actor.getPossessor() != null &&
+			 * mind.getAsHasActor().getActor().getName().equals("bobzy")) {
+			 * System.out.print(""); }
+			 */
 			/*
 			 * TODO use the held property
 			 *//*

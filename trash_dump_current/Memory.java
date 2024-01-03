@@ -54,9 +54,6 @@ public class Memory extends AbstractKnowledgeEntity implements IMindMemory {
 	public Memory addCulture(Culture culture) {
 
 		cultures.put(culture.getSelfProfile(), culture);
-		if (this.mainLanguage == null)
-			this.mainLanguage = culture.mainLanguage;
-		this.languages.addAll(culture.getLanguages());
 		return this;
 	}
 

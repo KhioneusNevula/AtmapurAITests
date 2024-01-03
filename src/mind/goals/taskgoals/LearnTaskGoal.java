@@ -6,7 +6,7 @@ import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
 import mind.goals.question.Question;
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class LearnTaskGoal implements ITaskGoal {
 
@@ -48,8 +48,8 @@ public class LearnTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
-		return question != null ? question.isAnswered(entity) : !entity.getMindMemory().isFeelingCurious();
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
+		return question != null ? question.isAnswered(entity) : true; // TODO curiosity emotion
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class LearnTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean isInvalid(IHasKnowledge knower) {
+	public boolean isInvalid(IUpgradedHasKnowledge knower) {
 		return !knower.isMindMemory();
 	}
 

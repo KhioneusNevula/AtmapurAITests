@@ -1,6 +1,6 @@
 package mind.goals;
 
-import mind.memory.IHasKnowledge;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.relationships.Role;
 
 public class ConductGoal implements IConduct {
@@ -38,7 +38,7 @@ public class ConductGoal implements IConduct {
 	}
 
 	@Override
-	public boolean isComplete(IHasKnowledge entity) {
+	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return false;
 	}
 
