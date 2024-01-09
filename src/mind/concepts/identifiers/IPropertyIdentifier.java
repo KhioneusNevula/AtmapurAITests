@@ -2,9 +2,10 @@ package mind.concepts.identifiers;
 
 import actor.IUniqueExistence;
 import actor.IVisage;
+import mind.concepts.CompositeIdentifier;
 import mind.concepts.type.Property;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * Some kind of class which identifies properties in something
@@ -52,6 +53,10 @@ public interface IPropertyIdentifier {
 	 */
 	default boolean isUnknown() {
 		return this == UNKNOWN;
+	}
+
+	default boolean isComposite() {
+		return this instanceof CompositeIdentifier;
 	}
 
 	/**

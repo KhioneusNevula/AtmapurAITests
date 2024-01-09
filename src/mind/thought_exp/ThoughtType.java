@@ -18,7 +18,7 @@ public enum ThoughtType implements IThoughtType {
 	/**
 	 * a thought representing the refinement of a belief (?) organizing mind (?) idk
 	 */
-	REFINE_BELIEFS(1),
+	REFINE_BELIEFS(10),
 	/** a thought to determine if something has a property */
 	EVALUATE_PROPERTY(10),
 	/** thoughts about sensory input, e.g. what is seen/heard/etc */

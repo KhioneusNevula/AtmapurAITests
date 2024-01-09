@@ -9,8 +9,9 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.speech.IUtterance;
+import mind.thought_exp.IThought;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class TalkTaskGoal implements ITaskGoal {
 
@@ -47,6 +48,16 @@ public class TalkTaskGoal implements ITaskGoal {
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		// TODO check if a communication goal is complete
+		return false;
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		return null;
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
 		return false;
 	}
 

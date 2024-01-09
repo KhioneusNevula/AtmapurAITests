@@ -29,6 +29,8 @@ public class WorldGraphics extends PApplet {
 	private IRenderable currentScreen;
 	private final float fps;
 	public static final int BORDER = 30;
+	private UpgradedCulture lens; // TODO allow interpreting the world using a culture as a 'lens,' i.e. using its
+									// language and stuff like that
 
 	public WorldGraphics(World world, float fps) {
 		this.fps = fps;
@@ -139,6 +141,14 @@ public class WorldGraphics extends PApplet {
 			/* if (this.currentDisplay == Display.WORLD) */ if (this.mouseX < world.getWidth() + BORDER) {
 				world.spawnActor(new Food(world, "nom" + this.mouseX + "_" + this.mouseY, world.clampX(mouseX - BORDER),
 						world.clampY(mouseY - BORDER), 5));
+			}
+		} else if (event.getKeyCode() == KeyEvent.VK_T) {
+			if (this.currentScreen instanceof UpgradedMindDisplay md) {
+				md.setCurrentScreen(UpgradedMindDisplay.Screen.THOUGHTS);
+			}
+		} else if (event.getKeyCode() == KeyEvent.VK_R) {
+			if (this.currentScreen instanceof UpgradedMindDisplay md) {
+				md.setCurrentScreen(UpgradedMindDisplay.Screen.RELATION_KNOWLEDGE);
 			}
 		}
 		super.keyPressed(event);

@@ -3,6 +3,7 @@ package actor;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -17,9 +18,10 @@ import biology.systems.ISystemHolder;
 import biology.systems.SystemType;
 import biology.systems.types.ISensor;
 import biology.systems.types.LifeSystem;
+import main.Pair;
 import mind.concepts.type.Property;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import processing.core.PApplet;
 import sim.Location;
 import sim.World;
@@ -61,9 +63,14 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 
 	private UUID uuid = UUID.randomUUID();
 
-	private Table<IUpgradedKnowledgeBase, Property, IPropertyData> socialProperties;
+	private Table<IUpgradedKnowledgeBase, Property, Pair<IPropertyData, Long>> socialProperties;
 
 	protected ITemplate species;
+
+	/**
+	 * Amount of milliseconds it takes properties to fade
+	 */
+	private long propertyDecayTime = 10000;// TODO change this to 86400000L;
 
 	public Actor(World world, String name, ITemplate species, int startX, int startY, int radius) {
 		this.world = world;
@@ -117,6 +124,11 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return name;
 	}
 
+	@Override
+	public String getSimpleName() {
+		return name;
+	}
+
 	public World getWorld() {
 		return world;
 	}
@@ -166,6 +178,15 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 	public void finalTick() {
 		if (world.getTicks() % 5 == 0) {
 			// TODO post sensory
+		}
+		if (socialProperties != null) {
+			Iterator<Pair<IPropertyData, Long>> iter = socialProperties.values().iterator();
+			while (iter.hasNext()) {
+				Pair<IPropertyData, Long> obj = iter.next();
+				if (System.currentTimeMillis() - obj.getSecond() >= this.propertyDecayTime) {
+					iter.remove();
+				}
+			}
 		}
 	}
 
@@ -395,21 +416,35 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 		return obj instanceof Actor a && a.uuid.equals(this.uuid);
 	}
 
+	/**
+	 * check = true if the property's "timer" should renew when checked
+	 * 
+	 * @param culture
+	 * @param property
+	 * @param check
+	 * @return
+	 */
 	@Override
-	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property, boolean check) {
+		if (property == Property.ANY)
+			return IPropertyData.PRESENCE;
 		if (this.socialProperties == null)
 			return IPropertyData.UNKNOWN;
-		return socialProperties.contains(culture, property) ? socialProperties.get(culture, property)
-				: IPropertyData.UNKNOWN;
+		Pair<IPropertyData, Long> pair = socialProperties.get(culture, property);
+		if (pair == null)
+			return IPropertyData.UNKNOWN;
+		if (check)
+			pair.setSecond(System.currentTimeMillis());
+		return pair.getFirst();
 	}
 
 	@Override
 	public void assignProperty(IUpgradedKnowledgeBase culture, Property property, IPropertyData data) {
 		(socialProperties == null ? socialProperties = HashBasedTable.create() : socialProperties).put(culture,
-				property, data);
+				property, Pair.of("data", data, "added_time", System.currentTimeMillis()));
 	}
 
-	public Map<IUpgradedKnowledgeBase, Map<Property, IPropertyData>> getSocialProperties() {
+	public Map<IUpgradedKnowledgeBase, Map<Property, Pair<IPropertyData, Long>>> getSocialProperties() {
 		return socialProperties == null ? Map.of() : socialProperties.rowMap();
 	}
 
@@ -443,6 +478,8 @@ public abstract class Actor implements IUniqueExistence, IRenderable, IPhysicalE
 
 	@Override
 	public IPropertyData getPropertyHint(Property property) {
+		if (property == Property.ANY)
+			return IPropertyData.PRESENCE;
 		return this.species.getPropertyHint(property);
 	}
 

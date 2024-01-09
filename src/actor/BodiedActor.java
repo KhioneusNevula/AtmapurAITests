@@ -13,9 +13,9 @@ public class BodiedActor extends MultipartActor {
 
 	protected void initBody() {
 		if (species == null)
-			this.body = new Body(this.getUUID());
+			this.body = new Body(this);
 		else {
-			this.body = new Body(getUUID(), (ISpeciesTemplate) species);
+			this.body = new Body(this, (ISpeciesTemplate) species);
 
 		}
 		((Body) this.body).buildBody();

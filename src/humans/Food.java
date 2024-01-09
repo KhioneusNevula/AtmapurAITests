@@ -13,7 +13,7 @@ import sim.World;
 
 public class Food extends Actor {
 
-	private IVisage visage = new SimpleVisage();
+	private IVisage visage = new SimpleVisage(this);
 	public static final ActorType FOOD_TYPE = ActorType.Builder.start("food")
 			.addHint(BasicProperties.FOOD, () -> IPropertyData.PRESENCE, ISensor.SIGHT).build();
 

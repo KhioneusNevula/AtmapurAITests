@@ -62,15 +62,6 @@ public interface IGoal extends IMeme {
 	public Type getGoalType();
 
 	/**
-	 * Whether this is an unknown goal
-	 * 
-	 * @return
-	 */
-	default boolean isUnknown() {
-		return false;
-	}
-
-	/**
 	 * Whether this is a placeholder goal indicating finishedness
 	 * 
 	 * @return
@@ -94,8 +85,7 @@ public interface IGoal extends IMeme {
 	public boolean societalGoal();
 
 	/**
-	 * Checks whether the goal is complete for a certain entity, by the action if
-	 * applicable
+	 * Checks whether the goal is complete for a certain entity.
 	 */
 	boolean isComplete(IUpgradedHasKnowledge entity);
 

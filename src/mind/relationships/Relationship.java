@@ -126,7 +126,7 @@ public class Relationship implements Comparable<Relationship>, IMeme {
 
 	@Override
 	public String getUniqueName() {
-		return "rel" + this.relationshipID;
+		return "relship_" + this.relationshipID;
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package sim;
 import java.awt.Color;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -18,15 +19,18 @@ import actor.IVisage;
 import actor.UpgradedSentientActor;
 import biology.anatomy.ISpeciesTemplate;
 import biology.anatomy.Species;
+import humans.BadThing;
+import humans.Flower;
 import humans.Food;
 import humans.UpgradedPerson;
 import main.ImmutableCollection;
 import mind.concepts.type.Property;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
 import mind.relationships.Relationship;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.culture.UpgradedGroup;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
+import phenomenon.IPhenomenon;
 import sim.interfaces.IRenderable;
 
 /**
@@ -38,6 +42,7 @@ import sim.interfaces.IRenderable;
 public class World implements IUniqueExistence, IRenderable {
 
 	protected Map<UUID, Actor> actors = new HashMap<>();
+	private Map<UUID, IPhenomenon> phenomena = new HashMap<>();
 
 	private final int width, height;
 	private UpgradedSentientActor testActor;
@@ -45,6 +50,7 @@ public class World implements IUniqueExistence, IRenderable {
 	private Random rand = new Random();
 	protected long ticks = 0;
 	private ImmutableCollection<Actor> actorCollection = new ImmutableCollection<>(actors.values());
+	private ImmutableCollection<IPhenomenon> phenCollection = new ImmutableCollection<>(phenomena.values());
 	private UUID id = UUID.randomUUID();
 	private Map<String, UpgradedGroup> groups;
 	private Map<ISpeciesTemplate, UpgradedCulture> defaultCultures;
@@ -52,6 +58,11 @@ public class World implements IUniqueExistence, IRenderable {
 	public World(int width, int height) {
 		this.width = width;
 		this.height = height;
+	}
+
+	@Override
+	public String getSimpleName() {
+		return "worldEntity";
 	}
 
 	public int getWidth() {
@@ -62,7 +73,7 @@ public class World implements IUniqueExistence, IRenderable {
 		return height;
 	}
 
-	public <T extends Actor> T spawnActor(T a) {
+	public synchronized <T extends Actor> T spawnActor(T a) {
 		this.actors.put(a.getUUID(), a);
 		System.out.println("Spawned " + a);
 		if (a == testActor && a.isMultipart())
@@ -70,7 +81,12 @@ public class World implements IUniqueExistence, IRenderable {
 		return a;
 	}
 
-	public UpgradedGroup makeGroup(String identifier) {
+	public synchronized <T extends IPhenomenon> T createPhenomenon(T a) {
+		this.phenomena.put(a.getUUID(), a);
+		return a;
+	}
+
+	public synchronized UpgradedGroup makeGroup(String identifier) {
 		UpgradedGroup group = new UpgradedGroup(identifier, this.rand);
 		(this.groups == null ? groups = new TreeMap<>() : groups).put(identifier, group);
 		return group;
@@ -80,7 +96,7 @@ public class World implements IUniqueExistence, IRenderable {
 		return defaultCultures == null ? null : defaultCultures.get(forSp);
 	}
 
-	public UpgradedCulture getOrGenDefaultCulture(ISpeciesTemplate forSp) {
+	public synchronized UpgradedCulture getOrGenDefaultCulture(ISpeciesTemplate forSp) {
 		UpgradedCulture a = this.getDefaultCulture(forSp);
 		if (a == null) {
 			a = this.putDefaultCulture(forSp);
@@ -98,6 +114,10 @@ public class World implements IUniqueExistence, IRenderable {
 
 	public Collection<Actor> getActors() {
 		return actorCollection;
+	}
+
+	public Collection<IPhenomenon> getPhenomena() {
+		return phenCollection;
 	}
 
 	/**
@@ -142,29 +162,53 @@ public class World implements IUniqueExistence, IRenderable {
 			y = Math.max(0, Math.min(height, 401 + (int) (i * (rand().nextDouble() * 5 - 10))));
 
 			this.spawnActor(new Food(this, "food" + i, x, y, 5));
+
+			x = Math.max(0, Math.min(width, 501 + (int) (i * (rand().nextDouble() * 5 - 10))));
+			y = Math.max(0, Math.min(height, 401 + (int) (i * (rand().nextDouble() * 5 - 10))));
+
+			if (i % 5 == 0) {
+
+				this.spawnActor(new BadThing(this, "evil" + i, x, y, 10));
+			} else {
+				this.spawnActor(new Flower(this, "flower" + i, x, y, (rand().nextInt(5) + 5)));
+			}
 		}
 	}
 
 	public synchronized void worldTick() {
-
-		for (Actor e : Set.copyOf(actors.values())) {
-			if (e.isRemoved()) {
-				if (e instanceof UpgradedSentientActor sa) {
-					sa.getMind().kill();
+		if (this.testActor.isRemoved())
+			makeTestActor();
+		synchronized (actors) {
+			Iterator<Actor> iter = actors.values().iterator();
+			while (iter.hasNext()) {
+				Actor e = iter.next();
+				if (e.isRemoved()) {
+					if (e instanceof UpgradedSentientActor sa) {
+						sa.getMind().kill();
+					}
+					iter.remove();
 				}
-				actors.remove(e.getUUID());
-				if (e == this.testActor)
-					makeTestActor();
-			}
-			e.movementTick();
-			e.tick();
-			e.senseTick();
-			e.thinkTick();
+				e.movementTick();
+				e.tick();
+				e.senseTick();
+				e.thinkTick();
 
-		}
-		for (Actor e : actors.values()) {
-			e.actionTick();
-			e.finalTick();
+			}
+
+			synchronized (phenomena) {
+				Iterator<IPhenomenon> iter2 = phenomena.values().iterator();
+				while (iter2.hasNext()) {
+					IPhenomenon p = iter2.next();
+					p.tick();
+					if (p.isComplete()) {
+						iter2.remove();
+					}
+				}
+			}
+			for (Actor e : actors.values()) {
+				e.actionTick();
+				e.finalTick();
+			}
 		}
 		for (UpgradedGroup g : groups.values()) {
 			g.tick(this.ticks);
@@ -212,11 +256,17 @@ public class World implements IUniqueExistence, IRenderable {
 
 		for (Actor e : actors.values()) {
 
-			if (e.canRender())
+			if (e.canRender()) {
 				e.draw(graphics);
+			}
 		}
-		graphics.popStyle();
+		for (IPhenomenon e : phenomena.values()) {
+			if (e.canRender()) {
+				e.draw(graphics);
+			}
+		}
 		graphics.popMatrix();
+		graphics.popStyle();
 	}
 
 	@Override
@@ -282,7 +332,7 @@ public class World implements IUniqueExistence, IRenderable {
 	}
 
 	@Override
-	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property, boolean check) {
 		return IPropertyData.UNKNOWN;
 	}
 

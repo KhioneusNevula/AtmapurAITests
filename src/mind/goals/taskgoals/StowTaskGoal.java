@@ -1,12 +1,17 @@
 package mind.goals.taskgoals;
 
+import java.util.Collection;
+
 import actor.Actor;
 import mind.concepts.type.IProfile;
+import mind.concepts.type.Property;
 import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
+import mind.thought_exp.info_thoughts.CheckHeldItemsThought;
 
 public class StowTaskGoal implements ITaskGoal {
 
@@ -37,7 +42,22 @@ public class StowTaskGoal implements ITaskGoal {
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
 
-		return entity.getAsHasActor().getActor().getHeld() == null;
+		return false;
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		return new CheckHeldItemsThought(Property.ANY);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought, Object result) {
+		return ((Collection<Actor>) result).isEmpty();
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+		return true;
 	}
 
 	@Override

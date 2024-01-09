@@ -40,22 +40,23 @@ public enum Species implements ISpeciesTemplate {
 						ActionType.WANDER, ActionType.SEARCH)) {
 					c.learnConcept(type);
 				}
-			}),
+			}, 0.5f),
 	ELF(HUMAN, Set.of(), Set.of(), Set.of(), Set.of("moustache", "beard"), c -> {
-	}),
+	}, 0.5f),
 	FAIRY(HUMAN, Set.of(TissueType.ESSENCE),
 			Set.of(BodyPartType.LEFT_WING, BodyPartType.RIGHT_WING, BodyPartType.LEFT_WING_BONE,
 					BodyPartType.RIGHT_WING_BONE, BodyPartType.TAIL, BodyPartType.TAILBONE),
 			Set.of("blood"), Set.of(), (c) -> {
-			}),
+			}, 0.8f),
 	IMP(FAIRY, Set.of(),
 			Set.of(BodyPartType.LEFT_HORN, BodyPartType.RIGHT_HORN, BodyPartType.TAIL.withoutTissueTags("hair")),
 			Set.of(), Set.of("hair", "beard", "moustache"), c -> {
-			});
+			}, 0.8f);
 
 	private Map<String, ITissueLayerType> tissue = ImmutableMap.of();
 	private Map<String, IBodyPartType> parts = ImmutableMap.of();
 	private Consumer<UpgradedCulture> genCulture;
+	private float averageUniqueness;
 
 	/**
 	 * Copy a previous template and either replace existing bodyparts/tissuelayers
@@ -66,7 +67,8 @@ public enum Species implements ISpeciesTemplate {
 	 * @param parts
 	 */
 	private Species(Species other, Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts,
-			Collection<String> deleteTissue, Collection<String> deleteParts, Consumer<UpgradedCulture> gdc) {
+			Collection<String> deleteTissue, Collection<String> deleteParts, Consumer<UpgradedCulture> gdc,
+			float averageUniqueness) {
 		Map<String, ITissueLayerType> tiss = new TreeMap<>(other.tissueTypes());
 		Map<String, IBodyPartType> par = new TreeMap<>(other.partTypes());
 		for (String del : deleteTissue)
@@ -90,10 +92,11 @@ public enum Species implements ISpeciesTemplate {
 		this.tissue = ImmutableMap.copyOf(b);
 		this.parts = ImmutableMap.copyOf(b2);
 		this.genCulture = other.genCulture.andThen(gdc);
+		this.averageUniqueness = averageUniqueness;
 	}
 
-	private Species(Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts,
-			Consumer<UpgradedCulture> gdc) {
+	private Species(Collection<ITissueLayerType> tissue, Collection<IBodyPartType> parts, Consumer<UpgradedCulture> gdc,
+			float averageUniqueness) {
 		ImmutableMap.Builder<String, ITissueLayerType> tissueL = ImmutableMap.builder();
 		ImmutableMap.Builder<String, IBodyPartType> partL = ImmutableMap.builder();
 		for (ITissueLayerType tl : tissue)
@@ -103,6 +106,12 @@ public enum Species implements ISpeciesTemplate {
 		this.tissue = tissueL.build();
 		this.parts = partL.build();
 		this.genCulture = gdc;
+		this.averageUniqueness = averageUniqueness;
+	}
+
+	@Override
+	public float averageUniqueness() {
+		return averageUniqueness;
 	}
 
 	@Override
@@ -117,6 +126,11 @@ public enum Species implements ISpeciesTemplate {
 
 	@Override
 	public String toString() {
+		return "species_" + this.name();
+	}
+
+	@Override
+	public String getUniqueName() {
 		return "species_" + this.name();
 	}
 

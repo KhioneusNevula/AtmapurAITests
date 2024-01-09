@@ -35,6 +35,7 @@ public class Profile implements IProfile {
 
 	public Profile(IUnique unique) {
 		this(unique.getUUID(), unique.getUnitString());
+		this.uniqueName = "profile_" + unique.getSimpleName();
 	}
 
 	@Override

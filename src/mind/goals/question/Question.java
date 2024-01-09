@@ -11,6 +11,7 @@ import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.linguistics.Language;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.memory.IUpgradedKnowledgeBase;
@@ -63,45 +64,47 @@ public class Question implements IMeme {
 		this.arguments = Map.copyOf(args);
 	}
 
-	public boolean isAnswered(IUpgradedHasKnowledge ihk) {
+	public IThought getAnsweringThought(IUpgradedHasKnowledge ihk) {
+		switch (type) {
+		default:
+			return null; // TODO implement answerer thoughts
+		}
+	}
+
+	public boolean isAnsweredAccordingToThought(IThought thought, Object result) {
+		switch (type) {
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * true = answered. false = not answered. null = use a thought to check answer
+	 * 
+	 * @param ihk
+	 * @return
+	 */
+	public Boolean isAnswered(IUpgradedHasKnowledge ihk) {
 		IUpgradedKnowledgeBase knowledge = ihk.getKnowledgeBase();
 		if (!knowledge.isKnown(topic))
 			throw new IllegalStateException(ihk + " does not know about " + topic);
 		switch (type) {
 		case LOCATION:
 			if (topic instanceof Profile)
-				return knowledge.hasRelation(topic, topic, null);
+				return knowledge.hasRelation(topic, topic, ConceptRelationType.FOUND_AT);
 			else if (topic instanceof Property) {
-				// System.out.println("Checking location question for " + ihk + " with topic " +
-				// topic + "--");
 				Iterator<IProfile> check = knowledge.getProfilesWithProperty((Property) topic);
 				if (ihk.isMindMemory()) {
 					for (UpgradedCulture culture : ihk.getMindMemory().cultures()) {
 						check = Iterators.concat(check, culture.getProfilesWithProperty((Property) topic));
 					}
 				}
-
 				while (check.hasNext()) {
 					IProfile prof = check.next();
-					// System.out.print("Checking " + topic + " at " + prof + "--");
 					if (knowledge.hasDirectionalRelationOfType(prof, ConceptRelationType.FOUND_AT)) {
-						// System.out.println("Location known for " + topic + " at " + prof);
 						return true;
 					}
 				}
-				// System.out.println();
-				/*
-				 * if (ihk.isMindMemory()) { check =
-				 * ihk.getMindMemory().getSenses().getAllSensedProfiles(); for (Profile prof :
-				 * check) { Actor a = ihk.getMindMemory().getSenses().getActorFor(prof); if (a
-				 * == null) continue; if (ITaskGoal.getProperty(a, (Property) topic,
-				 * ihk).isPresent() && ihk.getMindMemory().getSenses().getSensedLocation(prof)
-				 * != null) { return true;
-				 * 
-				 * }
-				 * 
-				 * } }
-				 */
 				// TODO also constructs
 			}
 			return false;

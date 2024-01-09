@@ -12,6 +12,7 @@ import mind.concepts.type.Property;
 import mind.goals.question.Question;
 import mind.memory.IPropertyData;
 import mind.speech.IUtterance;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.memory.IBrainMemory;
@@ -32,6 +33,16 @@ public interface ITaskGoal extends IGoal {
 		@Override
 		public boolean isDone() {
 			return true;
+		}
+
+		@Override
+		public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+			return false;
+		}
+
+		@Override
+		public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+			return null;
 		}
 
 		@Override
@@ -72,54 +83,6 @@ public interface ITaskGoal extends IGoal {
 		@Override
 		public String getUniqueName() {
 			return "goal_FINISHED";
-		}
-
-		@Override
-		public String toString() {
-			return getUniqueName();
-		}
-	};
-
-	public static final ITaskGoal UNKNOWN = new ITaskGoal() {
-
-		@Override
-		public ITaskHint getActionHint() {
-			return TaskHint.NONE;
-		}
-
-		@Override
-		public Priority getPriority() {
-			return Priority.TRIVIAL;
-		}
-
-		@Override
-		public IProfile beneficiary() {
-			return null;
-		}
-
-		@Override
-		public boolean individualGoal() {
-			return false;
-		}
-
-		@Override
-		public boolean societalGoal() {
-			return false;
-		}
-
-		@Override
-		public boolean isComplete(IUpgradedHasKnowledge entity) {
-			return false;
-		}
-
-		@Override
-		public boolean isInvalid(IUpgradedHasKnowledge knower) {
-			return false;
-		}
-
-		@Override
-		public String getUniqueName() {
-			return "goal_UNKNOWN";
 		}
 
 		@Override
@@ -243,10 +206,6 @@ public interface ITaskGoal extends IGoal {
 		return Set.of();
 	}
 
-	default boolean isUnknown() {
-		return this == UNKNOWN;
-	}
-
 	@Override
 	default IMemeType getMemeType() {
 		return MemeType.TASK_GOAL;
@@ -259,6 +218,34 @@ public interface ITaskGoal extends IGoal {
 	}
 
 	/**
+	 * Whether to create a new thought to check completion
+	 * 
+	 * @param mind
+	 * @return
+	 */
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind);
+
+	/**
+	 * Return a thought that will check if the goal is complete. This is only
+	 * returned if isComplete returns false but useThoughtToCheckCompletion returns
+	 * true.
+	 * 
+	 * @param mind
+	 * @return
+	 */
+	public IThought checkCompletion(IUpgradedHasKnowledge mind);
+
+	/**
+	 * check the result of the completion-checking thought
+	 * 
+	 * @param thought
+	 * @return
+	 */
+	public default boolean checkResult(IThought thought, Object result) {
+		return result == Boolean.TRUE;
+	}
+
+	/**
 	 * Uses the given knowledge base and the actor's contained properties to figure
 	 * out if this has a given property
 	 * 
@@ -268,15 +255,17 @@ public interface ITaskGoal extends IGoal {
 	 * @return
 	 */
 	public static IPropertyData getProperty(Actor actor, Property property, IUpgradedHasKnowledge entity) {
+		if (property == Property.ANY)
+			return IPropertyData.PRESENCE;
 		IUpgradedKnowledgeBase knowledge = entity.getKnowledgeBase();
-		IPropertyData dat = actor.getPropertyData(knowledge, property);
+		IPropertyData dat = actor.getPropertyData(knowledge, property, true);
 		IPropertyData dat2 = knowledge.getPropertyData(new Profile(actor), property);
 		if (dat2.getKnownCount() > dat.getKnownCount()) {
 			dat = dat2;
 		}
 		if (knowledge instanceof IBrainMemory) {
 			for (UpgradedCulture cult : ((IBrainMemory) knowledge).cultures()) {
-				IPropertyData twa = actor.getPropertyData(cult, property);
+				IPropertyData twa = actor.getPropertyData(cult, property, true);
 				if (twa.getKnownCount() > dat.getKnownCount())
 					dat = twa;
 

@@ -5,6 +5,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
 
 public enum RestTaskGoal implements ITaskGoal {
@@ -46,6 +47,16 @@ public enum RestTaskGoal implements ITaskGoal {
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return !entity.getAsMind().conscious();
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		return null;
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+		return false;
 	}
 
 	@Override

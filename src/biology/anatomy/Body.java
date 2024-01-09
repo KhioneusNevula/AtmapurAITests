@@ -13,6 +13,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Table;
 
+import actor.Actor;
 import actor.IComponentPart;
 import actor.IMultipart;
 import actor.IPartAbility;
@@ -36,7 +37,7 @@ public class Body implements IMultipart {
 	private Multimap<IPartAbility, BodyPart> partsByAbility = MultimapBuilder.hashKeys().treeSetValues().build();
 	private UUID rootID;
 	private BodyPart rootPart;
-	private UUID owner;
+	private Actor owner;
 	private boolean built;
 	private float lifePercent = 1f;
 	private ISpeciesTemplate species;
@@ -44,11 +45,11 @@ public class Body implements IMultipart {
 	private Multimap<ISensor, SenseProperty<?>> potentialSenses;
 	private boolean invisible;
 
-	public Body(UUID owner) {
+	public Body(Actor owner) {
 		this.owner = owner;
 	}
 
-	public Body(UUID owner, ISpeciesTemplate template) {
+	public Body(Actor owner, ISpeciesTemplate template) {
 		this.owner = owner;
 		this.species = template;
 	}
@@ -132,8 +133,9 @@ public class Body implements IMultipart {
 				}
 				for (SenseProperty<?> prop : partType.getSensableProperties()) {
 					if (prop.isUnique()) {
-						part.setSensableProperty(prop, this.owner); // set this property to uniquely match the owner's
-																	// id
+						part.setSensableProperty(prop, this.owner.getUUID()); // set this property to uniquely match the
+																				// owner's
+						// id
 					}
 				}
 				if (partType.isRoot()) {
@@ -378,6 +380,11 @@ public class Body implements IMultipart {
 	@Override
 	public boolean isInvisible() {
 		return invisible;
+	}
+
+	@Override
+	public Actor getOwner() {
+		return this.owner;
 	}
 
 	@Override

@@ -13,6 +13,12 @@ import biology.systems.types.ISensor;
 import mind.concepts.type.Property;
 import mind.memory.IPropertyData;
 
+/**
+ * Use this for entities that have virtually zero individuality among them.
+ * 
+ * @author borah
+ *
+ */
 public class ActorType implements ITemplate {
 
 	private String name;
@@ -29,6 +35,11 @@ public class ActorType implements ITemplate {
 	}
 
 	@Override
+	public float averageUniqueness() {
+		return 0;
+	}
+
+	@Override
 	public IPropertyData getPropertyHint(Property property) {
 		Supplier<IPropertyData> generator = generatorFunctions.get(property);
 		if (generator == null)
@@ -39,6 +50,21 @@ public class ActorType implements ITemplate {
 	@Override
 	public Collection<ISensor> getPreferredSensesForHint(Property property) {
 		return this.propertyHintSenses == null ? Set.of() : propertyHintSenses.get(property);
+	}
+
+	@Override
+	public String toString() {
+		return "ActorType(" + name + ")";
+	}
+
+	@Override
+	public String getUniqueName() {
+		return "actortype_" + name;
+	}
+
+	@Override
+	public int hashCode() {
+		return getUniqueName().hashCode();
 	}
 
 	public static class Builder {

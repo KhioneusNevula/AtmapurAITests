@@ -1,16 +1,16 @@
 package mind.concepts;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
 import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.type.Property;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class CompositeIdentifier implements IPropertyIdentifier {
 	private Set<IPropertyIdentifier> idens = Set.of();
@@ -23,8 +23,23 @@ public class CompositeIdentifier implements IPropertyIdentifier {
 		return this.idens.isEmpty();
 	}
 
+	/**
+	 * Adds identifiers; if any are Composite, add all of its constituents
+	 * 
+	 * @param identifier
+	 * @return
+	 */
 	public CompositeIdentifier addIdentifier(IPropertyIdentifier... identifier) {
-		idens = ImmutableSet.<IPropertyIdentifier>builder().addAll(Sets.union(idens, Set.of(identifier))).build();
+		Set<IPropertyIdentifier> ids = new HashSet<>();
+		ids.addAll(idens);
+		for (IPropertyIdentifier id : identifier) {
+			if (id instanceof CompositeIdentifier) {
+				ids.addAll(((CompositeIdentifier) id).idens);
+			} else {
+				ids.add(id);
+			}
+		}
+		idens = ImmutableSet.<IPropertyIdentifier>builder().addAll(ids).build();
 		return this;
 	}
 
@@ -56,6 +71,25 @@ public class CompositeIdentifier implements IPropertyIdentifier {
 			return false;
 		}
 		return false;
+	}
+
+	/**
+	 * Remove a given identifier/set of identifiers from this identifier
+	 * 
+	 * @param identifier
+	 * @return
+	 */
+	public boolean removeIdentifier(IPropertyIdentifier identifier) {
+		if (identifier instanceof CompositeIdentifier) {
+			CompositeIdentifier ci = (CompositeIdentifier) identifier;
+			return idens.removeAll(ci.idens);
+		}
+		return idens.remove(identifier);
+	}
+
+	@Override
+	public String toString() {
+		return "CID" + idens + "";
 	}
 
 }

@@ -2,10 +2,13 @@ package mind.thought_exp.memory;
 
 import java.util.Collection;
 
+import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.feeling.IFeeling;
 import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
+import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.culture.UpgradedCulture;
 
 public interface IBrainMemory extends IUpgradedKnowledgeBase {
@@ -43,7 +46,7 @@ public interface IBrainMemory extends IUpgradedKnowledgeBase {
 	 * @param type
 	 * @return
 	 */
-	public Collection<IThoughtMemory> getShortTermMemoriesOfType(IThoughtMemory.Type type);
+	public Collection<IThoughtMemory> getShortTermMemoriesOfType(IThoughtMemory.MemoryCategory type);
 
 	/**
 	 * Keeps this thought in short term memory; return false if there isn't space
@@ -53,12 +56,39 @@ public interface IBrainMemory extends IUpgradedKnowledgeBase {
 	public boolean rememberShortTerm(IThoughtMemory memory);
 
 	/**
-	 * Forget this memory from short term, return false if it isn't there
+	 * Remember this memory in the given section of interest; return false if there
+	 * isn't space or whatever
+	 * 
+	 * @param memoryType
+	 * @param memory
+	 * @return
+	 */
+	public boolean remember(Interest memoryType, IThoughtMemory memory);
+
+	/**
+	 * Forget this memory, return false if it isn't there
 	 * 
 	 * @param memory
 	 * @return
 	 */
-	public boolean forgetShortTerm(IThoughtMemory memory);
+	public boolean forgetMemory(Interest fromSection, IThoughtMemory memory);
+
+	/**
+	 * Gets memories of this section
+	 * 
+	 * @param section
+	 * @return
+	 */
+	public Collection<IThoughtMemory> getMemories(Interest section);
+
+	/**
+	 * Get memories of this type from the given section
+	 * 
+	 * @param section
+	 * @param type
+	 * @return
+	 */
+	public Collection<IThoughtMemory> getMemoriesOfType(Interest section, MemoryCategory type);
 
 	/**
 	 * Associate feelings with concepts
@@ -67,5 +97,12 @@ public interface IBrainMemory extends IUpgradedKnowledgeBase {
 	 * @return
 	 */
 	IFeeling getAssociatedFeeling(IMeme concept);
+
+	/**
+	 * return null if you store data another way. This is just for Mind Display
+	 * 
+	 * @return
+	 */
+	RelationsGraph getRelationsGraph();
 
 }

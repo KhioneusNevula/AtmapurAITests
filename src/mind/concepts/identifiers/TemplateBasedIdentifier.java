@@ -1,13 +1,11 @@
 package mind.concepts.identifiers;
 
-import java.util.function.Function;
-
 import actor.ITemplate;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import mind.concepts.type.Property;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * Returns Presence if the predicate returns true
@@ -18,20 +16,19 @@ import mind.memory.IPropertyData;
 public class TemplateBasedIdentifier implements IPropertyIdentifier {
 
 	private ITemplate template;
-	private Function<IUniqueExistence, IPropertyData> func;
 	private double chance;
 
-	public TemplateBasedIdentifier(ITemplate template, Function<IUniqueExistence, IPropertyData> func, double chance) {
+	public TemplateBasedIdentifier(ITemplate template, double chance) {
 		this.template = template;
-		this.func = func;
 		this.chance = chance;
 	}
 
 	@Override
-	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage, IUpgradedHasKnowledge ihk) {
+	public IPropertyData identifyInfo(Property prop, IUniqueExistence forExistence, IVisage visage,
+			IUpgradedHasKnowledge ihk) {
 
-		return (forExistence.getSpecies().equals(template) && forExistence.rand().nextDouble() <= chance
-				? func.apply(forExistence)
+		return (forExistence.getVisage().getSpecies().equals(template) && forExistence.rand().nextDouble() <= chance
+				? forExistence.getVisage().getSpecies().getPropertyHint(prop)
 				: IPropertyData.UNKNOWN);
 	}
 
@@ -41,6 +38,16 @@ public class TemplateBasedIdentifier implements IPropertyIdentifier {
 			return false;
 		TemplateBasedIdentifier tbi = (TemplateBasedIdentifier) obj;
 		return tbi.template.equals(this.template);
+	}
+
+	@Override
+	public String toString() {
+		return "TemplateID:" + this.template;
+	}
+
+	@Override
+	public int hashCode() {
+		return this.template.hashCode();
 	}
 
 }

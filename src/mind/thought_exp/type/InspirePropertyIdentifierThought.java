@@ -9,15 +9,15 @@ import com.google.common.collect.Iterators;
 import actor.ITemplate;
 import actor.IUniqueExistence;
 import biology.systems.types.ISensor;
-import humans.Food;
-import mind.concepts.PropertyController;
 import mind.concepts.identifiers.TemplateBasedIdentifier;
-import mind.concepts.type.BasicProperties;
+import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.memory.type.PropertyIdentifierMemory;
 import sim.World;
 
 public class InspirePropertyIdentifierThought extends AbstractThought {
@@ -26,12 +26,11 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 	private boolean failed;
 	private Iterator<? extends IUniqueExistence> forEntities;
 	private World senseworld;
-	private PropertyController controller;
-	private Map<ITemplate, Integer> identifiers = new HashMap<>();
-	private int actorCount = 1;
+	private Property property;
+	private Map<ITemplate, TemplateBasedIdentifier> identifiers = new HashMap<>();
 
-	public InspirePropertyIdentifierThought(PropertyController property, World senseworld) {
-		this.controller = property;
+	public InspirePropertyIdentifierThought(Property property, World senseworld) {
+		this.property = property;
 		this.senseworld = senseworld;
 	}
 
@@ -42,12 +41,12 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 
 	@Override
 	public boolean isLightweight() {
-		return true;
+		return false;
 	}
 
 	@Override
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return Interest.FORGET;
+	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return IThoughtMemory.Interest.FORGET;
 	}
 
 	@Override
@@ -75,26 +74,18 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 		if (forEntities.hasNext()) {
 			for (int i = 0; i < memory.getMaxFocusObjects() && forEntities.hasNext(); i++) {
 				IUniqueExistence iue = forEntities.next();
-				ITemplate template = iue.getSpecies();
-				if (this.controller.getProperty() == BasicProperties.FOOD && template == Food.FOOD_TYPE)
-					System.out.print("");
+				ITemplate template = iue.getVisage().getSpecies();
 				boolean senses = true;
-				for (ISensor sensor : template.getPreferredSensesForHint(controller.getProperty())) {
+				for (ISensor sensor : template.getPreferredSensesForHint(property)) {
 					if (!memory.getSenses().contains(sensor)) {
 						senses = false;
 						break;
 					}
 				}
-				senses = senses && !template.getPropertyHint(controller.getProperty()).isUnknown();
+				senses = senses && !template.getPropertyHint(property).isUnknown();
 				if (senses) {
-					int count = this.identifiers.getOrDefault(template, 0);
-					this.identifiers.put(template, ++count);
-					i -= 2;
-					if (count == actorCount) {
-						TemplateBasedIdentifier identifier = new TemplateBasedIdentifier(template,
-								(a) -> template.getPropertyHint(controller.getProperty()), 1f);
-						controller.editIdentifier(identifier);
-					}
+					TemplateBasedIdentifier identifier = new TemplateBasedIdentifier(template, 1f);
+					identifiers.put(template, identifier);
 				}
 			}
 		} else {
@@ -108,8 +99,20 @@ public class InspirePropertyIdentifierThought extends AbstractThought {
 	}
 
 	@Override
+	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		Map<IThoughtMemory, Interest> ls = new HashMap<>();
+		for (TemplateBasedIdentifier id : this.identifiers.values()) {
+			ls.put(new PropertyIdentifierMemory(property, id), Interest.FORGET);
+		}
+		if (!ls.isEmpty()) {
+			System.out.print("");
+		}
+		return ls;
+	}
+
+	@Override
 	public String displayText() {
-		return "inspiring property " + this.controller.getProperty();
+		return "inspiring property " + property;
 	}
 
 	@Override

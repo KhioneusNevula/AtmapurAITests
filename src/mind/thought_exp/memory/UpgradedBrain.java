@@ -1,6 +1,8 @@
 package mind.thought_exp.memory;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +12,7 @@ import java.util.UUID;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
+import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
@@ -18,6 +21,8 @@ import mind.relationships.IParty;
 import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
+import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.culture.UpgradedGroup;
 
@@ -25,11 +30,13 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 
 	private Map<IProfile, UpgradedCulture> cultures = new TreeMap<>();
 	private Map<IMeme, IFeeling> feelings;
-	private Multimap<IThoughtMemory.Type, IThoughtMemory> shortTermMemories = MultimapBuilder
-			.enumKeys(IThoughtMemory.Type.class).linkedListValues().build();
+	private Map<IThoughtMemory.Interest, Multimap<IThoughtMemory.MemoryCategory, IThoughtMemory>> memories = new EnumMap<>(
+			IThoughtMemory.Interest.class);
+
 	private Multimap<IProfile, Relationship> agreements = MultimapBuilder.treeKeys().linkedListValues().build();
 	private Map<IProfile, Float> trust = new TreeMap<>();
 	private Map<IProfile, Integer> partOfGroups = new TreeMap<>();
+	// TODO short term memory maximum and all that
 
 	public UpgradedBrain(UUID selfID, String type) {
 		super(new Profile(selfID, type));
@@ -75,27 +82,55 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 		return super.learnConcept(concept);
 	}
 
-	@Override
-	public Collection<IThoughtMemory> getShortTermMemories() {
-		return this.shortTermMemories.values();
+	private Multimap<IThoughtMemory.MemoryCategory, IThoughtMemory> makeMemoryMultimapFor(Interest memorySection) {
+		if (memorySection == Interest.FORGET)
+			throw new IllegalArgumentException();
+		return memories.computeIfAbsent(memorySection,
+				(a) -> MultimapBuilder.enumKeys(IThoughtMemory.MemoryCategory.class).linkedListValues().build());
 	}
 
 	@Override
-	public Collection<IThoughtMemory> getShortTermMemoriesOfType(IThoughtMemory.Type type) {
+	public Collection<IThoughtMemory> getShortTermMemories() {
+		return this.memories.get(Interest.SHORT_TERM) == null ? Collections.emptySet()
+				: this.memories.get(Interest.SHORT_TERM).values();
+	}
 
-		return this.shortTermMemories.get(type);
+	@Override
+	public Collection<IThoughtMemory> getShortTermMemoriesOfType(IThoughtMemory.MemoryCategory type) {
+
+		return this.memories.get(Interest.SHORT_TERM) == null ? Collections.emptySet()
+				: this.memories.get(Interest.SHORT_TERM).get(type);
 	}
 
 	@Override
 	public boolean rememberShortTerm(IThoughtMemory memory) {
 
-		return this.shortTermMemories.put(memory.getType(), memory);
+		return makeMemoryMultimapFor(Interest.SHORT_TERM).put(memory.getType(), memory);
 	}
 
 	@Override
-	public boolean forgetShortTerm(IThoughtMemory memory) {
+	public boolean remember(Interest memoryType, IThoughtMemory memory) {
+		return makeMemoryMultimapFor(memoryType).put(memory.getType(), memory);
+	}
 
-		return this.shortTermMemories.remove(memory.getType(), memory);
+	@Override
+	public boolean forgetMemory(Interest section, IThoughtMemory memory) {
+		if (this.memories.get(section) == null)
+			return false;
+		return this.memories.get(section).remove(memory.getType(), memory);
+	}
+
+	@Override
+	public Collection<IThoughtMemory> getMemories(Interest section) {
+		if (this.memories.get(section) == null)
+			return Collections.emptySet();
+		return this.memories.get(section).values();
+	}
+
+	@Override
+	public Collection<IThoughtMemory> getMemoriesOfType(Interest section, MemoryCategory type) {
+
+		return this.memories.get(section) == null ? Collections.emptySet() : this.memories.get(section).get(type);
 	}
 
 	public Collection<Relationship> getRelationshipsWith(IProfile other) {
@@ -170,8 +205,41 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 		return agreements == null ? false : !this.agreements.get(other).isEmpty();
 	}
 
+	@Override
+	public RelationsGraph getRelationsGraph() {
+		return this.relations;
+	}
+
 	public String report() {
-		return "UpgradedBrain:\n";
+		StringBuilder builder = new StringBuilder();
+		builder.append("UpgradedBrain: {\n");
+		builder.append("\tselfProfile: " + this.selfProfile + ", ");
+		builder.append("cultures: " + this.cultures + "\n");
+		if (!knownConcepts.isEmpty())
+			builder.append("\tknownConcepts: " + this.knownConcepts.values() + "\n");
+		if (!relations.isEmpty())
+			builder.append("\trelations: " + this.relations + "\n");
+		if (!relationships.isEmpty())
+			builder.append("\tknownRelationships: " + this.relationships + "\n");
+		if (!identifiers.isEmpty())
+			builder.append("\tpropertyIdentifiers: " + this.identifiers + "\n");
+		if (!profileProperties.isEmpty())
+			builder.append("\tprofileProperties: " + this.profileProperties + "\n");
+		if (!needs.isEmpty())
+			builder.append("\tneeds: " + this.needs.values() + "\n");
+		if (!goals.isEmpty())
+			builder.append("\tgoals: " + this.goals.values() + "\n");
+		if (!agreements.isEmpty())
+			builder.append("\tagreements: " + this.agreements + "\n");
+		if (!memories.isEmpty())
+			builder.append("\tshortTermMemories: " + this.memories.values() + "\n");
+		builder.append("}");
+		return builder.toString();
+	}
+
+	@Override
+	public String toString() {
+		return "Brain(" + this.selfProfile + ")";
 	}
 
 }

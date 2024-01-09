@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import mind.action.ActionType;
 import mind.action.IActionType;
+import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.type.BasicProperties;
 import mind.concepts.type.IMeme;
@@ -61,7 +62,11 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 	 */
 	public void usualInit() {
 		for (Property property : BasicProperties.getAll()) {
-			this.learnConcept(property, BasicProperties.genAssociations(property));
+			this.learnConcept(property);
+			IPropertyIdentifier id = BasicProperties.genAssociations(property);
+			if (id != null) {
+				this.learnPropertyIdentifier(property, id);
+			}
 		}
 	}
 
@@ -128,7 +133,27 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 
 	public String report() {
 
-		return "";
+		StringBuilder builder = new StringBuilder();
+		builder.append((isStatic ? "Static" : "") + "Culture(" + this.groupName + "): {\n");
+		builder.append("\tselfProfile: " + this.selfProfile + "\n");
+		if (!knownConcepts.isEmpty())
+			builder.append("\tknownConcepts: " + this.knownConcepts.values() + "\n");
+		if (!relations.isEmpty())
+			builder.append("\trelations: " + this.relations + "\n");
+		if (!relationships.isEmpty())
+			builder.append("\tknownRelationships: " + this.relationships + "\n");
+		if (!identifiers.isEmpty())
+			builder.append("\tpropertyIdentifiers: " + this.identifiers + "\n");
+		if (!profileProperties.isEmpty())
+			builder.append("\tprofileProperties: " + this.profileProperties + "\n");
+		if (!needs.isEmpty())
+			builder.append("\tneeds: " + this.needs.values() + "\n");
+		if (!goals.isEmpty())
+			builder.append("\tgoals: " + this.goals.values() + "\n");
+		if (!this.trends.isEmpty())
+			builder.append("\ttrends: " + this.trends.values());
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override

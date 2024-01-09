@@ -1,14 +1,17 @@
 package mind.thought_exp.actions;
 
 import java.awt.Color;
+import java.util.Map;
 
 import mind.goals.IGoal.Priority;
 import mind.goals.ITaskGoal;
-import mind.thought_exp.IUpgradedHasKnowledge;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
+import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.memory.type.RecentActionMemory;
 import mind.thought_exp.type.AbstractThought;
 import sim.WorldGraphics;
 
@@ -224,8 +227,13 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	@Override
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return Interest.SHORT_TERM; // TODO action memory stuff
+	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return IThoughtMemory.Interest.SHORT_TERM; // TODO action memory stuff
+	}
+
+	@Override
+	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return Map.of(new RecentActionMemory(this), Interest.SHORT_TERM);
 	}
 
 	private static final Color ACTIVE_BOX_COLOR = Color.cyan;

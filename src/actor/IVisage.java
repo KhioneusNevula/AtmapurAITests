@@ -60,4 +60,11 @@ public interface IVisage {
 	 */
 	public boolean isInvisible();
 
+	/**
+	 * Returns the owner of this visage
+	 * 
+	 * @return
+	 */
+	public IUniqueExistence getOwner();
+
 }

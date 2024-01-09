@@ -5,11 +5,15 @@ import java.util.Iterator;
 
 import com.google.common.collect.Multimap;
 
+import actor.ITemplate;
+import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IMeme.IMemeType;
 import mind.concepts.type.IProfile;
+import mind.concepts.type.ITemplateConcept;
 import mind.concepts.type.Property;
+import mind.concepts.type.TemplateConcept;
 import mind.goals.IGoal;
 import mind.memory.IPropertyData;
 import mind.need.INeed;
@@ -18,22 +22,6 @@ import mind.relationships.RelationType;
 import mind.relationships.Relationship;
 
 public interface IUpgradedKnowledgeBase {
-
-	public static enum Interest {
-		/** indicate this memory/profile should never be forgotten by any means */
-		CORE_MEMORY,
-		/**
-		 * indicate this memory/profile will be remembered for a while but can be
-		 * forgotten
-		 */
-		REMEMBER,
-		/**
-		 * indicate this memory/profile will be remembered until the next sleep cycle
-		 */
-		SHORT_TERM,
-		/** indicate this is to be forgotten in a few ticks(?) */
-		FORGET
-	}
 
 	public boolean isKnown(IProfile IProfile);
 
@@ -108,7 +96,40 @@ public interface IUpgradedKnowledgeBase {
 	 */
 	public IPropertyData learnPropertyData(IProfile prof, Property prop, IPropertyData dat);
 
-	public void learnPropertyIdentifier(Property prop,I)
+	/**
+	 * add this property identifier to the property identifier for this property,
+	 * turning it into a composite property identifier if needed
+	 * 
+	 * @param prop
+	 * @param identifier
+	 */
+	public void learnPropertyIdentifier(Property prop, IPropertyIdentifier identifier);
+
+	/**
+	 * Get the property identifier for this property, UNKNOWN if not present
+	 * 
+	 * @param prop
+	 * @return
+	 */
+	public IPropertyIdentifier getPropertyIdentifier(Property prop);
+
+	/**
+	 * Forget all identifiers for this property and return them
+	 * 
+	 * @param prop
+	 * @return
+	 */
+	public IPropertyIdentifier forgetIdentifiers(Property prop);
+
+	/**
+	 * Forget the given identifier for this property; return true if it was
+	 * forgotten
+	 * 
+	 * @param prop
+	 * @param identifier
+	 * @return
+	 */
+	public boolean forgetIdentifier(Property prop, IPropertyIdentifier identifier);
 
 	/**
 	 * Forgets this property data and returns its previous contents
@@ -135,7 +156,7 @@ public interface IUpgradedKnowledgeBase {
 
 	/**
 	 * whether this concept has a non-political/social relation (of any direction)
-	 * to the other thing
+	 * to the @Override other thing
 	 * 
 	 * @param one
 	 * @param other
@@ -185,6 +206,16 @@ public interface IUpgradedKnowledgeBase {
 	 */
 	public <T extends IProfile> Multimap<T, Relationship> getProfilesWithRelationship(IProfile fromWhat,
 			RelationType type);
+
+	/**
+	 * gets profiles with these relationships
+	 * 
+	 * @param <T>
+	 * @param fromWhat
+	 * @param type
+	 * @return
+	 */
+	public <T extends IProfile> Collection<T> getProfilesWithRelationshipFrom(IProfile fromWhat, RelationType type);
 
 	/**
 	 * Adds a relation into the knowledge; if the relation is bidirectional, will
@@ -347,6 +378,48 @@ public interface IUpgradedKnowledgeBase {
 	public Collection<INeed> getNeeds();
 
 	public Collection<INeed> getNeeds(INeedType type);
+
+	/**
+	 * Returns a template concept for the given template, or null if not present
+	 * 
+	 * @param forTemplate
+	 * @return
+	 */
+	public ITemplateConcept getTemplateConcept(ITemplate forTemplate);
+
+	/**
+	 * Returns or creates a new template concept for the given template, or null if
+	 * not present. A created template concept will be of type
+	 * {@link TemplateConcept}
+	 * 
+	 * @param forTemplate
+	 * @return
+	 */
+	public ITemplateConcept getOrLearnTemplateConcept(ITemplate forTemplate);
+
+	/**
+	 * Sets the template concept for this given template
+	 * 
+	 * @param concept
+	 */
+	public void learnTemplateConcept(ITemplateConcept concept);
+
+	/**
+	 * Gets the template of this profile
+	 * 
+	 * @param forProfile
+	 * @return
+	 */
+	public ITemplateConcept getTemplate(IProfile forProfile);
+
+	/**
+	 * learn a template concept for this profile
+	 * 
+	 * @param forProfile
+	 * @param value
+	 * @return
+	 */
+	ITemplateConcept learnTemplateFor(IProfile forProfile, ITemplateConcept value);
 
 	// TODO add other forms of knowledge
 

@@ -70,4 +70,9 @@ public class UseRelationType implements IConceptRelationType {
 		return inverse;
 	}
 
+	@Override
+	public boolean subtypeOf(IConceptRelationType other) {
+		return this.equals(other) || other == ConceptRelationType.USES;
+	}
+
 }

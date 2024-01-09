@@ -60,7 +60,18 @@ public enum ConceptRelationType implements IConceptRelationType {
 	 * something (the other end) for a general purpose defined by the action
 	 * argument.
 	 */
-	USE(false, true),
+	USES(false, true),
+
+	/**
+	 * Default relationship to check if the left thing is in possession of the right
+	 * thing
+	 */
+	POSSESSES(false, false),
+	/**
+	 * a form of relationship indicating that (this end) is a danger to (the other
+	 * end)
+	 */
+	DANGER_TO(false, true),
 	/**
 	 * Indicates that something (this end) is used for an action relating to
 	 * something else (the other end)
@@ -119,7 +130,7 @@ public enum ConceptRelationType implements IConceptRelationType {
 
 	@Override
 	public String idString() {
-		return this.toString();
+		return "rel" + this.toString();
 	}
 
 	@Override

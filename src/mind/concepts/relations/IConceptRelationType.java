@@ -1,6 +1,6 @@
 package mind.concepts.relations;
 
-public interface IConceptRelationType {
+public interface IConceptRelationType extends IInvertibleRelationType<IConceptRelationType> {
 
 	/**
 	 * is this relation bidirectional
@@ -10,7 +10,7 @@ public interface IConceptRelationType {
 	public boolean bidirectional();
 
 	/**
-	 * does this relation require an action or event
+	 * does this relation involve an action or event
 	 * 
 	 * @return
 	 */
@@ -36,11 +36,27 @@ public interface IConceptRelationType {
 	public String idString();
 
 	/**
-	 * Whether this relationship is not "really" a relationship, but rather just
-	 * intended to be the backwards counterpart of a relationship
+	 * This is used to check if the left relationship is a subtype or supertype of
+	 * the right relationship. Returns true if the relations are equal as well
 	 * 
 	 * @return
 	 */
+	default boolean matches(IConceptRelationType other) {
+		return this.subtypeOf(other) || other.subtypeOf(this);
+	}
+
+	/**
+	 * return true if the left relation is a subtype of or equivalent to the right
+	 * relationship
+	 * 
+	 * @param other
+	 * @return
+	 */
+	default boolean subtypeOf(IConceptRelationType other) {
+		return this.equals(other);
+	}
+
+	@Override
 	public default boolean isInverseType() {
 		return this instanceof InverseType;
 	}
@@ -81,7 +97,12 @@ public interface IConceptRelationType {
 
 		@Override
 		public String idString() {
-			return bearerType.idString() + "_inverse";
+			return "inv_" + bearerType.idString();
+		}
+
+		@Override
+		public String toString() {
+			return idString();
 		}
 
 		@Override

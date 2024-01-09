@@ -1,30 +1,51 @@
 package mind.thought_exp.type;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import actor.IUniqueExistence;
-import humans.Food;
-import mind.concepts.PropertyController;
-import mind.concepts.type.BasicProperties;
+import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.IGoal.Priority;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.memory.IPropertyData;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.ThoughtType;
 import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.memory.type.ApplyPropertyMemory;
 
 public class ApplyPropertiesThought extends AbstractThought {
 
 	private Collection<? extends IUniqueExistence> actors;
 	private Collection<Property> properties;
 	private Iterator<? extends IUniqueExistence> actorIterator;
+	private Map<IThoughtMemory, Interest> memories;
 	private boolean failed;
 	private boolean complete;
+	/**
+	 * whether to apply the property within memory
+	 */
+	private boolean keepInMemory;
+
+	/**
+	 * whether to apply hte property to the actor's property-list
+	 */
+	private boolean applyToActor;
+
+	public ApplyPropertiesThought(Collection<? extends IUniqueExistence> actors, Collection<Property> property,
+			boolean keepInMemory, boolean applyToActor) {
+		this.actors = actors;
+		this.properties = property;
+		this.applyToActor = applyToActor;
+		if (this.keepInMemory = keepInMemory) {
+			memories = new HashMap<>();
+		}
+	}
 
 	/**
 	 * If property is null or empty, apply all properties
@@ -33,8 +54,7 @@ public class ApplyPropertiesThought extends AbstractThought {
 	 * @param property
 	 */
 	public ApplyPropertiesThought(Collection<? extends IUniqueExistence> actors, Collection<Property> property) {
-		this.actors = actors;
-		this.properties = property;
+		this(actors, property, false, true);
 	}
 
 	@Override
@@ -48,8 +68,8 @@ public class ApplyPropertiesThought extends AbstractThought {
 	}
 
 	@Override
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return Interest.FORGET;
+	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return IThoughtMemory.Interest.FORGET;
 	}
 
 	@Override
@@ -76,48 +96,36 @@ public class ApplyPropertiesThought extends AbstractThought {
 			}
 			IUniqueExistence actor = actorIterator.next();
 			for (Property property : this.properties) {
-				PropertyController associations = memory.getKnowledgeBase().getPropertyAssociations(property);
-				if (associations == null && memory.isMindMemory()) {
+				IPropertyIdentifier associations = memory.getKnowledgeBase().getPropertyIdentifier(property);
+				if (associations.isUnknown() && memory.isMindMemory()) {
 					for (UpgradedCulture culture : memory.getMindMemory().cultures()) {
-						PropertyController assoc2 = culture.getPropertyAssociations(property);
-						if (associations == null && assoc2 != null) {
+						IPropertyIdentifier assoc2 = culture.getPropertyIdentifier(property);
+						if (associations.isUnknown() && !assoc2.isUnknown()) {
 							associations = assoc2;
 							break;
 						}
 					}
 				}
 
-				if (associations == null)
-					throw new IllegalStateException(this + " unknown property:" + property + " " + this.actors + " "
-							+ this.properties + " parent:" + this.parent);
-				IPropertyData data = associations.getIdentifier().identifyInfo(property, actor, actor.getVisage(),
-						memory);
-				if (!data.isUnknown() && data.getKnownCount() > actor
-						.getPropertyData(memory.getKnowledgeBase(), property).getKnownCount()) {
-					actor.assignProperty(memory.getKnowledgeBase(), property, data);
-					Profile aProf = memory.getKnowledgeBase().getProfileFor(actor);
-					if (aProf != null) {
-						memory.getKnowledgeBase().setProperty(aProf, property, data);
+				if (associations.isUnknown())
+					continue;
+				IPropertyData data = associations.identifyInfo(property, actor, actor.getVisage(), memory);
+				if (data.isPresent() && data.getKnownCount() > actor
+						.getPropertyData(memory.getKnowledgeBase(), property, true).getKnownCount()) {
+					if (applyToActor)
+						actor.assignProperty(memory.getKnowledgeBase(), property, data);
+					Profile aProf = new Profile(actor);
+					if (keepInMemory) {
+						memories.put(new ApplyPropertyMemory(aProf, property, data), Interest.FORGET);
 					}
 				}
-				if (memory.isMindMemory()) {
-					Map<UpgradedCulture, PropertyController> assoc = memory.getMindMemory()
-							.getPropertyAssociationsFromCulture(property);
-					for (Map.Entry<UpgradedCulture, PropertyController> entry : assoc.entrySet()) {
-						IPropertyData datau = entry.getValue().getIdentifier().identifyInfo(property, actor,
-								actor.getVisage(), memory);
-						if (!datau.isUnknown() && datau.getKnownCount() > actor
-								.getPropertyData(entry.getKey(), property).getKnownCount()) {
-							if (property == BasicProperties.FOOD && actor.getSpecies() == Food.FOOD_TYPE) {
-								System.out.println(actor + " received food property");
-							}
-							actor.assignProperty(entry.getKey(), property, data = datau);
-							Profile aProf = memory.getKnowledgeBase().getProfileFor(actor);
-							if (aProf == null)
-								aProf = entry.getKey().getProfileFor(actor);
-							if (aProf != null) {
-								memory.getKnowledgeBase().setProperty(aProf, property, data);
-							}
+				if (memory.isMindMemory() && applyToActor) {
+					for (UpgradedCulture culture : memory.getMindMemory().cultures()) {
+						IPropertyIdentifier id = culture.getPropertyIdentifier(property);
+						IPropertyData datau = id.identifyInfo(property, actor, actor.getVisage(), memory);
+						if (datau.isPresent() && datau.getKnownCount() > actor.getPropertyData(culture, property, true)
+								.getKnownCount()) {
+							actor.assignProperty(culture, property, data = datau);
 						}
 					}
 				}
@@ -132,6 +140,11 @@ public class ApplyPropertiesThought extends AbstractThought {
 	}
 
 	@Override
+	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return memories == null ? Map.of() : memories;
+	}
+
+	@Override
 	public String displayText() {
 		return "applying properties";
 	}
@@ -139,7 +152,8 @@ public class ApplyPropertiesThought extends AbstractThought {
 	@Override
 	public boolean equivalent(IThought other) {
 		if (other instanceof ApplyPropertiesThought apt) {
-			return (this.actors.containsAll(apt.actors)) && (properties.containsAll(apt.properties));
+			return ((this.applyToActor == apt.applyToActor) && (this.keepInMemory == apt.keepInMemory))
+					&& (this.actors.containsAll(apt.actors)) && (properties.containsAll(apt.properties));
 		}
 		return this.equals(other);
 	}

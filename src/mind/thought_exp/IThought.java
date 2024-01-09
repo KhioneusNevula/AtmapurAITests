@@ -2,13 +2,14 @@ package mind.thought_exp;
 
 import java.awt.Color;
 import java.util.Collection;
+import java.util.Map;
 
 import main.Pair;
 import mind.concepts.type.IMeme;
 import mind.feeling.IFeeling;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Priority;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
+import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.actions.IActionThought;
 import sim.WorldGraphics;
 import sim.interfaces.IUnique;
@@ -150,20 +151,19 @@ public interface IThought extends IUnique, IMeme {
 	 * 
 	 * @return
 	 */
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks);
+	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks);
 
 	/**
-	 * Called if the thought should become a memory; return null if the default
-	 * memory format should be used (ThoughtMemory object with the thought as its
-	 * parameter).
+	 * Return the memories this thought produces and the section they should be
+	 * stored in
 	 * 
 	 * @param mind
 	 * @param finishingTicks
 	 * @param worldTicks
 	 */
-	public default IThoughtMemory getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public default Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
 
-		return null;
+		return Map.of();
 	}
 
 	/**

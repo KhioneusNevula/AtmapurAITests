@@ -6,9 +6,9 @@ import actor.IVisage;
 import actor.PossessState;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
 import mind.memory.RememberedProperties;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 public enum IsHeldByIdentifier implements IPropertyIdentifier {
 

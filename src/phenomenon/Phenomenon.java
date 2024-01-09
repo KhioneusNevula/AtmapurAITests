@@ -7,8 +7,8 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 
 import mind.concepts.type.Property;
-import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.memory.IPropertyData;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import sim.World;
 
 /**
@@ -23,9 +23,21 @@ public abstract class Phenomenon implements IPhenomenon {
 	private UUID id = UUID.randomUUID();
 	private IPhenomenonType type;
 	private Table<IUpgradedKnowledgeBase, Property, IPropertyData> socialProperties;
+	protected int maxLifeTime = -1;
+	protected int lifetime = -1;
 
 	public Phenomenon(IPhenomenonType type) {
 		this.type = type;
+	}
+
+	/**
+	 * Use this to end the phenomenon's life at a specific time
+	 * 
+	 * @param seconds
+	 */
+	protected void setLifeTimer(int seconds) {
+		this.maxLifeTime = seconds;
+		this.lifetime = 0;
 	}
 
 	@Override
@@ -35,7 +47,7 @@ public abstract class Phenomenon implements IPhenomenon {
 	}
 
 	@Override
-	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property) {
+	public IPropertyData getPropertyData(IUpgradedKnowledgeBase culture, Property property, boolean check) {
 		return socialProperties == null ? IPropertyData.UNKNOWN : socialProperties.get(culture, property);
 	}
 
@@ -62,5 +74,17 @@ public abstract class Phenomenon implements IPhenomenon {
 	@Override
 	public Random rand() {
 		return this.world.rand();
+	}
+
+	@Override
+	public void tick() {
+		if (this.maxLifeTime > 0) {
+			lifetime++;
+		}
+	}
+
+	@Override
+	public boolean isComplete() {
+		return lifetime >= maxLifeTime;
 	}
 }

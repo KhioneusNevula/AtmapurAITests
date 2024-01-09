@@ -35,4 +35,9 @@ public enum PossessionRelationType implements IConceptRelationType {
 		return inverse;
 	}
 
+	@Override
+	public boolean subtypeOf(IConceptRelationType other) {
+		return other == this || other == ConceptRelationType.POSSESSES;
+	}
+
 }

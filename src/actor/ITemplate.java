@@ -16,9 +16,33 @@ public interface ITemplate {
 			return "world";
 		}
 
+		@Override
+		public String getUniqueName() {
+			return "template_world";
+		}
+
+		@Override
+		public float averageUniqueness() {
+			return 1f;
+		}
+
 	};
 
 	public String name();
+
+	/**
+	 * For treemap sorting
+	 * 
+	 * @return
+	 */
+	public String getUniqueName();
+
+	/**
+	 * The average unusualness of any distinctive example of this template
+	 * 
+	 * @return
+	 */
+	public float averageUniqueness();
 
 	default IPropertyData getPropertyHint(Property property) {
 		return IPropertyData.UNKNOWN;

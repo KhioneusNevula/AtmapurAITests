@@ -2,6 +2,8 @@ package sim.interfaces;
 
 import java.util.UUID;
 
+import mind.concepts.type.IMeme;
+
 public interface IUnique extends Comparable<IUnique> {
 
 	public UUID getUUID();
@@ -13,6 +15,10 @@ public interface IUnique extends Comparable<IUnique> {
 
 	default String getUnitString() {
 		return "unit";
+	}
+
+	default String getSimpleName() {
+		return this instanceof IMeme ? ((IMeme) this).getUniqueName() : this.toString();
 	}
 
 }

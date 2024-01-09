@@ -7,6 +7,7 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
 import sim.interfaces.IPhysicalExistence;
 
@@ -85,6 +86,16 @@ public class TravelTaskGoal implements ITaskGoal {
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return entity.getAsHasActor().getActor().distance(
 				location.getGeneralLocation()) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		return null;
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+		return false;
 	}
 
 	@Override

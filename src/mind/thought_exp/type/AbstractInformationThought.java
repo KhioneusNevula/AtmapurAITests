@@ -2,8 +2,9 @@ package mind.thought_exp.type;
 
 import java.awt.Color;
 
-import mind.thought_exp.memory.IUpgradedKnowledgeBase.Interest;
 import mind.thought_exp.ICanThink;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
 
 public abstract class AbstractInformationThought<T> extends AbstractThought {
 
@@ -27,8 +28,8 @@ public abstract class AbstractInformationThought<T> extends AbstractThought {
 	}
 
 	@Override
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return Interest.FORGET;
+	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+		return IThoughtMemory.Interest.FORGET;
 	}
 
 	private static final Color BOX_COLOR = Color.yellow;

@@ -14,7 +14,7 @@ public interface IProfile extends IMeme, IUnique {
 
 		@Override
 		public String getUniqueName() {
-			return "__self";
+			return "__profile_self";
 		}
 
 		@Override
@@ -30,7 +30,7 @@ public interface IProfile extends IMeme, IUnique {
 		private UUID atID = UUID.fromString("c35f3e35-2992-4f02-bc55-103dde4b857b");
 
 		public String getUniqueName() {
-			return "__relationship_party";
+			return "__profile_relationship_party";
 		}
 
 		public UUID getUUID() {

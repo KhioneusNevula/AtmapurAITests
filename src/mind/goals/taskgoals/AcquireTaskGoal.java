@@ -14,7 +14,9 @@ import mind.goals.IGoal;
 import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
+import mind.thought_exp.info_thoughts.CheckHeldItemsThought;
 
 public class AcquireTaskGoal implements ITaskGoal {
 
@@ -51,14 +53,32 @@ public class AcquireTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
-		if (item instanceof Property)
-			return ((entity.getAsHasActor().getActor()).getPossessed().stream()
-					.anyMatch((a) -> ITaskGoal.getProperty(a, (Property) item, entity).isPresent()));
-		if (item instanceof Profile) {
-			return ((entity.getAsHasActor().getActor()).getPossessed().stream()
-					.anyMatch((a) -> a.getUUID().equals(((Profile) item).getUUID())));
-		}
+		/*
+		 * if (item instanceof Property) return
+		 * ((entity.getAsHasActor().getActor()).getPossessed().stream() .anyMatch((a) ->
+		 * ITaskGoal.getProperty(a, (Property) item, entity).isPresent())); if (item
+		 * instanceof Profile) { return
+		 * ((entity.getAsHasActor().getActor()).getPossessed().stream() .anyMatch((a) ->
+		 * a.getUUID().equals(((Profile) item).getUUID()))); }
+		 */
 		return false;
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		return item instanceof Profile ? new CheckHeldItemsThought((Profile) item)
+				: new CheckHeldItemsThought((Property) item);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought, Object result) {
+		return !((Collection<Actor>) result).isEmpty();
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+
+		return true;
 	}
 
 	public IMeme getItem() {

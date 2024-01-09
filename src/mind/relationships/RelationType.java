@@ -2,9 +2,10 @@ package mind.relationships;
 
 import java.util.EnumSet;
 
+import mind.concepts.relations.IInvertibleRelationType;
 import mind.goals.IGoal;
 
-public enum RelationType {
+public enum RelationType implements IInvertibleRelationType<RelationType> {
 
 	/** Give a resource */
 	GIVE(true, false, false, null, IGoal.Type.FLOW),
@@ -41,6 +42,7 @@ public enum RelationType {
 	private RelationType opposite;
 	private EnumSet<IGoal.Type> relationshipTypes;
 	private boolean singular;
+	private boolean isInverse;
 
 	private RelationType(boolean provide, boolean benefit, boolean singular, RelationType opposite,
 			IGoal.Type... types) {
@@ -56,6 +58,7 @@ public enum RelationType {
 		if (opposite != null) {
 			this.opposite = opposite;
 			opposite.opposite = this;
+			this.isInverse = true;
 		} else if (provides && benefit) {
 			this.opposite = this;
 		}
@@ -79,8 +82,13 @@ public enum RelationType {
 		return benefits;
 	}
 
-	public RelationType opposite() {
+	public RelationType inverse() {
 		return opposite;
+	}
+
+	@Override
+	public boolean isInverseType() {
+		return isInverse;
 	}
 
 	public EnumSet<IGoal.Type> getRelationshipTypes() {

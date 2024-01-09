@@ -14,8 +14,17 @@ public class Pair<A, B> implements Map.Entry<A, B> {
 
 	private A first;
 	private B second;
+	private String firstLabel;
+	private String secondLabel;
 
 	private static final Pair EMPTY = new Pair(null, null);
+
+	public static final <A, B> Pair<A, B> of(String label1, A first, String label2, B second) {
+		Pair<A, B> pair = of(first, second);
+		pair.firstLabel = label1;
+		pair.secondLabel = label2;
+		return pair;
+	}
 
 	public static final <A, B> Pair<A, B> of(A first, B second) {
 		if (first == null && second == null) {
@@ -47,6 +56,9 @@ public class Pair<A, B> implements Map.Entry<A, B> {
 
 	@Override
 	public String toString() {
+		if (firstLabel != null) {
+			return "<" + firstLabel + "=" + first + ", " + secondLabel + "=" + second + ">";
+		}
 		return "<" + first + "," + second + ">";
 	}
 

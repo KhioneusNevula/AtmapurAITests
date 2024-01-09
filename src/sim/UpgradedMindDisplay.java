@@ -3,6 +3,7 @@ package sim;
 import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -10,15 +11,25 @@ import java.util.PrimitiveIterator.OfInt;
 import java.util.stream.IntStream;
 
 import main.Pair;
+import mind.concepts.relations.AbstractRelationalGraph.IEdge;
+import mind.concepts.relations.IConceptRelationType;
+import mind.concepts.relations.RelationsGraph;
+import mind.concepts.type.IMeme;
 import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedMind;
 import sim.interfaces.IRenderable;
 
 public class UpgradedMindDisplay implements IRenderable {
 
+	public static enum Screen {
+		THOUGHTS, RELATION_KNOWLEDGE
+	}
+
+	private Screen currentScreen = Screen.THOUGHTS;
 	private IUpgradedMind containedMind;
 	/** boolean -> true if paused */
 	private Map<IThought, Pair<Rectangle, Boolean>> thoughtBoxes = new HashMap<>();
+	private Map<RelationsGraph.Node, Rectangle> relationBoxes = new HashMap<>();
 	private IThought focusedThought = null;
 	private static final int vanishTime = 20;
 	private Map<IThought, Pair<Rectangle, Integer>> vanishingThoughts = new HashMap<>();
@@ -35,17 +46,25 @@ public class UpgradedMindDisplay implements IRenderable {
 		return containedMind;
 	}
 
+	public Screen getCurrentScreen() {
+		return currentScreen;
+	}
+
+	public void setCurrentScreen(Screen currentScreen) {
+		this.currentScreen = currentScreen;
+	}
+
+	@Override
+	public boolean canRender() {
+		return containedMind != null;
+	}
+
 	public IThought getFocusedThought() {
 		return focusedThought;
 	}
 
 	public void setFocusedThought(IThought focusedThought) {
 		this.focusedThought = focusedThought;
-	}
-
-	@Override
-	public boolean canRender() {
-		return containedMind != null;
 	}
 
 	public Map<IThought, Pair<Rectangle, Boolean>> getThoughtBoxes() {
@@ -89,6 +108,39 @@ public class UpgradedMindDisplay implements IRenderable {
 			boolean canMake = true;
 			for (Pair<Rectangle, Boolean> ra : this.thoughtBoxes.values()) {
 				if (ra.getFirst().intersects(rect)) {
+					canMake = false;
+					break;
+				}
+			}
+			if (canMake) {
+				return rect;
+			}
+		}
+		return null;
+	}
+
+	private Rectangle createBoxForNode(RelationsGraph.Node node, String boxText, WorldGraphics g, int border,
+			int startX, int startY, int textHeight) {
+		double textWidth = g.textWidth(boxText);
+		int attempts = 0;
+		int width = (int) (textWidth + border + 0.5);
+		int height = (int) (textHeight + border + 0.5);
+		int ubX = g.width() - width - border;
+		int ubY = g.height() - height - border;
+		if (startX >= ubX || startY >= ubY)
+			return null;
+		IntStream xis = this.containedMind.rand().ints(startX, ubX).distinct();
+		IntStream yis = this.containedMind.rand().ints(startY, ubY).distinct();
+		OfInt xIter = xis.iterator();
+		OfInt yIter = yis.iterator();
+
+		for (; attempts < Math.min(200, Math.min(ubX - startX, ubY - startY)); attempts++) {
+			int x = xIter.nextInt();
+			int y = yIter.nextInt();
+			Rectangle rect = new Rectangle(x, y, width, height);
+			boolean canMake = true;
+			for (Rectangle ra : this.relationBoxes.values()) {
+				if (ra.intersects(rect)) {
 					canMake = false;
 					break;
 				}
@@ -160,6 +212,48 @@ public class UpgradedMindDisplay implements IRenderable {
 		}
 	}
 
+	private void renderRelationMapBox(Rectangle box, WorldGraphics g, String boxText, int border, float textSize,
+			Color color) {
+		g.fill(g.color((int) (color.getRed()), (int) (color.getGreen()), (int) (color.getBlue())));
+		g.rectMode(WorldGraphics.CORNER);
+		g.rect((int) box.getMinX(), (int) box.getMinY(), (int) box.getWidth(), (int) box.getHeight());
+		g.fill(g.color(0));
+		g.text(boxText, (int) box.getMinX() + border / 2, (int) box.getMaxY() - border / 2);
+	}
+
+	private void renderRelationMapConnection(IEdge<IConceptRelationType, Collection<IMeme>, IMeme> edge,
+			WorldGraphics g, float textSize, Color color) {
+		Rectangle left = relationBoxes.get(edge.getLeft());
+		Rectangle right = relationBoxes.get(edge.getRight());
+		if (left == null || right == null)
+			return;
+
+		Point[] points = null;
+		double distance = -1;
+		Point[] childPoints = getConnectionPoints(left, false);
+		Point[] parentPoints = getConnectionPoints(right, false);
+		for (Point point : childPoints) {
+			for (Point pPoint : parentPoints) {
+				double d = point.distance(pPoint);
+				if (points == null || d < distance) {
+					points = new Point[] { point, pPoint };
+					distance = d;
+				}
+			}
+		}
+		g.stroke(g.color(color.getRGB()));
+		g.line(points[0].x, points[0].y, points[1].x, points[1].y);
+		g.textSize(textSize);
+		g.fill(g.color(color.getRGB()));
+		g.ellipseMode(WorldGraphics.CENTER);
+		g.circle(points[1].x, points[1].y, 10);
+		g.fill(g.color(Color.white.getRGB()));
+		String edgeString = edge.getType().toString() + edge.getArgs();
+		float w = g.textWidth(edgeString);
+		g.text(edgeString, (points[0].x + points[1].x) / 2 - w / 2, (points[0].y + points[1].y) / 2);
+
+	}
+
 	private void renderAllThoughts(WorldGraphics g) {
 		final int border = 10, startX = 30, startY = 30;
 		float textSize = 0;
@@ -197,10 +291,57 @@ public class UpgradedMindDisplay implements IRenderable {
 			if (box != null) {
 				this.renderThoughtBox(thought, box, pair.getSecond(), g, boxText, border, vanishTime, textSize);
 			} else {
-				System.err.println("Failed to show thought box for " + thought);
+				// System.err.println("Failed to show thought box for " + thought);
 			}
 
 		}
+	}
+
+	private void renderRelationsGraph(WorldGraphics g) {
+		final int border = 10, startX = 30, startY = 30;
+		float textSize = 10;
+
+		for (RelationsGraph.Edge edge : containedMind.getMemory().getRelationsGraph().getAllEdges()) {
+			this.renderRelationMapConnection(edge, g, textSize, Color.pink);
+		}
+		for (RelationsGraph.Node node : containedMind.getMemory().getRelationsGraph().getAllNodes()) {
+			g.textSize(20);
+			final int textHeight = (int) (g.textAscent() + g.textDescent() + 0.5);
+			Rectangle box = this.relationBoxes.get(node);
+			String boxText = node.getData().toString();
+			if (box == null) {
+				box = this.createBoxForNode(node, boxText, g, border, startX, startY, textHeight);
+				if (box != null) {
+					relationBoxes.put(node, box);
+				}
+			}
+			if (box != null) {
+				this.renderRelationMapBox(box, g, boxText, border, textSize, Color.GREEN);
+			} else {
+				// System.err.println("Failed to show thought box for " + thought);
+			}
+
+		}
+	}
+
+	private void renderFocusedThought(WorldGraphics g) {
+		int leftX = g.width() / 5;
+		int leftY = g.height() / 4;
+		int width = g.width() * 3 / 5;
+		int height = g.height() / 2;
+		g.pushStyle();
+		g.fill(this.thoughtBoxes.get(focusedThought).getSecond() ? g.color(255, 100, 100) : g.color(100, 100, 255));
+		g.rectMode(WorldGraphics.CORNER);
+		g.rect(leftX, leftY, width, height);
+		g.popStyle();
+		g.fill(0);
+		g.stroke(0);
+		g.pushStyle();
+		g.pushMatrix();
+		g.translate(leftX, leftY);
+		this.focusedThought.renderThoughtView(g, width, height);
+		g.popMatrix();
+		g.popStyle();
 	}
 
 	@Override
@@ -214,32 +355,19 @@ public class UpgradedMindDisplay implements IRenderable {
 			g.textSize(20);
 			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "");
 			g.text(name, g.width() / 2 - g.textWidth(name) / 2, g.textAscent() + 10);
-			// render all thoughts
-			this.renderAllThoughts(g);
-			// TODO render focused thought
-			if (this.focusedThought != null) {
-				if (!this.thoughtBoxes.containsKey(focusedThought)) {
-					focusedThought = null;
-				} else {
-					int leftX = g.width() / 5;
-					int leftY = g.height() / 4;
-					int width = g.width() * 3 / 5;
-					int height = g.height() / 2;
-					g.pushStyle();
-					g.fill(this.thoughtBoxes.get(focusedThought).getSecond() ? g.color(255, 100, 100)
-							: g.color(100, 100, 255));
-					g.rectMode(WorldGraphics.CORNER);
-					g.rect(leftX, leftY, width, height);
-					g.popStyle();
-					g.fill(0);
-					g.stroke(0);
-					g.pushStyle();
-					g.pushMatrix();
-					g.translate(leftX, leftY);
-					this.focusedThought.renderThoughtView(g, width, height);
-					g.popMatrix();
-					g.popStyle();
+			if (this.currentScreen == Screen.THOUGHTS) {
+				// render all thoughts
+				this.renderAllThoughts(g);
+				// TODO render focused thought
+				if (this.focusedThought != null) {
+					if (!this.thoughtBoxes.containsKey(focusedThought)) {
+						focusedThought = null;
+					} else {
+						this.renderFocusedThought(g);
+					}
 				}
+			} else if (currentScreen == Screen.RELATION_KNOWLEDGE) {
+				this.renderRelationsGraph(g);
 			}
 		} else {
 			g.fill(g.color(255, 200, 200));

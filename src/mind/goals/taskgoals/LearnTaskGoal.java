@@ -6,12 +6,14 @@ import mind.goals.ITaskGoal;
 import mind.goals.ITaskHint;
 import mind.goals.TaskHint;
 import mind.goals.question.Question;
+import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedHasKnowledge;
 
 public class LearnTaskGoal implements ITaskGoal {
 
 	private Question question;
 	private Priority priority = Priority.NORMAL;
+	private boolean needThoughtToAnswer = false;
 
 	public LearnTaskGoal() {
 
@@ -49,7 +51,32 @@ public class LearnTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
-		return question != null ? question.isAnswered(entity) : true; // TODO curiosity emotion
+		if (question == null) {
+			return true; // TODO curiosity emotion
+		}
+		Boolean ans = question.isAnswered(entity);
+		if (ans == null) {
+			needThoughtToAnswer = true;
+			return false;
+		}
+		return ans;
+	}
+
+	@Override
+	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
+		needThoughtToAnswer = false;
+		return question.getAnsweringThought(mind);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought, Object result) {
+		return question.isAnsweredAccordingToThought(thought, result);
+	}
+
+	@Override
+	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
+
+		return needThoughtToAnswer;
 	}
 
 	@Override

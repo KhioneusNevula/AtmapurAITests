@@ -19,7 +19,7 @@ public class NameWord implements IMeme, Comparable<NameWord> {
 	private String display;
 
 	public NameWord(String identifier) {
-		this.identifier = "name_" + /* language.getName() + "_" + */identifier;
+		this.identifier = "nameword_" + /* language.getName() + "_" + */identifier;
 
 	}
 

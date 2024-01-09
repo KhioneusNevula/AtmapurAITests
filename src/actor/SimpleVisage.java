@@ -8,7 +8,15 @@ import mind.concepts.type.SenseProperty;
 
 public class SimpleVisage implements IVisage {
 
-	public SimpleVisage() {
+	private IUniqueExistence owner;
+
+	public SimpleVisage(IUniqueExistence owner) {
+		this.owner = owner;
+	}
+
+	@Override
+	public IUniqueExistence getOwner() {
+		return owner;
 	}
 
 	@Override
@@ -23,7 +31,7 @@ public class SimpleVisage implements IVisage {
 
 	@Override
 	public ITemplate getSpecies() {
-		return null;
+		return owner.getSpecies();
 	}
 
 	@Override
