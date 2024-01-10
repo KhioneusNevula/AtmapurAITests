@@ -13,6 +13,7 @@ import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.ThoughtType;
 import mind.thought_exp.memory.type.RecentActionMemory;
 import mind.thought_exp.type.AbstractThought;
+import processing.core.PConstants;
 import sim.WorldGraphics;
 
 public abstract class AbstractActionThought extends AbstractThought implements IActionThought {
@@ -80,9 +81,6 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		} else {
 			if (!this.started) {
 				if (this.failedPreemptively()) {
-					if (this instanceof EatActionThought) {
-						System.out.print("");
-					}
 					this.ended = true;
 				}
 			} else {
@@ -95,9 +93,6 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 						this.actionTicks++;
 					} else {
 						this.succeeded = this.finishActionIndividual(memory, actionTicks, ticks, false);
-						if (this instanceof EatActionThought) {
-							System.out.print(""); // TODO remove this dumbery
-						}
 						memory.releaseAbilitySlots(this);
 						this.ended = true;
 					}
@@ -156,7 +151,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	@Override
 	public void renderThoughtView(WorldGraphics g, int boxWidth, int boxHeight) {
 		g.textSize(20);
-		g.textAlign(g.CENTER);
+		g.textAlign(PConstants.CENTER);
 		String text = "";
 		for (IThought thought : this.childThoughts()) {
 			text += thought.displayText() + "\n";
@@ -187,9 +182,6 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	 */
 	@Override
 	public void cancel() {
-		if (this instanceof PickupActionThought) {
-			System.out.print("");
-		}
 		if (!this.started) {
 			this.shouldCancel = true;
 		} else {

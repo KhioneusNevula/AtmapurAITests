@@ -17,6 +17,8 @@ import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.thought_exp.IThought;
 import mind.thought_exp.IUpgradedMind;
+import mind.thought_exp.culture.UpgradedCulture;
+import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import sim.interfaces.IRenderable;
 
 public class UpgradedMindDisplay implements IRenderable {
@@ -27,6 +29,7 @@ public class UpgradedMindDisplay implements IRenderable {
 
 	private Screen currentScreen = Screen.THOUGHTS;
 	private IUpgradedMind containedMind;
+	private boolean cultureMode;
 	/** boolean -> true if paused */
 	private Map<IThought, Pair<Rectangle, Boolean>> thoughtBoxes = new HashMap<>();
 	private Map<RelationsGraph.Node, Rectangle> relationBoxes = new HashMap<>();
@@ -52,6 +55,14 @@ public class UpgradedMindDisplay implements IRenderable {
 
 	public void setCurrentScreen(Screen currentScreen) {
 		this.currentScreen = currentScreen;
+	}
+
+	public boolean isCultureMode() {
+		return cultureMode;
+	}
+
+	public void setCultureMode(boolean cultureMode) {
+		this.cultureMode = cultureMode;
 	}
 
 	@Override
@@ -297,14 +308,16 @@ public class UpgradedMindDisplay implements IRenderable {
 		}
 	}
 
-	private void renderRelationsGraph(WorldGraphics g) {
-		final int border = 10, startX = 30, startY = 30;
-		float textSize = 10;
-
-		for (RelationsGraph.Edge edge : containedMind.getMemory().getRelationsGraph().getAllEdges()) {
-			this.renderRelationMapConnection(edge, g, textSize, Color.pink);
+	private void renderEdges(IUpgradedKnowledgeBase knowledge, WorldGraphics g, float textSize, Color color) {
+		for (RelationsGraph.Edge edge : knowledge.getRelationsGraph().getAllEdges()) {
+			this.renderRelationMapConnection(edge, g, textSize, color);
 		}
-		for (RelationsGraph.Node node : containedMind.getMemory().getRelationsGraph().getAllNodes()) {
+	}
+
+	private void renderNodes(IUpgradedKnowledgeBase knowledge, WorldGraphics g, int border, int startX, int startY,
+			float textSize, Color color) {
+
+		for (RelationsGraph.Node node : knowledge.getRelationsGraph().getAllNodes()) {
 			g.textSize(20);
 			final int textHeight = (int) (g.textAscent() + g.textDescent() + 0.5);
 			Rectangle box = this.relationBoxes.get(node);
@@ -316,12 +329,30 @@ public class UpgradedMindDisplay implements IRenderable {
 				}
 			}
 			if (box != null) {
-				this.renderRelationMapBox(box, g, boxText, border, textSize, Color.GREEN);
+				this.renderRelationMapBox(box, g, boxText, border, textSize, color);
 			} else {
 				// System.err.println("Failed to show thought box for " + thought);
 			}
 
 		}
+	}
+
+	private void renderRelationsGraph(WorldGraphics g) {
+		final int border = 10, startX = 30, startY = 30;
+		float textSize = 10;
+		if (this.cultureMode) {
+			for (UpgradedCulture culture : this.containedMind.getMemory().cultures()) {
+				this.renderEdges(culture, g, textSize, Color.pink);
+			}
+		}
+		if (this.cultureMode) {
+			for (UpgradedCulture culture : this.containedMind.getMemory().cultures()) {
+				this.renderNodes(culture, g, border, startX, startY, textSize, Color.cyan);
+			}
+		}
+		this.renderEdges(this.containedMind.getMemory(), g, textSize, Color.red);
+		this.renderNodes(this.containedMind.getMemory(), g, border, startX, startY, textSize, Color.green);
+
 	}
 
 	private void renderFocusedThought(WorldGraphics g) {
@@ -353,7 +384,8 @@ public class UpgradedMindDisplay implements IRenderable {
 			}
 			g.fill(0);
 			g.textSize(20);
-			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "");
+			String name = (containedMind.hasActor() ? containedMind.getAsHasActor().getActor().getName() : "")
+					+ (this.cultureMode && this.currentScreen == Screen.RELATION_KNOWLEDGE ? " (with cultures)" : "");
 			g.text(name, g.width() / 2 - g.textWidth(name) / 2, g.textAscent() + 10);
 			if (this.currentScreen == Screen.THOUGHTS) {
 				// render all thoughts

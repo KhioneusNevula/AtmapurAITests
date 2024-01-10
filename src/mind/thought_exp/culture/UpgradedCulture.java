@@ -14,6 +14,7 @@ import mind.action.ActionType;
 import mind.action.IActionType;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.relations.IConceptRelationType;
+import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.BasicProperties;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
@@ -178,7 +179,7 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 	@Override
 	public boolean learnConcept(IMeme concept) {
 		if (isStatic) {
-			return false;
+			throw new CultureIsStaticException(this);
 		}
 		return super.learnConcept(concept);
 	}
@@ -362,6 +363,11 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 		public UpgradedCulture getCulture() {
 			return culture;
 		}
+	}
+
+	@Override
+	public RelationsGraph getRelationsGraph() {
+		return this.relations;
 	}
 
 }

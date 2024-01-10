@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -15,9 +16,11 @@ import com.google.common.collect.TreeBasedTable;
 import com.google.common.collect.TreeMultimap;
 
 import actor.ITemplate;
+import mind.action.IActionType;
 import mind.concepts.CompositeIdentifier;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.relations.AbstractRelationalGraph.IEdge;
+import mind.concepts.relations.ConceptRelationType;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
@@ -29,6 +32,7 @@ import mind.concepts.type.Property;
 import mind.concepts.type.TemplateConcept;
 import mind.goals.IGoal;
 import mind.goals.IGoal.Type;
+import mind.goals.ITaskHint;
 import mind.memory.IPropertyData;
 import mind.need.INeed;
 import mind.need.INeed.INeedType;
@@ -325,8 +329,16 @@ public abstract class UpgradedAbstractKnowledgeBase implements IUpgradedKnowledg
 	public boolean learnConcept(IMeme concept) {
 		if (concept instanceof IProfile)
 			return this.learnProfile((IProfile) concept);
-
-		return this.knownConcepts.put(concept.getMemeType(), concept);
+		boolean done = this.knownConcepts.put(concept.getMemeType(), concept);
+		// TODO make a better way to learn what actions do, e.g. by just doing them
+		if (concept instanceof IActionType<?> iat) {
+			Set<ITaskHint> hints = iat.getUsage();
+			for (ITaskHint hint : hints) {
+				this.learnConcept(hint);
+				this.learnRelation(iat, hint, ConceptRelationType.USED_FOR, Collections.emptyList());
+			}
+		}
+		return done;
 	}
 
 	@Override

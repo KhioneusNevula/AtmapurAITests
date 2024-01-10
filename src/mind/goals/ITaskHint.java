@@ -1,6 +1,8 @@
 package mind.goals;
 
-public interface ITaskHint {
+import mind.concepts.type.IMeme;
+
+public interface ITaskHint extends IMeme {
 
 	public String getName();
 
@@ -33,5 +35,10 @@ public interface ITaskHint {
 	 * @return
 	 */
 	public boolean harmsTarget();
+
+	@Override
+	default IMemeType getMemeType() {
+		return MemeType.TASK_HINT;
+	}
 
 }

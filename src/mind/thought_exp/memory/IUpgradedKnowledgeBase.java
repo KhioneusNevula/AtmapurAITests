@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import actor.ITemplate;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.relations.IConceptRelationType;
+import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IMeme.IMemeType;
 import mind.concepts.type.IProfile;
@@ -420,6 +421,13 @@ public interface IUpgradedKnowledgeBase {
 	 * @return
 	 */
 	ITemplateConcept learnTemplateFor(IProfile forProfile, ITemplateConcept value);
+
+	/**
+	 * return null if you store data another way. This is just for Mind Display
+	 * 
+	 * @return
+	 */
+	RelationsGraph getRelationsGraph();
 
 	// TODO add other forms of knowledge
 

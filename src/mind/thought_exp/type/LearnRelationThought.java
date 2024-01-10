@@ -18,6 +18,7 @@ import mind.concepts.type.IProfile;
 import mind.concepts.type.ITemplateConcept;
 import mind.concepts.type.Profile;
 import mind.goals.IGoal.Priority;
+import mind.personality.Personality.BasicPersonalityTrait;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
 import mind.thought_exp.IThoughtMemory;
@@ -71,7 +72,9 @@ public class LearnRelationThought extends AbstractThought {
 		ITemplateConcept objectT = memory.getKnowledgeBase()
 				.getOrLearnTemplateConcept(phenomenon.object().getVisage().getSpecies());
 		/** whether to treat this object as unique */
-		boolean useObjectUniqueness = memory.rand().nextFloat() < objectT.uniquenessOfMembers();
+		boolean useObjectUniqueness = memory.rand().nextFloat()
+				* memory.personality().getTrait(BasicPersonalityTrait.PREJUDGEMENT)
+				* 1.5 < objectT.uniquenessOfMembers();
 		IMeme object = useObjectUniqueness ? new Profile(phenomenon.object()) : objectT;
 		if (useObjectUniqueness) {
 			pMemories.add(new LearnProfileMemory((IProfile) object, phenomenon.object().uniqueness()));
@@ -102,7 +105,9 @@ public class LearnRelationThought extends AbstractThought {
 			// kind either and all that
 			ITemplateConcept causeT = memory.getKnowledgeBase().getOrLearnTemplateConcept(ex.getVisage().getSpecies());
 			/** whether to treat the cause as unique */
-			boolean useCauseUniqueness = memory.rand().nextFloat() < causeT.uniquenessOfMembers();
+			boolean useCauseUniqueness = memory.rand().nextFloat()
+					* memory.personality().getTrait(BasicPersonalityTrait.PREJUDGEMENT)
+					* 1.5 < causeT.uniquenessOfMembers();
 			IMeme cause = useCauseUniqueness ? new Profile(ex) : causeT;
 			if (useCauseUniqueness) {
 				pMemories.add(new LearnProfileMemory((IProfile) cause, ex.uniqueness()));

@@ -203,6 +203,7 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 	public class Node implements Comparable<Node> {
 		private MemeType data;
 		private Table<RelationType, MemeType, IEdge<RelationType, RelationArguments, MemeType>> edges;
+		private boolean visited;
 
 		protected Node(MemeType data) {
 			this.data = data;
@@ -287,8 +288,10 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 
 	private TreeMap<MemeType, Node> nodes = new TreeMap<>((a, b) -> a.getUniqueName().compareTo(b.getUniqueName()));
 	private HashSet<Edge> edges = new HashSet<>();
+	private boolean allowBareNodes = false;
 
-	public AbstractRelationalGraph() {
+	public AbstractRelationalGraph(boolean allowBareNodes) {
+		this.allowBareNodes = allowBareNodes;
 
 	}
 
@@ -317,21 +320,30 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 	}
 
 	/**
-	 * Removes all connections from this node, leaving it 'bare'
+	 * Removes all connections from this node, leaving it 'bare'. Does almost the
+	 * same thing as removeNode, but if allowBareNodes is true, it won't delete the
+	 * node itself
 	 * 
 	 * @param one
 	 * @return
 	 */
-	/*
-	 * public Collection<IEdge<RelationType, RelationArguments, MemeType>>
-	 * removeAllEdges(MemeType one) { Node nOne = nodes.get(one); if (nOne == null)
-	 * return Collections.emptySet(); Collection<IEdge<RelationType,
-	 * RelationArguments, MemeType>> edges = nOne.clearAllEdges(); for
-	 * (IEdge<RelationType, RelationArguments, MemeType> edge : edges) { if
-	 * (edge.isInverseEdge()) this.edges.remove(edge.inverseView()); else
-	 * this.edges.remove(edge); edge.getRight().removeEdge(one,
-	 * edge.inverseView().getType()); } return edges; }
-	 */
+
+	public Collection<IEdge<RelationType, RelationArguments, MemeType>> removeAllEdges(MemeType one) {
+		Node nOne = nodes.get(one);
+		if (nOne == null)
+			return Collections.emptySet();
+		Collection<IEdge<RelationType, RelationArguments, MemeType>> edges = nOne.clearAllEdges();
+		if (!allowBareNodes)
+			nodes.remove(one);
+		for (IEdge<RelationType, RelationArguments, MemeType> edge : edges) {
+			if (edge.isInverseEdge())
+				this.edges.remove(edge.inverseView());
+			else
+				this.edges.remove(edge);
+			edge.getRight().removeEdge(one, edge.inverseView().getType());
+		}
+		return edges;
+	}
 
 	/**
 	 * Remove all edges of type from the given node
@@ -353,7 +365,7 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 				edges.remove(edge);
 			edge.getRight().removeEdge(one, edge.inverseView().getType());
 		}
-		if (!nOne.hasConnections())
+		if (!nOne.hasConnections() && !allowBareNodes)
 			nodes.remove(one);
 		return rels;
 	}
@@ -372,9 +384,9 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 		}
 		Node nOther = this.getNode(other);
 		nOther.clearAllEdgesWith(one);
-		if (!nOne.hasConnections())
+		if (!nOne.hasConnections() && !allowBareNodes)
 			nodes.remove(one);
-		if (!nOther.hasConnections())
+		if (!nOther.hasConnections() && !allowBareNodes)
 			nodes.remove(other);
 		return rels;
 	}
@@ -393,17 +405,17 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 			edges.remove(edge);
 
 		edge.getRight().removeEdge(one, edge.inverseView().getType());
-		if (!nOne.hasConnections())
+		if (!nOne.hasConnections() && !allowBareNodes)
 			nodes.remove(one);
-		if (!edge.getRight().hasConnections())
+		if (!edge.getRight().hasConnections() && !allowBareNodes)
 			nodes.remove(other);
 		return edge;
 	}
 
 	public IEdge<RelationType, RelationArguments, MemeType> createEdge(MemeType one, MemeType other, RelationType type,
 			RelationArguments args) {
-		Node nOne = this.getOrCreateNode(one);
-		Node nOther = this.getOrCreateNode(other);
+		Node nOne = this._getOrCreateNode(one);
+		Node nOther = this._getOrCreateNode(other);
 		Edge edge = new Edge(nOne, nOther, type, args);
 		nOne.putEdge(other, edge);
 		edges.add(edge);
@@ -423,7 +435,7 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 			RelationType type) {
 		Node a = nodes.get(one);
 		if (a == null)
-			return null;
+			return Map.of();
 		return a.getEdgesOfType(type);
 	}
 
@@ -431,7 +443,7 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 			MemeType other) {
 		Node a = nodes.get(one);
 		if (a == null)
-			return null;
+			return Map.of();
 		return a.getEdgesWith(other);
 	}
 
@@ -442,12 +454,31 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 		return a.getEdge(other, type);
 	}
 
-	protected Node getOrCreateNode(MemeType concept) {
-		return nodes.computeIfAbsent(concept, (a) -> new Node(a));
+	/**
+	 * Only allowable if "allowBareNodes" is true; otherwise, throws an exception
+	 * 
+	 * @param concept
+	 * @return
+	 */
+	public Node getOrCreateNode(MemeType concept) {
+		if (allowBareNodes) {
+			return _getOrCreateNode(concept);
+		}
+		throw new IllegalStateException("Graph does not allow bare nodes");
 	}
 
+	/**
+	 * Get the node mapped to this key
+	 * 
+	 * @param concept
+	 * @return
+	 */
 	public Node getNode(MemeType concept) {
 		return nodes.get(concept);
+	}
+
+	protected Node _getOrCreateNode(MemeType concept) {
+		return nodes.computeIfAbsent(concept, (a) -> new Node(a));
 	}
 
 	public Collection<Node> getAllNodes() {

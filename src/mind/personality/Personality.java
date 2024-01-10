@@ -34,6 +34,11 @@ public class Personality {
 	}
 
 	public static enum BasicPersonalityTrait implements IPersonalityTrait {
+
+		/**
+		 * How likely this individual is to assume a trait applies to a group
+		 */
+		PREJUDGEMENT((a) -> MathHelp.clamp(0, 1, Math.pow(a.nextGaussian(), 3) * 0.4 + 0.55)),
 		/**
 		 * how willing an individual is to help others / negative: how willing they are
 		 * to sacrifice others for themself
@@ -48,7 +53,7 @@ public class Personality {
 		/**
 		 * How much an individual is affected by stress
 		 */
-		ANXIETY((a) -> 2 * Math.pow(a, 3) + 0.5, true),
+		ANXIETY((a) -> 0.8 * Math.pow(a, 3), true),
 		/**
 		 * how much an individual follows roles / negative: how much an individual
 		 * breaks roles and rules
@@ -99,7 +104,8 @@ public class Personality {
 		 * how much an individual desires power / negative: how much an individual
 		 * avoids power
 		 */
-		AMBITION((a) -> -Math.sin(2.2 * Math.PI * Math.abs(a)) - Math.cos(6 * Math.PI * Math.abs(a)) + 0.7, true),
+		AMBITION((a) -> -(0.8 * Math.sin(a)) * Math.sin(9.2 * Math.PI * Math.abs(a))
+				- 0.25 * Math.cos(0.9 * Math.PI * Math.abs(a)), true),
 		/**
 		 * how curious an individual is for knowledge / negative: how much an individual
 		 * avoids knowledge
@@ -109,7 +115,8 @@ public class Personality {
 		 * how much an individual fears their own mortality / negative: how accepting an
 		 * individual is of death
 		 */
-		MORTAL_FEAR((a) -> -Math.sin(2.2 * Math.PI * Math.abs(a)) - Math.cos(6 * Math.PI * Math.abs(a)) + 0.7, true);
+		MORTAL_FEAR((a) -> -(0.8 * Math.sin(a)) * Math.sin(9.2 * Math.PI * Math.abs(a))
+				- 0.25 * Math.cos(0.9 * Math.PI * Math.abs(a)), true);
 
 		private ToDoubleFunction<Random> curve;
 
@@ -128,7 +135,7 @@ public class Personality {
 		 * @param curve
 		 */
 		private BasicPersonalityTrait(ToDoubleFunction<Double> curve, boolean a) {
-			this.curve = (r) -> MathHelp.clamp(-1, 1, MathHelp.clamp(-1, 1, curve.applyAsDouble(r.nextGaussian())));
+			this.curve = (r) -> MathHelp.clamp(-1, 1, curve.applyAsDouble(r.nextGaussian()));
 		}
 
 		/**
@@ -190,5 +197,4 @@ public class Personality {
 	public String report() {
 		return "personality(" + owner + "):" + this.values;
 	}
-
 }

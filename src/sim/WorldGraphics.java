@@ -125,6 +125,7 @@ public class WorldGraphics extends PApplet {
 				for (UpgradedCulture c : md.getContainedMind().getMindMemory().cultures()) {
 					System.out.println(c.report());
 				}
+				md.setCultureMode(!md.isCultureMode());
 			}
 
 		} else if (event.getKeyCode() == KeyEvent.VK_I) {

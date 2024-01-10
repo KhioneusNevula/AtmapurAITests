@@ -12,6 +12,10 @@ import mind.concepts.type.IProfile;
 
 public class PartyRelationshipsGraph extends AbstractRelationalGraph<RelationType, Collection<Relationship>, IProfile> {
 
+	public PartyRelationshipsGraph() {
+		super(false);
+	}
+
 	@Override
 	protected int compare(RelationType one, RelationType two) {
 		return one.compareTo(two);

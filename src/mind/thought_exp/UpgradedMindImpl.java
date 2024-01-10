@@ -560,7 +560,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 					if (!(g instanceof ITaskGoal))
 						continue;
 					ITaskGoal goal = g.asTask();
-					IntentionThought thought = new IntentionThought(goal);
+					IntentionThought thought = new IntentionThought(goal, true);
 					boolean unnecessary = false;
 					for (IThought comparison : this.getThoughtsByType(ThoughtType.INTENTION)) {
 						if (comparison.equivalent(thought)) {
@@ -849,8 +849,9 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public String report() {
-		return "mind of " + this.owner + " with thoughts: " + this.activeThoughts + ", paused: " + this.pausedThoughts
-				+ " and memory: " + this.memory.report();
+		return "mind of " + this.owner + "\n\twith thoughts: " + this.activeThoughts + "\n\tpaused: "
+				+ this.pausedThoughts + "\n\tpersonality: " + this.personality.report() + "\n\t and memory: "
+				+ this.memory.report();
 	}
 
 	@Override

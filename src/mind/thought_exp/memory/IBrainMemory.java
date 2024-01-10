@@ -2,7 +2,6 @@ package mind.thought_exp.memory;
 
 import java.util.Collection;
 
-import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
 import mind.feeling.IFeeling;
@@ -97,12 +96,5 @@ public interface IBrainMemory extends IUpgradedKnowledgeBase {
 	 * @return
 	 */
 	IFeeling getAssociatedFeeling(IMeme concept);
-
-	/**
-	 * return null if you store data another way. This is just for Mind Display
-	 * 
-	 * @return
-	 */
-	RelationsGraph getRelationsGraph();
 
 }

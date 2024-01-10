@@ -124,4 +124,9 @@ public enum TaskHint implements ITaskHint {
 		return name;
 	}
 
+	@Override
+	public String getUniqueName() {
+		return "taskhint_" + this.name;
+	}
+
 }

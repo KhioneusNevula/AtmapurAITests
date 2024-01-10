@@ -55,6 +55,12 @@ public enum ConceptRelationType implements IConceptRelationType {
 	 * used for a Recipe too
 	 */
 	BECOMES(false, true),
+
+	/**
+	 * Indicates that an action (this end) is used to complete the task-hint (the
+	 * other end)
+	 */
+	USED_FOR(false, false),
 	/**
 	 * the most default form of relationship indicating someone (this end) utilizes
 	 * something (the other end) for a general purpose defined by the action
