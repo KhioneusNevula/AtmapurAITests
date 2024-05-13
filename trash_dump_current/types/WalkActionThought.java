@@ -60,7 +60,7 @@ public class WalkActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public IActionType<?> getType() {
+	public IActionType<?> getActionType() {
 		return ActionType.WALK;
 	}
 
@@ -74,7 +74,7 @@ public class WalkActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

@@ -70,7 +70,7 @@ public class GoalIntentionThought extends AbstractThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 		// TODO Auto-generated method stub
 		if (childThought == executing) {
 
@@ -210,7 +210,7 @@ public class GoalIntentionThought extends AbstractThought {
  * (actions.empty()) { this.ended = true; } else { this.phase = Phase.PLANNING;
  * } break; } }
  * 
- * @Override public void getInfoFromChild(IThought childThought, boolean
+ * @Override public void getInfoFromChild(ICanThink mind, IThought childThought, boolean
  * interrupted, int ticks) { if (childThought instanceof IActionThought iat) {
  * this.phase = Phase.REVIEW; dI = actions.indexOf(iat); //
  * this.actions.remove(iat); if (childThought instanceof PickupActionThought) {

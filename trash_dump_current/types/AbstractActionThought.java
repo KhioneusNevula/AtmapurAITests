@@ -18,17 +18,19 @@ import sim.WorldGraphics;
 
 public abstract class AbstractActionThought extends AbstractThought implements IActionThought {
 
-	private boolean succeeded;
+	protected boolean succeeded;
 	protected Priority priority;
 	private ITaskGoal pendingCondition;
 	private int actionTicks = -1;
 	private boolean started;
 	private boolean ended;
-	private boolean shouldResume;
 	private boolean shouldCancel;
 	private boolean shouldInterrupt;
 	private String failureReason;
 	private boolean preemptivelyFailed;
+
+	private boolean addedShortTermMemories;
+	private boolean oughtToCheckShortTermMemories;
 
 	public AbstractActionThought(ITaskGoal goal) {
 		this.priority = goal.getPriority();
@@ -67,7 +69,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 
 	@Override
 	public final boolean isFinished(ICanThink memory, int ticks, long worldTick) {
-		return (ended || shouldCancel);
+		return ended || shouldCancel;
 	}
 
 	@Override
@@ -81,7 +83,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		} else {
 			if (!this.started) {
 				if (this.failedPreemptively()) {
-					this.ended = true;
+					this.shouldCancel = true;
 				}
 			} else {
 				if (this.actionTicks < 0) {
@@ -108,7 +110,7 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	}
 
 	/**
-	 * Specify the specific condition to be returned if the action cannot execute;
+	 * Post a condition for execution of this action.
 	 * 
 	 * @param memory
 	 * @param thinkTicks
@@ -117,6 +119,14 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	 */
 	protected final void postConditionForExecution(ITaskGoal condition) {
 		this.pendingCondition = condition;
+		this.ended = true;
+	}
+
+	/**
+	 * Marks this method as ready to execute without needing to post a condition
+	 */
+	protected final void markAsReadyToExecute() {
+		this.ended = true;
 	}
 
 	@Override
@@ -125,27 +135,22 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 																				// paused
 	}
 
-	@Override
-	public final boolean shouldPause(ICanThink mind, int ticks, long worldTicks) {
-		return this.pendingCondition != null;
-	}
-
-	@Override
-	public final boolean resume(ICanThink memory, int ticks, long worldTick) {
-		if (shouldResume) {
-			pendingCondition = null;
-			this.uponResume(memory, ticks, worldTick);
-		}
-		return !shouldResume;
-	}
-
-	protected void uponResume(ICanThink mind, int ticks, long worldTick) {
-
-	}
+	/*
+	 * @Override public final boolean shouldPause(ICanThink mind, int ticks, long
+	 * worldTicks) { return this.pendingCondition != null; }
+	 * 
+	 * @Override public final boolean resume(ICanThink memory, int ticks, long
+	 * worldTick) { if (shouldResume) { pendingCondition = null;
+	 * this.uponResume(memory, ticks, worldTick); } return !shouldResume; }
+	 * 
+	 * protected void uponResume(ICanThink mind, int ticks, long worldTick) {
+	 * 
+	 * }
+	 */
 
 	@Override
 	public String displayText() {
-		return (started ? "doing " : "pondering ") + "action " + this.getType().getName();
+		return (started ? "doing " : "pondering ") + "action " + this.getActionType().getName();
 	}
 
 	@Override
@@ -169,12 +174,31 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		return pendingCondition != null;
 	}
 
-	/**
-	 * Notify an action thought that it should resume
-	 */
 	@Override
-	public final void notifyShouldResume() {
-		shouldResume = true;
+	public final boolean addedShortTermMemories() {
+		return addedShortTermMemories;
+	}
+
+	/**
+	 * Used to indicate that this action has added short term memories which ought
+	 * to be checked by the next action
+	 */
+	protected final void markAddedShortTermMemories() {
+		this.addedShortTermMemories = true;
+	}
+
+	/**
+	 * Whether this thought ought to check short term memories
+	 * 
+	 * @return
+	 */
+	protected final boolean oughtToCheckShortTermMemories() {
+		return oughtToCheckShortTermMemories;
+	}
+
+	@Override
+	public final void notifyCheckMemories() {
+		this.oughtToCheckShortTermMemories = true;
 	}
 
 	/**
@@ -201,10 +225,11 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 
 	protected final void failPreemptively() {
 		this.preemptivelyFailed = true;
+		this.ended = true;
 	}
 
 	/**
-	 * If this action has started yet
+	 * If this action is executing
 	 * 
 	 * @return
 	 */
@@ -213,19 +238,39 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 		return started;
 	}
 
+	/**
+	 * Whether this action is in the pondering stage
+	 * 
+	 * @return
+	 */
+	protected final boolean isPondering() {
+		return !started;
+	}
+
+	/**
+	 * Whether this action is in the executing stage
+	 * 
+	 * @return
+	 */
+	protected final boolean isExecuting() {
+		return started;
+	}
+
 	@Override
 	public final void start() {
 		this.started = true;
+		this.ended = false;
 	}
 
 	@Override
-	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return IThoughtMemory.Interest.SHORT_TERM; // TODO action memory stuff
+	public IThoughtMemory.Interest shouldProduceRecentThoughtMemory(ICanThink mind, int finishingTicks,
+			long worldTicks) {
+		return IThoughtMemory.Interest.FORGET; // TODO action memory stuff
 	}
 
 	@Override
-	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
-		return Map.of(new RecentActionMemory(this), Interest.SHORT_TERM);
+	public Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
+		return Map.of(new RecentActionMemory(this, succeeded), Interest.SHORT_TERM);
 	}
 
 	private static final Color ACTIVE_BOX_COLOR = Color.cyan;
@@ -234,6 +279,11 @@ public abstract class AbstractActionThought extends AbstractThought implements I
 	@Override
 	public Color getBoxColor() {
 		return this.started ? ACTIVE_BOX_COLOR : THINKING_BOX_COLOR;
+	}
+
+	@Override
+	public String getUniqueName() {
+		return this.getClass().getSimpleName().toLowerCase() + "_" + goal.getUniqueName();
 	}
 
 }

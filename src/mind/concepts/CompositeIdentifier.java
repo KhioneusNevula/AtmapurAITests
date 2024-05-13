@@ -73,6 +73,11 @@ public class CompositeIdentifier implements IPropertyIdentifier {
 		return false;
 	}
 
+	@Override
+	public int hashCode() {
+		return this.idens.hashCode();
+	}
+
 	/**
 	 * Remove a given identifier/set of identifiers from this identifier
 	 * 

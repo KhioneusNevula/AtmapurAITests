@@ -86,7 +86,7 @@ package mind.thought_exp.type;
  * 
  * } } }
  * 
- * @Override public void getInfoFromChild(IThought childThought, boolean
+ * @Override public void getInfoFromChild(ICanThink mind, IThought childThought, boolean
  * interrupted, int ticks) { if (childThought instanceof PlanActionThought pat)
  * { if (pat.failed) { // this.failedActions.add(actionType); this.actionType =
  * null; if (this.action != null) { this.action.cancel(); this.action = null; }

@@ -181,6 +181,13 @@ public interface ICanThink extends IUpgradedHasKnowledge, IParty {
 	public int getMaxFocusObjects();
 
 	/**
+	 * Max actions performable per goal
+	 * 
+	 * @return
+	 */
+	public int getMaxActions();
+
+	/**
 	 * Get the personality values of this entity
 	 * 
 	 * @return

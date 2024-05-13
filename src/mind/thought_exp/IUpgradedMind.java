@@ -118,4 +118,6 @@ public interface IUpgradedMind extends ICanThink {
 	IUpgradedMind init(Collection<? extends IThoughtType> types);
 
 	void tickSenses(long worldTicks);
+
+	int ticksSinceFallingAsleep();
 }

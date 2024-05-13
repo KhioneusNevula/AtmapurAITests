@@ -46,7 +46,7 @@ public enum RestTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
-		return !entity.getAsMind().conscious();
+		return entity.getAsMind().ticksSinceFallingAsleep() < 10;
 	}
 
 	@Override

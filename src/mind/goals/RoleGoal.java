@@ -32,7 +32,7 @@ public class RoleGoal implements IRoleGoal {
 	}
 
 	private void generateName() {
-		// generates a name for this role TODO
+		// TODO generates a name for this role
 	}
 
 	@Override

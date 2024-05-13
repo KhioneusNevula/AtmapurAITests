@@ -93,7 +93,6 @@ public class EatTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

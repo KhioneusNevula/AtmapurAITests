@@ -77,7 +77,7 @@ public class FocusOnThingThought extends AbstractInformationThought<Collection<I
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink memory, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

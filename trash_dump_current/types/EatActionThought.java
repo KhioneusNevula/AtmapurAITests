@@ -1,19 +1,24 @@
 package mind.thought_exp.actions;
 
 import actor.Actor;
+import actor.IUniqueExistence;
 import biology.systems.SystemType;
 import mind.action.ActionType;
 import mind.action.IActionType;
 import mind.concepts.type.BasicProperties;
 import mind.concepts.type.IMeme;
+import mind.concepts.type.IProfile;
 import mind.concepts.type.Profile;
 import mind.concepts.type.Property;
 import mind.goals.ITaskGoal;
 import mind.goals.taskgoals.AcquireTaskGoal;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.ThoughtType;
 import mind.thought_exp.info_thoughts.CheckHeldItemsThought;
+import mind.thought_exp.memory.type.ImportantWorldObjectsMemory;
+import mind.thought_exp.memory.type.MemoryWrapper;
 
 public class EatActionThought extends AbstractActionThought {
 
@@ -21,8 +26,7 @@ public class EatActionThought extends AbstractActionThought {
 
 	private boolean needFoodItem;
 
-	private Actor foodItem;
-	private boolean succeeded;
+	private IUniqueExistence foodItem;
 
 	public EatActionThought(ITaskGoal goal) {
 		super(goal);
@@ -36,23 +40,52 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public void startThinking(ICanThink memory, long worldTick) {
+
 	}
 
 	@Override
 	public void thinkTick(ICanThink memory, int ticks, long worldTick) {
-		if (!this.started()) {
-
-			if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()) {
-				// && ticks % 5 >= memory.rand().nextInt(5)) {
-				this.postChildThought(foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType)
-						: new CheckHeldItemsThought((Property) foodType), ticks);
-			}
+		if (!started()) {
 			if (this.needFoodItem) {
 				if (this.getPendingCondition(memory) == null) {
 					this.postConditionForExecution(new AcquireTaskGoal(foodType));
 					this.needFoodItem = false;
+
+				}
+			} else if (foodItem == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()) {
+				if (this.oughtToCheckShortTermMemories()) {
+					for (MemoryWrapper mw : memory.getMindMemory()
+							.getShortTermMemoriesOfType(MemoryCategory.REMEMBER_FOR_PURPOSE)) {
+						if (mw.getMemory() instanceof ImportantWorldObjectsMemory iwom) {
+							Property prop = iwom.getProperty();
+							if (prop.equals(foodType)) { /*
+															 * memory.getKnowledgeBase().isConceptSubtype( prop,
+															 * BasicProperties.FOOD)) {
+															 */
+								// TODO check subtype properties or something idk
+								foodItem = iwom.getObjects().iterator().next();
+							} else if (foodType instanceof IProfile ip) {
+								for (IUniqueExistence ex : iwom.getObjects()) {
+									if (ex.getUUID().equals(ip.getUUID())) {
+										foodItem = ex;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				if (foodItem == null) {
+					this.postChildThought(
+							foodType instanceof Profile ? new CheckHeldItemsThought((Profile) foodType, this.getGoal())
+									: new CheckHeldItemsThought((Property) foodType, this.getGoal()),
+							ticks);
+					this.markAddedShortTermMemories();
 				}
 			}
+			if (foodItem != null)
+				this.markAsReadyToExecute();
+		} else {
 		}
 	}
 
@@ -63,11 +96,23 @@ public class EatActionThought extends AbstractActionThought {
 
 	@Override
 	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks) {
+
+		if (foodItem == null) {
+			for (MemoryWrapper mw : forUser.getMindMemory().getShortTermMemoriesOfType(MemoryCategory.RECENT_ACTION)) {
+				if (mw.getMemory() instanceof EatActionThought eat && eat.isPondering() && eat.succeeded()) {
+					this.foodItem = eat.foodItem;
+					break;
+				}
+			}
+		}
 		Actor owner = forUser.getAsHasActor().getActor();
-		int numero = owner.getSystem(SystemType.HUNGER).eat(foodItem);
-		succeeded = (numero == 1);
-		if (forUser.getAsHasActor().getActor().getName().equals("bobzy")) {
-			System.out.print("");
+		if (foodItem instanceof Actor ac && forUser.getAsHasActor().getActor().reachable(ac)) {
+			int numero = owner.getSystem(SystemType.HUNGER).eat(ac);
+			succeeded = (numero == 1);
+		} else {
+			succeeded = false; // TODO add some kind of strangeness ability to thoughts to indicate that things
+								// aren't making sense
+			System.out.println(forUser + " tried to grab food " + foodItem + " but failed");
 		}
 	}
 
@@ -88,7 +133,7 @@ public class EatActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public IActionType<?> getType() {
+	public IActionType<?> getActionType() {
 		return ActionType.EAT;
 	}
 
@@ -98,7 +143,7 @@ public class EatActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 		if (childThought instanceof CheckHeldItemsThought chifpt) {
 			if (!chifpt.getInformation().isEmpty()) {
 				this.foodItem = chifpt.getInformation().iterator().next();

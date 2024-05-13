@@ -36,8 +36,8 @@ public enum Species implements ISpeciesTemplate {
 					BodyPartType.BEARD, BodyPartType.LEFT_EAR, BodyPartType.LEFT_EAR_CANAL, BodyPartType.RIGHT_EAR,
 					BodyPartType.RIGHT_EAR_CANAL),
 			(c) -> {
-				for (IActionType<?> type : Set.of(ActionType.EAT, ActionType.WALK, ActionType.SLEEP, ActionType.PICK_UP,
-						ActionType.WANDER, ActionType.SEARCH)) {
+				for (IActionType<?> type : Set.of(ActionType.EAT, ActionType.EAT2, ActionType.EAT3, ActionType.WALK,
+						ActionType.SLEEP, ActionType.PICK_UP, ActionType.WANDER, ActionType.SEARCH)) {
 					c.learnConcept(type);
 				}
 			}, 0.5f),

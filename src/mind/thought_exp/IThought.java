@@ -146,22 +146,25 @@ public interface IThought extends IUnique, IMeme {
 	public IGoal getGoal();
 
 	/**
-	 * If this thought should become a memory (called after the thought finishes
-	 * without interruption; if the result is Forget, it will not become a memory)
+	 * If this thought should become a RecentThought memory (called after the
+	 * thought finishes without interruption; if the result is Forget, it will not
+	 * become a memory). This does not affect the execution of
+	 * {@link #produceMemories(ICanThink, int, long)}, which executes independently.
 	 * 
 	 * @return
 	 */
-	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks);
+	public IThoughtMemory.Interest shouldProduceRecentThoughtMemory(ICanThink mind, int finishingTicks,
+			long worldTicks);
 
 	/**
-	 * Return the memories this thought produces and the section they should be
-	 * stored in
+	 * Return the memories this thought produces when complete, as well as the
+	 * section they should be stored in
 	 * 
 	 * @param mind
 	 * @param finishingTicks
 	 * @param worldTicks
 	 */
-	public default Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public default Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
 
 		return Map.of();
 	}
@@ -269,7 +272,7 @@ public interface IThought extends IUnique, IMeme {
 	 * 
 	 * @param childThought
 	 */
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks);
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks);
 
 	/**
 	 * Called after a child thought is finished, intended to delete it from the

@@ -28,7 +28,7 @@ public abstract class AbstractInformationThought<T> extends AbstractThought {
 	}
 
 	@Override
-	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public IThoughtMemory.Interest shouldProduceRecentThoughtMemory(ICanThink mind, int finishingTicks, long worldTicks) {
 		return IThoughtMemory.Interest.FORGET;
 	}
 

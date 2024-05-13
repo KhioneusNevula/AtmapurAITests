@@ -6,9 +6,10 @@ import actor.Actor;
 import actor.IUniqueExistence;
 import actor.IVisage;
 import actor.MultipartActor;
+import mind.concepts.CompositeIdentifier;
 import mind.concepts.type.Property;
-import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.memory.IPropertyData;
+import mind.thought_exp.IUpgradedHasKnowledge;
 
 /**
  * Returns Presence if the predicate returns true
@@ -52,6 +53,14 @@ public class PresencePredicateIdentifier implements IPropertyIdentifier {
 
 	public PresencePredicateIdentifier or(PresencePredicateIdentifier other) {
 		return new PresencePredicateIdentifier(predicate.or(other.predicate));
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof CompositeIdentifier ci) {
+			return ci.equals(this);
+		}
+		return super.equals(obj);
 	}
 
 }

@@ -47,12 +47,18 @@ public class StowTaskGoal implements ITaskGoal {
 
 	@Override
 	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
-		return new CheckHeldItemsThought(Property.ANY);
+		return new CheckHeldItemsThought(Property.ANY, null);
 	}
 
 	@Override
-	public boolean checkResult(IThought thought, Object result) {
-		return ((Collection<Actor>) result).isEmpty();
+	public IThought checkCompletionAndRemember(IUpgradedHasKnowledge mind) {
+		return new CheckHeldItemsThought(Property.ANY, this);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought) {
+		Collection<Actor> result = ((CheckHeldItemsThought) thought).getInformation();
+		return result.isEmpty();
 	}
 
 	@Override

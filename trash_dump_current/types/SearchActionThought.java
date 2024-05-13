@@ -68,7 +68,7 @@ public class SearchActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public IActionType<?> getType() {
+	public IActionType<?> getActionType() {
 		return ActionType.SEARCH;
 	}
 
@@ -78,7 +78,7 @@ public class SearchActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

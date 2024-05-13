@@ -18,8 +18,6 @@ import mind.thought_exp.IUpgradedMind;
 import mind.thought_exp.actions.EatActionThought;
 import mind.thought_exp.actions.IActionThought;
 import mind.thought_exp.actions.PickupActionThought;
-import mind.thought_exp.actions.SearchActionThought;
-import mind.thought_exp.actions.SleepActionThought;
 import mind.thought_exp.actions.WalkActionThought;
 
 public class ActionType<T extends IActionThought> implements IActionType<T> {
@@ -28,22 +26,33 @@ public class ActionType<T extends IActionThought> implements IActionType<T> {
 	public static final ActionType<EatActionThought> EAT = new ActionType<EatActionThought>("eat", TaskHint.CONSUME)
 			.setThoughtGenerator(EatActionThought::new).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
 			.setRequiredConcepts((a) -> a.usedItem());
+	/// * for testings
+	public static final ActionType<EatActionThought> EAT2 = new ActionType<EatActionThought>("eat2", TaskHint.CONSUME)
+			.setThoughtGenerator(EatActionThought::new).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
+			.setRequiredConcepts((a) -> a.usedItem());
+	public static final ActionType<EatActionThought> EAT3 = new ActionType<EatActionThought>("eat3", TaskHint.CONSUME)
+			.setThoughtGenerator(EatActionThought::new).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
+			.setRequiredConcepts((a) -> a.usedItem());
+	public static final ActionType<EatActionThought> EAT4 = new ActionType<EatActionThought>("eat4", TaskHint.CONSUME)
+			.setThoughtGenerator(EatActionThought::new).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
+			.setRequiredConcepts((a) -> a.usedItem());
+	public static final ActionType<EatActionThought> EAT5 = new ActionType<EatActionThought>("eat5", TaskHint.CONSUME)
+			.setThoughtGenerator(EatActionThought::new).requireBody().setUsedAbilities(Abilities.EAT, Abilities.GRASP)
+			.setRequiredConcepts((a) -> a.usedItem());
+	// */
 	/** walking or running somewhere */
 	public static final ActionType<WalkActionThought> WALK = new ActionType<WalkActionThought>("walk", TaskHint.TRAVEL)
 			.requireBody().setThoughtGenerator(WalkActionThought::new).setUsedAbilities(Abilities.WALK);
-	/** sleeping */
-	public static final ActionType<SleepActionThought> SLEEP = new ActionType<SleepActionThought>("sleep",
-			TaskHint.REST).requireBody().setUsedAbilities(Abilities.THINK)
-					.setViabilityCondition((a, b) -> a instanceof IUpgradedMind);
 	/** picking up an item */
 	public static final ActionType<PickupActionThought> PICK_UP = new ActionType<PickupActionThought>("pick_up",
 			TaskHint.ACQUIRE).requireBody()
 					.setViabilityCondition((a, b) -> a.isMindMemory() || a instanceof IUpgradedMind)
 					.setUsedAbilities(Abilities.GRASP).setThoughtGenerator(PickupActionThought::new);
-	public static final ActionType<SearchActionThought> SEARCH = new ActionType<SearchActionThought>("search",
-			TaskHint.LEARN).requireBody().setUsedAbilities(Abilities.WALK).setThoughtGenerator(SearchActionThought::new)
-					.setViabilityCondition(
-							(ihk, tg) -> tg.learnInfo() != null && tg.learnInfo().getType() == QuestionType.LOCATION);
+	public static final ActionType SLEEP = new ActionType<>("sleep", TaskHint.REST).requireBody()
+			.setUsedAbilities(Abilities.THINK).setViabilityCondition((a, b) -> a instanceof IUpgradedMind);
+	public static final ActionType SEARCH = new ActionType<>("search", TaskHint.LEARN).requireBody()
+			.setUsedAbilities(Abilities.WALK).setViabilityCondition(
+					(ihk, tg) -> tg.learnInfo() != null && tg.learnInfo().getType() == QuestionType.LOCATION);
 
 	public static final ActionType WANDER = new ActionType<>("wander", TaskHint.LEARN)
 			.setViabilityCondition((a, b) -> (a instanceof IUpgradedMind) && b.learnInfo() == null).requireBody()
@@ -295,7 +304,6 @@ public class ActionType<T extends IActionThought> implements IActionType<T> {
 
 	@Override
 	public String toString() {
-		return "action_" + this.name + "{for:" + this.usage + ""
-				+ (this.facilities.isEmpty() ? "" : ",facilities:" + this.facilities) + "}";
+		return "action_" + this.name;
 	}
 }

@@ -331,7 +331,7 @@ public abstract class UpgradedAbstractKnowledgeBase implements IUpgradedKnowledg
 			return this.learnProfile((IProfile) concept);
 		boolean done = this.knownConcepts.put(concept.getMemeType(), concept);
 		// TODO make a better way to learn what actions do, e.g. by just doing them
-		if (concept instanceof IActionType<?> iat) {
+		if (concept instanceof IActionType<?>iat) {
 			Set<ITaskHint> hints = iat.getUsage();
 			for (ITaskHint hint : hints) {
 				this.learnConcept(hint);
@@ -495,6 +495,12 @@ public abstract class UpgradedAbstractKnowledgeBase implements IUpgradedKnowledg
 	public boolean forgetAllRelations(IMeme one, IMeme other) {
 
 		return !this.relations.removeAllEdgesBetween(one, other).isEmpty();
+	}
+
+	@Override
+	public boolean forgetAllRelationsOfType(IMeme fromOne, IConceptRelationType type) {
+
+		return !relations.removeAllEdgesFrom(fromOne, type).isEmpty();
 	}
 
 	/*
@@ -700,6 +706,17 @@ public abstract class UpgradedAbstractKnowledgeBase implements IUpgradedKnowledg
 				return this.identifiers.remove(prop, id);
 		}
 		return false;
+	}
+
+	@Override
+	public RelationsGraph getRelationsGraph() {
+		return this.relations;
+	}
+
+	@Override
+	public boolean isConceptSubtype(IMeme concept, IMeme superclass) {
+
+		return this.relations.isSubtypeOf(concept, superclass);
 	}
 
 }

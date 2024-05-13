@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="_nonsense/Action.java|_nonsense/ActionCondition.java|_nonsense/ActionNode.java|_nonsense/ActionQueue.java|_nonsense/ActionSearch.java|_nonsense/ActionState.java|_nonsense/Brain.java|_nonsense/CheckCondition.java|_nonsense/ConditionType.java|_nonsense/Goal.java|_nonsense/Memory.java|_nonsense/Profile.java|_nonsense/ProfileCondition.java|_nonsense/ProfileSlot.java|_nonsense/RelationalCondition.java|_nonsense/Sociocon.java|_nonsense/Sociocontype.java|_nonsense/StateCondition.java|_nonsense/Task.java|mind/thought_exp/type/GoalIntentionThought.java|psych_first/mind/WillRedo.java" kind="src" path="src"/>
+	<classpathentry excluding="_nonsense/Action.java|_nonsense/ActionCondition.java|_nonsense/ActionNode.java|_nonsense/ActionQueue.java|_nonsense/ActionSearch.java|_nonsense/ActionState.java|_nonsense/Brain.java|_nonsense/CheckCondition.java|_nonsense/ConditionType.java|_nonsense/Goal.java|_nonsense/Memory.java|_nonsense/Profile.java|_nonsense/ProfileCondition.java|_nonsense/ProfileSlot.java|_nonsense/RelationalCondition.java|_nonsense/Sociocon.java|_nonsense/Sociocontype.java|_nonsense/StateCondition.java|_nonsense/Task.java|mind/thought_exp/type/GoalIntentionThought.java|psych_first/mind/WillRedo.java|mind/thought_exp/actions/x_PickupActionThought.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>

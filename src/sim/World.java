@@ -24,6 +24,7 @@ import humans.Flower;
 import humans.Food;
 import humans.UpgradedPerson;
 import main.ImmutableCollection;
+import mind.action.ActionType;
 import mind.concepts.type.Property;
 import mind.memory.IPropertyData;
 import mind.relationships.Relationship;
@@ -144,6 +145,9 @@ public class World implements IUniqueExistence, IRenderable {
 		System.out.println("setting up");
 		testGroup = this.makeGroup("TheGroup");
 		testGroup.getCulture().usualInit();
+		testGroup.getCulture().learnConcept(ActionType.EAT3);
+		testGroup.getCulture().learnConcept(ActionType.EAT4);
+		testGroup.getCulture().learnConcept(ActionType.EAT5);
 		// testGroup.getCulture().languageInit(this.rand);
 		this.makeTestActor();
 		Actor idk = null;
@@ -178,38 +182,38 @@ public class World implements IUniqueExistence, IRenderable {
 	public synchronized void worldTick() {
 		if (this.testActor.isRemoved())
 			makeTestActor();
-		synchronized (actors) {
-			Iterator<Actor> iter = actors.values().iterator();
-			while (iter.hasNext()) {
-				Actor e = iter.next();
-				if (e.isRemoved()) {
-					if (e instanceof UpgradedSentientActor sa) {
-						sa.getMind().kill();
-					}
-					iter.remove();
+		// synchronized (actors) {
+		Iterator<Actor> iter = actors.values().iterator();
+		while (iter.hasNext()) {
+			Actor e = iter.next();
+			if (e.isRemoved()) {
+				if (e instanceof UpgradedSentientActor sa) {
+					sa.getMind().kill();
 				}
-				e.movementTick();
-				e.tick();
-				e.senseTick();
-				e.thinkTick();
-
+				iter.remove();
 			}
+			e.movementTick();
+			e.tick();
+			e.senseTick();
+			e.thinkTick();
 
-			synchronized (phenomena) {
-				Iterator<IPhenomenon> iter2 = phenomena.values().iterator();
-				while (iter2.hasNext()) {
-					IPhenomenon p = iter2.next();
-					p.tick();
-					if (p.isComplete()) {
-						iter2.remove();
-					}
+		}
+
+		synchronized (phenomena) {
+			Iterator<IPhenomenon> iter2 = phenomena.values().iterator();
+			while (iter2.hasNext()) {
+				IPhenomenon p = iter2.next();
+				p.tick();
+				if (p.isComplete()) {
+					iter2.remove();
 				}
-			}
-			for (Actor e : actors.values()) {
-				e.actionTick();
-				e.finalTick();
 			}
 		}
+		for (Actor e : actors.values()) {
+			e.actionTick();
+			e.finalTick();
+		}
+		// }
 		for (UpgradedGroup g : groups.values()) {
 			g.tick(this.ticks);
 		}

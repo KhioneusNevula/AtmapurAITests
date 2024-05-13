@@ -9,6 +9,14 @@ import com.google.common.collect.ImmutableMap;
 import mind.concepts.identifiers.IPropertyIdentifier;
 import mind.concepts.identifiers.IsHeldByIdentifier;
 
+/**
+ * TODO consider that meaningfulness is often derived through longevity, i.e.
+ * life is meaningful if it's eternal, relationships are meaningful if they're
+ * long, practices are meaningful if they're longstanding traditions
+ * 
+ * @author borah
+ *
+ */
 public class BasicProperties {
 	private static Map<Property, Supplier<IPropertyIdentifier>> gens = Map.of();
 

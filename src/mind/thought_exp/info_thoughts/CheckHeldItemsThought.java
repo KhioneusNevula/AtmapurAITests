@@ -2,6 +2,7 @@ package mind.thought_exp.info_thoughts;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 
 import actor.Actor;
@@ -13,7 +14,10 @@ import mind.goals.ITaskGoal;
 import mind.memory.IPropertyData;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.memory.type.ImportantWorldObjectsMemory;
 import mind.thought_exp.type.AbstractInformationThought;
 
 public class CheckHeldItemsThought extends AbstractInformationThought<Collection<Actor>> {
@@ -21,12 +25,25 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 	private Profile profile;
 	private Property property;
 	private String failure;
+	private ITaskGoal remember;
 
-	public CheckHeldItemsThought(Profile profile) {
+	/**
+	 * taskgoal can be null; if it is non-null, this will be stored as a memory
+	 * 
+	 * @param profile
+	 * @param remember
+	 */
+	public CheckHeldItemsThought(Profile profile, ITaskGoal remember) {
 		this.profile = profile;
 	}
 
-	public CheckHeldItemsThought(Property property) {
+	/**
+	 * taskgoal can be null; if non-null, this will be stored as a memory
+	 * 
+	 * @param property
+	 * @param remember
+	 */
+	public CheckHeldItemsThought(Property property, ITaskGoal remember) {
 		this.property = property;
 	}
 
@@ -43,6 +60,17 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 	@Override
 	public boolean isLightweight() {
 		return true;
+	}
+
+	@Override
+	public Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
+		if (remember != null) {
+			if (!this.information.isEmpty()) {
+				return Map.of(new ImportantWorldObjectsMemory(information, remember)
+						.setProperty(property == null ? Property.ANY : property), Interest.SHORT_TERM);
+			}
+		}
+		return super.produceMemories(mind, finishingTicks, worldTicks);
 	}
 
 	@Override
@@ -117,7 +145,7 @@ public class CheckHeldItemsThought extends AbstractInformationThought<Collection
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink memory, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

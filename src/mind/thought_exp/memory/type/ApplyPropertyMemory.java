@@ -23,13 +23,13 @@ public class ApplyPropertyMemory extends AbstractMemory {
 	}
 
 	@Override
-	public boolean apply(IBrainMemory toMind) {
+	public boolean applyMemoryEffects(IBrainMemory toMind) {
 		toMind.learnPropertyData(toProfile, getTopic(), dat);
 		return false;
 	}
 
 	@Override
-	public void uponForgetting(IUpgradedMind toMind) {
+	public void forgetMemoryEffects(IUpgradedMind toMind) {
 
 	}
 

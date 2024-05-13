@@ -303,6 +303,7 @@ public class UpgradedMindDisplay implements IRenderable {
 				this.renderThoughtBox(thought, box, pair.getSecond(), g, boxText, border, vanishTime, textSize);
 			} else {
 				// System.err.println("Failed to show thought box for " + thought);
+				break;
 			}
 
 		}
@@ -332,6 +333,7 @@ public class UpgradedMindDisplay implements IRenderable {
 				this.renderRelationMapBox(box, g, boxText, border, textSize, color);
 			} else {
 				// System.err.println("Failed to show thought box for " + thought);
+				break;
 			}
 
 		}

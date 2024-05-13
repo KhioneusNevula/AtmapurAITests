@@ -3,6 +3,7 @@ package mind.concepts.identifiers;
 import actor.ITemplate;
 import actor.IUniqueExistence;
 import actor.IVisage;
+import mind.concepts.CompositeIdentifier;
 import mind.concepts.type.Property;
 import mind.memory.IPropertyData;
 import mind.thought_exp.IUpgradedHasKnowledge;
@@ -34,6 +35,8 @@ public class TemplateBasedIdentifier implements IPropertyIdentifier {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (obj instanceof CompositeIdentifier)
+			return obj.equals(this);
 		if (!(obj instanceof TemplateBasedIdentifier))
 			return false;
 		TemplateBasedIdentifier tbi = (TemplateBasedIdentifier) obj;

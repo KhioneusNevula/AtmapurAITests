@@ -17,7 +17,7 @@ public class PropertyIdentifierMemory extends AbstractMemory {
 	}
 
 	@Override
-	public boolean apply(IBrainMemory toMind) {
+	public boolean applyMemoryEffects(IBrainMemory toMind) {
 		IPropertyIdentifier id = toMind.getPropertyIdentifier(property);
 		if (id.isComposite()) {
 			((CompositeIdentifier) id).addIdentifier(ide);
@@ -32,7 +32,7 @@ public class PropertyIdentifierMemory extends AbstractMemory {
 	}
 
 	@Override
-	public void uponForgetting(IUpgradedMind toMind) {
+	public void forgetMemoryEffects(IUpgradedMind toMind) {
 
 	}
 
@@ -43,7 +43,17 @@ public class PropertyIdentifierMemory extends AbstractMemory {
 
 	@Override
 	public int hashCode() {
-		return property.hashCode();
+		return property.hashCode() + ide.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (super.equals(obj))
+			return true;
+		if (obj instanceof PropertyIdentifierMemory pim) {
+			return this.property.equals(pim.property) && this.ide.equals(pim.ide);
+		}
+		return false;
 	}
 
 	@Override

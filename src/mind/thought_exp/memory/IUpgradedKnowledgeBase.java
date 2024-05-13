@@ -245,6 +245,15 @@ public interface IUpgradedKnowledgeBase {
 	public boolean forgetAllRelations(IMeme one, IMeme other);
 
 	/**
+	 * Forget all relations of the given type from this entity
+	 * 
+	 * @param fromOne
+	 * @param type
+	 * @return
+	 */
+	public boolean forgetAllRelationsOfType(IMeme fromOne, IConceptRelationType type);
+
+	/**
 	 * Whether this concept has a relation going from One to Other in that direction
 	 * 
 	 * @param one
@@ -423,11 +432,21 @@ public interface IUpgradedKnowledgeBase {
 	ITemplateConcept learnTemplateFor(IProfile forProfile, ITemplateConcept value);
 
 	/**
-	 * return null if you store data another way. This is just for Mind Display
+	 * The relations graph, for very baseline manipulation
 	 * 
 	 * @return
 	 */
 	RelationsGraph getRelationsGraph();
+
+	/**
+	 * Whether a concept is a subtype of another concept as per the relations graph
+	 * using the method {@link RelationsGraph#isSubtypeOf(IMeme, IMeme)}
+	 * 
+	 * @param prop
+	 * @param food
+	 * @return
+	 */
+	public boolean isConceptSubtype(IMeme concept, IMeme superclass);
 
 	// TODO add other forms of knowledge
 

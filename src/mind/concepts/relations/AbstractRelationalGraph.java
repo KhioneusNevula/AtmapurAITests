@@ -6,12 +6,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 
 import mind.concepts.relations.AbstractRelationalGraph.Edge.InverseView;
 import mind.concepts.type.IMeme;
+import mind.thought_exp.IThoughtMemory;
 
 /**
  * 
@@ -64,6 +66,43 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 
 		AbstractRelationalGraph<RelationType, RelationArguments, MemeType>.Node getRight();
 
+		/**
+		 * 0 - 1, indicates that the edge is an uncertain connection if less than 1
+		 * 
+		 * @return
+		 */
+		float sureness();
+
+		/**
+		 * Remove this source from this relation's sources; if there are other sources
+		 * still keeping this relation connected, return false, otherwise return true.
+		 * Return false if the thought is not part of the sources at all
+		 * 
+		 * @param thought
+		 * @return
+		 */
+		public boolean attemptDelete(IThoughtMemory thought);
+
+		/**
+		 * Add this thought-memory as a source for this piece of information
+		 * 
+		 * @param source
+		 */
+		public void addSource(IThoughtMemory source);
+
+		/**
+		 * Return all thought-memories acting as sources for this connection
+		 * 
+		 * @return
+		 */
+		public Collection<IThoughtMemory> getSources();
+
+		public static String toStringMethod(IEdge<?, ?, ?> edge) {
+			return "(" + edge.getLeft().data + "):=" + edge.getType() + "{" + edge.getArgs() + "}=>("
+					+ edge.getRight().data + ")" + (edge.sureness() < 1 ? "[s=" + edge.sureness() + "]" : "")
+					+ (edge.getSources().isEmpty() ? "" : "[from=" + edge.getSources() + "]");
+		}
+
 	}
 
 	public class Edge implements IEdge<RelationType, RelationArguments, MemeType> {
@@ -72,6 +111,32 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 		private Node left;
 		private Node right;
 		private InverseView inverse;
+		private float sureness = 1;
+		/** source of the knowledge */
+		private HashSet<IThoughtMemory> sources;
+
+		@Override
+		public void addSource(IThoughtMemory source) {
+			if (sources == null)
+				sources = new HashSet<>();
+			sources.add(source);
+		}
+
+		@Override
+		public boolean attemptDelete(IThoughtMemory thought) {
+			if (sources == null)
+				return false;
+			if (sources.remove(thought)) {
+				if (sources.isEmpty())
+					return true;
+			}
+			return false;
+		}
+
+		@Override
+		public Collection<IThoughtMemory> getSources() {
+			return sources == null ? Collections.emptySet() : sources;
+		}
 
 		@Override
 		public RelationType getType() {
@@ -138,7 +203,17 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 
 		@Override
 		public String toString() {
-			return "(" + this.left.data + "):=" + this.type + "{" + this.args + "}=>(" + this.right.data + ")";
+			return IEdge.toStringMethod(this);
+		}
+
+		@Override
+		public float sureness() {
+			return sureness;
+		}
+
+		public Edge setSureness(float sureness) {
+			this.sureness = sureness;
+			return this;
 		}
 
 		public class InverseView implements IEdge<RelationType, RelationArguments, MemeType> {
@@ -192,9 +267,28 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 			}
 
 			@Override
+			public float sureness() {
+				return Edge.this.sureness();
+			}
+
+			@Override
+			public boolean attemptDelete(IThoughtMemory thought) {
+				return Edge.this.attemptDelete(thought);
+			}
+
+			@Override
+			public Collection<IThoughtMemory> getSources() {
+				return Edge.this.getSources();
+			}
+
+			@Override
+			public void addSource(IThoughtMemory source) {
+				Edge.this.addSource(source);
+			}
+
+			@Override
 			public String toString() {
-				return "<" + this.getLeft().data + ":=" + this.getType() + "(" + this.getArgs() + ")=>"
-						+ this.getRight().data;
+				return IEdge.toStringMethod(this);
 			}
 
 		}
@@ -203,7 +297,7 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 	public class Node implements Comparable<Node> {
 		private MemeType data;
 		private Table<RelationType, MemeType, IEdge<RelationType, RelationArguments, MemeType>> edges;
-		private boolean visited;
+		private UUID visitid;
 
 		protected Node(MemeType data) {
 			this.data = data;
@@ -213,6 +307,20 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 
 		public boolean hasConnections() {
 			return !edges.isEmpty();
+		}
+
+		/**
+		 * Used for traversals to indicate this node is visited by this traversal; the
+		 * UUID should be unique to each traversal
+		 * 
+		 * @param id
+		 */
+		public void setVisitID(UUID id) {
+			this.visitid = id;
+		}
+
+		public UUID getVisitID() {
+			return this.visitid;
 		}
 
 		public Collection<IEdge<RelationType, RelationArguments, MemeType>> getAllEdges() {
@@ -237,6 +345,17 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 
 		protected IEdge<RelationType, RelationArguments, MemeType> removeEdge(MemeType other, RelationType type) {
 			return edges.remove(type, other);
+		}
+
+		protected IEdge<RelationType, RelationArguments, MemeType> attemptRemoveEdge(MemeType other, RelationType type,
+				IThoughtMemory source) {
+			IEdge<RelationType, RelationArguments, MemeType> edge = edges.get(type, other);
+			if (edge == null)
+				return null;
+			if (edge.attemptDelete(source)) {
+				return edges.remove(type, other);
+			}
+			return null;
 		}
 
 		protected Collection<IEdge<RelationType, RelationArguments, MemeType>> clearAllEdges() {
@@ -412,6 +531,38 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 		return edge;
 	}
 
+	/**
+	 * attempts to remove the given edge by using the thought memory as the source;
+	 * return null if the edge was not deleted or if the source is not part of the
+	 * edge
+	 * 
+	 * @param one
+	 * @param other
+	 * @param type
+	 * @param source
+	 * @return
+	 */
+	public IEdge<RelationType, RelationArguments, MemeType> attemptRemoveEdge(MemeType one, MemeType other,
+			RelationType type, IThoughtMemory source) {
+		Node nOne = this.getNode(one);
+		if (nOne == null)
+			return null;
+		IEdge<RelationType, RelationArguments, MemeType> edge = nOne.attemptRemoveEdge(other, type, source);
+		if (edge == null)
+			return null;
+		if (edge.isInverseEdge())
+			edges.remove(edge.inverseView());
+		else
+			edges.remove(edge);
+
+		edge.getRight().removeEdge(one, edge.inverseView().getType());
+		if (!nOne.hasConnections() && !allowBareNodes)
+			nodes.remove(one);
+		if (!edge.getRight().hasConnections() && !allowBareNodes)
+			nodes.remove(other);
+		return edge;
+	}
+
 	public IEdge<RelationType, RelationArguments, MemeType> createEdge(MemeType one, MemeType other, RelationType type,
 			RelationArguments args) {
 		Node nOne = this._getOrCreateNode(one);
@@ -422,6 +573,28 @@ public abstract class AbstractRelationalGraph<RelationType extends IInvertibleRe
 		nOther.putEdge(one, edge.inverseView());
 		return edge;
 
+	}
+
+	/**
+	 * either creates an edge of the given type, or grabs an existing edge, and
+	 * makes the given memory one of its sources. The empty relation-args argument
+	 * at the end is the relation args to add if the edge doesn't exist; they will
+	 * not be applied if the edge does exist
+	 * 
+	 * @param one
+	 * @param other
+	 * @param type
+	 * @param source
+	 * @param emptyArgs
+	 * @return
+	 */
+	public IEdge<RelationType, RelationArguments, MemeType> addSourceToEdge(MemeType one, MemeType other,
+			RelationType type, IThoughtMemory source, RelationArguments emptyArgs) {
+		IEdge<RelationType, RelationArguments, MemeType> edge = this.getEdge(one, other, type);
+		if (edge == null)
+			edge = this.createEdge(one, other, type, emptyArgs);
+		edge.addSource(source);
+		return edge;
 	}
 
 	public Collection<IEdge<RelationType, RelationArguments, MemeType>> getAllEdgesFrom(MemeType one) {

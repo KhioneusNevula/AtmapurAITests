@@ -21,6 +21,24 @@ public class RelationMemory extends AbstractMemory {
 	}
 
 	/**
+	 * Get the concept representing the left end of the relation
+	 * 
+	 * @return
+	 */
+	public IMeme getFirst() {
+		return first;
+	}
+
+	/**
+	 * Get the concept representing the right end of the relation
+	 * 
+	 * @return
+	 */
+	public IMeme getSecond() {
+		return second;
+	}
+
+	/**
 	 * put bidirectional relations in relationsLeft
 	 * 
 	 * @param first
@@ -38,7 +56,7 @@ public class RelationMemory extends AbstractMemory {
 	}
 
 	@Override
-	public boolean apply(IBrainMemory toMind) {
+	public boolean applyMemoryEffects(IBrainMemory toMind) {
 		for (Map.Entry<? extends IConceptRelationType, Collection<IMeme>> entry : relationsRight.entrySet()) {
 			toMind.learnRelation(first, second, entry.getKey(), entry.getValue());
 		}
@@ -49,7 +67,7 @@ public class RelationMemory extends AbstractMemory {
 	}
 
 	@Override
-	public void uponForgetting(IUpgradedMind toMind) {
+	public void forgetMemoryEffects(IUpgradedMind toMind) {
 
 	}
 
@@ -60,6 +78,8 @@ public class RelationMemory extends AbstractMemory {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (super.equals(obj))
+			return true;
 		if (!(obj instanceof RelationMemory))
 			return false;
 		RelationMemory relmem = (RelationMemory) obj;

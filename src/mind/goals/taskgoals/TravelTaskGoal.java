@@ -1,6 +1,5 @@
 package mind.goals.taskgoals;
 
-import actor.Actor;
 import mind.concepts.type.ILocationMeme;
 import mind.concepts.type.IProfile;
 import mind.goals.IGoal;
@@ -75,7 +74,7 @@ public class TravelTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean isInvalid(IUpgradedHasKnowledge knower) {
-		if (reachDistance && !(knower instanceof Actor))
+		if (reachDistance && !(knower.hasActor()))
 			return true;
 		if (knower instanceof IPhysicalExistence)
 			return false;
@@ -86,6 +85,7 @@ public class TravelTaskGoal implements ITaskGoal {
 	public boolean isComplete(IUpgradedHasKnowledge entity) {
 		return entity.getAsHasActor().getActor().distance(
 				location.getGeneralLocation()) <= (reachDistance ? (entity.getAsHasActor().getActor()).getReach() : 0);
+		// TODO change location checking to allow for someone to be fooled
 	}
 
 	@Override

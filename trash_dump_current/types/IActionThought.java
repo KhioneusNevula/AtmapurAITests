@@ -6,6 +6,7 @@ import java.util.Set;
 import actor.IPartAbility;
 import mind.action.IActionType;
 import mind.goals.ITaskGoal;
+import mind.goals.ITaskHint;
 import mind.relationships.IParty;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
@@ -13,10 +14,7 @@ import mind.thought_exp.IUpgradedHasKnowledge;
 import mind.thought_exp.culture.UpgradedGroup;
 
 /**
- * An instance of an action in memory. Actions are of two different types -- the
- * Thinking and the Executing. Both types function as different action-thoughts,
- * with the Thinking thought being generated to produce conditions, and the
- * Executing variant being generated to actually execute the action
+ * An instance of an action in memory
  * 
  * @author borah
  *
@@ -39,6 +37,15 @@ public interface IActionThought extends IThought {
 	 */
 	default boolean performableByIndividual() {
 		return true;
+	}
+
+	/**
+	 * What use this task is for
+	 * 
+	 * @return
+	 */
+	default Collection<ITaskHint> getUsageHints() {
+		return getActionType().getUsage();
 	}
 
 	/**
@@ -73,19 +80,16 @@ public interface IActionThought extends IThought {
 	 * 
 	 * @param forUser
 	 */
-	// public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks,
-	// long worldTicks);
+	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks);
 
 	/**
 	 * {@link IAction#beginExecutingIndividual} but for a group
 	 * 
 	 * @param forUser
 	 */
-	/*
-	 * default void beginExecutingGroup(UpgradedGroup group, long worldTicks) {
-	 * 
-	 * }
-	 */
+	default void beginExecutingGroup(UpgradedGroup group, long worldTicks) {
+
+	}
 
 	/**
 	 * whether the action can execute continuously; checked every tick
@@ -93,15 +97,13 @@ public interface IActionThought extends IThought {
 	 * @param individual
 	 * @return
 	 */
-	/*
-	 * default boolean canContinueExecutingIndividual(ICanThink individual, int
-	 * actionTick, int thoughtTick) { return false; }
-	 */
+	default boolean canContinueExecutingIndividual(ICanThink individual, int actionTick, int thoughtTick) {
+		return false;
+	}
 
-	/*
-	 * default boolean canContinueExecutingGroup(UpgradedGroup group, int
-	 * actionTick) { return false; }
-	 */
+	default boolean canContinueExecutingGroup(UpgradedGroup group, int actionTick) {
+		return false;
+	}
 
 	/**
 	 * a tick of execution for an individual; the "tick" parameter indicates how
@@ -111,18 +113,13 @@ public interface IActionThought extends IThought {
 	 * @param tick
 	 * @return
 	 */
-	/*
-	 * default void executionTickIndividual(ICanThink individual, int actionTick,
-	 * int thoughtTick) {
-	 * 
-	 * }
-	 */
+	default void executionTickIndividual(ICanThink individual, int actionTick, int thoughtTick) {
 
-	/*
-	 * default void executionTickGroup(UpgradedGroup group, int tick) {
-	 * 
-	 * }
-	 */
+	}
+
+	default void executionTickGroup(UpgradedGroup group, int tick) {
+
+	}
 
 	/**
 	 * Finish this action (called once canContinueExecuting returns false; return if
@@ -131,16 +128,14 @@ public interface IActionThought extends IThought {
 	 * @param individual
 	 * @param tick
 	 */
-	/*
-	 * public default boolean finishActionIndividual(ICanThink individual, int
-	 * actionTick, int thoughtTick, boolean interruption) { return
-	 * !failedPreemptively(); }
-	 */
+	public default boolean finishActionIndividual(ICanThink individual, int actionTick, int thoughtTick,
+			boolean interruption) {
+		return !failedPreemptively();
+	}
 
-	/*
-	 * default boolean finishActionGroup(UpgradedGroup group, int tick) { return
-	 * false; }
-	 */
+	default boolean finishActionGroup(UpgradedGroup group, int tick) {
+		return false;
+	}
 
 	/**
 	 * retrieves the goal representing the condition the action needs in order to
@@ -203,12 +198,6 @@ public interface IActionThought extends IThought {
 		return Set.of();
 	}
 
-	/**
-	 * whether this action executed successfully; for a thinking action, whether
-	 * this action produced a successful result
-	 * 
-	 * @return
-	 */
 	boolean succeeded();
 
 	/**
@@ -225,17 +214,29 @@ public interface IActionThought extends IThought {
 	void cancel();
 
 	/**
-	 * If this action is in Executing state; if this is false, the action is in the
-	 * Thinking state
+	 * If this action is in the Started phase yet; if this is false, the action is
+	 * in the Thinking phase
 	 * 
 	 * @return
 	 */
-	boolean executing();
+	boolean started();
 
 	/**
-	 * Mark this action as executing; assumes that preconditions of the action are
-	 * met.
+	 * Start this action; assumes that preconditions of the action are met.
 	 */
 	public void start();
+
+	/**
+	 * Whether this thought has created short term memories that ought to be checked
+	 * 
+	 * @return
+	 */
+	boolean addedShortTermMemories();
+
+	/**
+	 * Indicates to this thought that the previous thought changed some short-term
+	 * memories which the next thought can check
+	 */
+	public void notifyCheckMemories();
 
 }

@@ -69,14 +69,22 @@ public class LearnTaskGoal implements ITaskGoal {
 	}
 
 	@Override
-	public boolean checkResult(IThought thought, Object result) {
-		return question.isAnsweredAccordingToThought(thought, result);
+	public IThought checkCompletionAndRemember(IUpgradedHasKnowledge mind) {
+		return question.getAnsweringThoughtAndRemember(mind);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought) {
+		return question.isAnsweredAccordingToThought(thought);
 	}
 
 	@Override
 	public boolean useThoughtToCheckCompletion(IUpgradedHasKnowledge mind) {
-
-		return needThoughtToAnswer;
+		if (needThoughtToAnswer)
+			return needThoughtToAnswer;
+		else {
+			return question.isAnswered(mind) == null;
+		}
 	}
 
 	@Override

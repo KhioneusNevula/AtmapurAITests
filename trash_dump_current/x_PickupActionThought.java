@@ -3,7 +3,7 @@ package mind.thought_exp.actions;
 import java.util.Iterator;
 
 import actor.Actor;
-import main.Pair;
+import actor.IUniqueExistence;
 import mind.action.ActionType;
 import mind.action.IActionType;
 import mind.concepts.relations.ConceptRelationType;
@@ -15,12 +15,15 @@ import mind.goals.ITaskGoal;
 import mind.goals.taskgoals.TravelTaskGoal;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.ThoughtType;
 import mind.thought_exp.info_thoughts.CheckKnownProfilesThought;
 import mind.thought_exp.info_thoughts.CheckSensedActorsThought;
+import mind.thought_exp.memory.type.ImportantWorldObjectsMemory;
+import mind.thought_exp.memory.type.MemoryWrapper;
 import sim.WorldGraphics;
 
-public class PickupActionThought extends AbstractActionThought {
+public class x_PickupActionThought extends AbstractActionThought {
 
 	private IMeme toAcquireMeme;
 	private Actor toAcquire;
@@ -30,9 +33,8 @@ public class PickupActionThought extends AbstractActionThought {
 	private boolean checkingUnreachableSensed;
 	private boolean checkProfileLocation;
 	private ILocationMeme goTo;
-	private int tries = 5;
 
-	public PickupActionThought(ITaskGoal goal) {
+	public x_PickupActionThought(ITaskGoal goal) {
 		super(goal);
 		this.toAcquireMeme = goal.transferItem();
 	}
@@ -53,31 +55,41 @@ public class PickupActionThought extends AbstractActionThought {
 			this.goTo = memory.getKnowledgeBase()
 					.<ILocationMeme>getConceptsWithRelation(profile, ConceptRelationType.FOUND_AT).iterator().next();
 		}
-
-		if (this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty() && toAcquire == null) {
-			if (toAcquireProfile != null) {
-				this.postChildThought(new CheckSensedActorsThought(toAcquireProfile), ticks);
-			} else if (property != null) {
-				this.postChildThought(
-						new CheckSensedActorsThought(property, (a) -> memory.getAsHasActor().getActor().reachable(a)),
-						ticks);
-
-			} else {
-				this.postChildThought(new CheckSensedActorsThought(profile), ticks);
-
+		if (toAcquire == null && this.childThoughts(ThoughtType.FIND_MEMORY_INFO).isEmpty()) {
+			if (oughtToCheckShortTermMemories()) {
+				for (MemoryWrapper mw : memory.getMindMemory()
+						.getShortTermMemoriesOfType(MemoryCategory.REMEMBER_FOR_PURPOSE)) {
+					if (mw.getMemory() instanceof ImportantWorldObjectsMemory iwom) {
+						Property prop = iwom.getProperty();
+						if (prop.equals(toAcquireMeme)) {
+							IUniqueExistence ex = iwom.getObjects().iterator().next();
+							if (ex instanceof Actor) toAcquire = (Actor) ex;
+						} else if (toAcquireMeme instanceof IProfile ip) {
+							for (IUniqueExistence ex : iwom.getObjects()) {
+								if (ex.getUUID().equals(ip.getUUID()) && ex instanceof Actor) {
+									toAcquire = (Actor) ex;
+									break;
+								}
+							}
+						}
+					}
+				}
 			}
-			tries--;
-			if (tries <= 0) {
-				this.setFailureReason("too many attempts");
-				if (memory.hasActor() && memory.getAsHasActor().getActor().getName().equals("bobzy"))
-					System.out.print(""); // TODO remove this dumbery
-				this.failPreemptively();
+			if (toAcquire == null) {
+				if (toAcquireProfile != null) {
+					this.postChildThought(new CheckSensedActorsThought(toAcquireProfile, this.getGoal()), ticks);
+				} else if (property != null) {
+					this.postChildThought(new CheckSensedActorsThought(property,
+							(a) -> memory.getAsHasActor().getActor().reachable(a), this.getGoal()), ticks);
+				} else {
+					this.postChildThought(new CheckSensedActorsThought(profile, this.getGoal()), ticks);
+
+				}
+				this.markAddedShortTermMemories();
 			}
 		} else if (toAcquire != null) {
 			if (toAcquire.isRemoved()
 					|| toAcquire.getHeld() != null && toAcquire.getHeld().equals(memory.getAsHasActor().getActor())) {
-				if (memory.hasActor() && memory.getAsHasActor().getActor().getName().equals("bobzy"))
-					System.out.print(""); // TODO remove this dumbery
 				this.failPreemptively();
 			} else {
 				if (!memory.getAsHasActor().getActor().reachable(toAcquire)
@@ -92,7 +104,7 @@ public class PickupActionThought extends AbstractActionThought {
 
 	// TODO eventually also add, like, constructs or whatever
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink memory, IThought childThought, boolean interrupted, int ticks) {
 		if (childThought instanceof CheckSensedActorsThought csat) {
 
 			if (!checkingUnreachableSensed) {
@@ -122,27 +134,34 @@ public class PickupActionThought extends AbstractActionThought {
 						}
 					} else {
 						this.toAcquire = csat.getInformation().iterator().next();
-						this.goTo = toAcquire.getLocation();
+						this.goTo = ((Actor) toAcquire).getLocation();
 					}
 				} else {
-					this.postChildThought(new CheckKnownProfilesThought(property, true), ticks);
+					this.postChildThought(new CheckKnownProfilesThought(property, true, null), ticks);
 				}
 			}
 		} else if (childThought instanceof CheckKnownProfilesThought ckat) {
 			if (!ckat.getInformation().isEmpty()) {
-				Pair<IProfile, ILocationMeme> pair = ckat.getInformation().iterator().next();
-				this.toAcquireProfile = pair.getFirst();
-				this.goTo = pair.getSecond();
-				this.postConditionForExecution(new TravelTaskGoal(goTo, true));
+				Iterator<IProfile> profs = ckat.getInformation().iterator();
+				while (goTo == null && profs.hasNext()) {
+					IProfile pair = profs.next();
+					this.toAcquireProfile = pair;
+					this.goTo = memory.getKnowledgeBase()
+							.<ILocationMeme>getConceptsWithRelation(pair, ConceptRelationType.FOUND_AT).iterator()
+							.next();
+				}
+				if (goTo != null) {
+					this.postConditionForExecution(new TravelTaskGoal(goTo, true));
+				}
 			} else {
-				tries--;
+				this.failPreemptively();
 			}
 		}
 	}
 
 	@Override
 	public boolean canExecuteIndividual(ICanThink user, int thoughtTicks, long worldTicks) {
-		return (toAcquire != null && user.getAsHasActor().getActor().reachable(toAcquire));
+		return (toAcquire instanceof Actor && user.getAsHasActor().getActor().reachable((Actor)toAcquire));
 	}
 
 	@Override
@@ -163,7 +182,7 @@ public class PickupActionThought extends AbstractActionThought {
 	}
 
 	@Override
-	public IActionType<?> getType() {
+	public IActionType<?> getActionType() {
 		return ActionType.PICK_UP;
 	}
 

@@ -110,19 +110,20 @@ public interface IGoal extends IMeme {
 	}
 
 	public static enum Priority {
+
+		/** this thing is of least priority */
+		TRIVIAL,
+		/** this priority is preferred but not imminent */
+		NORMAL,
+		/** this is a serious priority, but not life-threatening in nature */
+		SERIOUS,
+		/** the goal of this priority is mortal in nature */
+		VITAL,
 		/**
 		 * a goal of this priority is not driven by rational need; this would be
 		 * something resultant of insanity or whatever
 		 */
-		OBSESSION,
-		/** the goal of this priority is mortal in nature */
-		VITAL,
-		/** this is a serious priority, but not life-threatening in nature */
-		SERIOUS,
-		/** this priority is preferred but not imminent */
-		NORMAL,
-		/** this thing is of least priority */
-		TRIVIAL
+		OBSESSION
 	}
 
 }

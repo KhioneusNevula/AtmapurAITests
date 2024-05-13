@@ -1,17 +1,27 @@
 package mind.thought_exp.memory;
 
+import java.util.AbstractCollection;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
+import java.util.function.Function;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 
+import mind.concepts.relations.AbstractRelationalGraph.IEdge;
+import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
 import mind.concepts.type.IProfile;
@@ -25,12 +35,17 @@ import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.culture.UpgradedGroup;
+import mind.thought_exp.memory.type.MemoryWrapper;
 
 public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBrainMemory {
 
 	private Map<IProfile, UpgradedCulture> cultures = new TreeMap<>();
 	private Map<IMeme, IFeeling> feelings;
-	private Map<IThoughtMemory.Interest, Multimap<IThoughtMemory.MemoryCategory, IThoughtMemory>> memories = new EnumMap<>(
+	/**
+	 * Note that the multimap stores using a tree-set that is in latest-to-oldest
+	 * order
+	 */
+	private Map<IThoughtMemory.Interest, Multimap<IThoughtMemory.MemoryCategory, MemoryWrapper>> memories = new EnumMap<>(
 			IThoughtMemory.Interest.class);
 
 	private Multimap<IProfile, Relationship> agreements = MultimapBuilder.treeKeys().linkedListValues().build();
@@ -58,6 +73,188 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 	}
 
 	@Override
+	public Collection<IUpgradedKnowledgeBase> mindAndCultures() {
+		return mindAndCultures;
+	}
+
+	private MindAndCulturesCollection mindAndCultures = new MindAndCulturesCollection();
+
+	private class MindAndCulturesCollection extends AbstractCollection<IUpgradedKnowledgeBase> {
+
+		@Override
+		public boolean contains(Object o) {
+			return o instanceof UpgradedCulture ? cultures.containsKey(((UpgradedCulture) o).selfProfile)
+					: (o instanceof IBrainMemory ? this == o : false);
+		}
+
+		@Override
+		public boolean isEmpty() {
+			return false;
+		}
+
+		@Override
+		public Iterator<IUpgradedKnowledgeBase> iterator() {
+			return new MACIterator();
+		}
+
+		@Override
+		public int size() {
+			return cultures.size() + 1;
+		}
+
+		private class MACIterator implements Iterator<IUpgradedKnowledgeBase> {
+
+			private Iterator<UpgradedCulture> culIt = cultures.values().iterator();
+			private boolean atHead = true;
+
+			@Override
+			public boolean hasNext() {
+				return atHead || culIt.hasNext();
+			}
+
+			@Override
+			public IUpgradedKnowledgeBase next() {
+				if (atHead) {
+					atHead = false;
+					return UpgradedBrain.this;
+				}
+				return culIt.next();
+			}
+
+		}
+
+	}
+
+	@Override
+	public <T> Collection<T> getCollectionFromCultures(
+			Function<IUpgradedKnowledgeBase, ? extends Collection<? extends T>> function) {
+		return new CulturesFunctionCollection<>(function, false);
+	}
+
+	@Override
+	public <T> Collection<T> getCollectionFromMindAndCultures(
+			Function<IUpgradedKnowledgeBase, ? extends Collection<? extends T>> function) {
+		return new CulturesFunctionCollection<T>(function, true);
+	}
+
+	@Override
+	public <T> Collection<T> getCollectionFromMindAndCultures(
+			Function<IUpgradedKnowledgeBase, ? extends Collection<? extends T>> function, Random rand) {
+		return new CulturesFunctionCollection<T>(function, true).rand(rand);
+	}
+
+	private class CulturesFunctionCollection<T> extends AbstractCollection<T> {
+		Function<IUpgradedKnowledgeBase, ? extends Collection<? extends T>> function;
+		LinkedList<Collection<? extends T>> collections = new LinkedList<>();
+		boolean includeMind;
+		int size = -1;
+		Random rand;
+
+		public CulturesFunctionCollection(Function<IUpgradedKnowledgeBase, ? extends Collection<? extends T>> function,
+				boolean includeMind) {
+			this.function = function;
+			this.includeMind = includeMind;
+		}
+
+		private CulturesFunctionCollection<T> rand(Random rand) {
+			this.rand = rand;
+			return this;
+		}
+
+		private void initAll() {
+			if (collections.isEmpty()) {
+				if (includeMind)
+					collections.add(function.apply(UpgradedBrain.this));
+				for (UpgradedCulture c : cultures.values()) {
+					collections.add(function.apply(c));
+				}
+			}
+		}
+
+		@Override
+		public Iterator<T> iterator() {
+			return new CFCIterator();
+		}
+
+		@Override
+		public int size() {
+			if (size <= -1) {
+				initAll();
+				size = 0;
+				for (Collection<? extends T> col : this.collections) {
+					size += col.size();
+				}
+			}
+			return size;
+		}
+
+		private class CFCIterator implements Iterator<T> {
+			Iterator<? extends T> curIter;
+			Iterator<Collection<? extends T>> colIter;
+			T skip;
+
+			public CFCIterator() {
+				initAll();
+				colIter = rand != null
+						? (rand.nextBoolean() ? collections.iterator() : collections.descendingIterator())
+						: collections.iterator();
+				while (curIter == null && colIter.hasNext()) {
+					Collection<? extends T> col = colIter.next();
+					if (rand != null && col instanceof Deque<? extends T>ls) {
+						curIter = rand.nextBoolean() ? ls.descendingIterator() : ls.iterator();
+					} else {
+						curIter = col.iterator();
+					}
+					if (!curIter.hasNext())
+						curIter = null;
+				}
+			}
+
+			@Override
+			public boolean hasNext() {
+				if (skip != null)
+					return true;
+				if (curIter == null)
+					return false;
+				if (curIter.hasNext())
+					return true;
+				return false;
+			}
+
+			@Override
+			public T next() {
+				T next = null;
+				if (skip != null) {
+					next = skip;
+					skip = null;
+					if (curIter == null)
+						return next;
+				} else {
+					if (curIter == null)
+						throw new NoSuchElementException();
+				}
+				if (next == null) {
+					next = curIter.next();
+					if (rand != null && rand.nextBoolean() && curIter.hasNext()) {
+						skip = next;
+						next = curIter.next();
+					}
+				}
+				if (!curIter.hasNext()) {
+					curIter = null;
+					while (curIter == null && colIter.hasNext()) {
+						curIter = colIter.next().iterator();
+						if (!curIter.hasNext())
+							curIter = null;
+					}
+				}
+
+				return next;
+			}
+		}
+	}
+
+	@Override
 	public void addCulture(UpgradedCulture a) {
 		this.cultures.put(a.getSelf(), a);
 	}
@@ -82,35 +279,58 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 		return super.learnConcept(concept);
 	}
 
-	private Multimap<IThoughtMemory.MemoryCategory, IThoughtMemory> makeMemoryMultimapFor(Interest memorySection) {
+	private Multimap<IThoughtMemory.MemoryCategory, MemoryWrapper> makeMemoryMultimapFor(Interest memorySection) {
 		if (memorySection == Interest.FORGET)
 			throw new IllegalArgumentException();
-		return memories.computeIfAbsent(memorySection,
-				(a) -> MultimapBuilder.enumKeys(IThoughtMemory.MemoryCategory.class).linkedListValues().build());
+		return memories.computeIfAbsent(memorySection, (a) -> MultimapBuilder
+				.enumKeys(IThoughtMemory.MemoryCategory.class).<MemoryWrapper>treeSetValues((ag, bg) -> {
+					int diff = (int) (bg.getTime() - ag.getTime());
+					if (diff != 0)
+						return diff;
+					else
+						return ag.getMemory().hashCode() - bg.getMemory().hashCode();
+				}).build());
 	}
 
 	@Override
-	public Collection<IThoughtMemory> getShortTermMemories() {
+	public Collection<MemoryWrapper> getShortTermMemories() {
 		return this.memories.get(Interest.SHORT_TERM) == null ? Collections.emptySet()
 				: this.memories.get(Interest.SHORT_TERM).values();
 	}
 
 	@Override
-	public Collection<IThoughtMemory> getShortTermMemoriesOfType(IThoughtMemory.MemoryCategory type) {
+	public Collection<MemoryWrapper> getShortTermMemoriesOfType(IThoughtMemory.MemoryCategory type) {
 
 		return this.memories.get(Interest.SHORT_TERM) == null ? Collections.emptySet()
 				: this.memories.get(Interest.SHORT_TERM).get(type);
 	}
 
 	@Override
-	public boolean rememberShortTerm(IThoughtMemory memory) {
+	public boolean rememberShortTerm(IThoughtMemory memory, long time) {
 
-		return makeMemoryMultimapFor(Interest.SHORT_TERM).put(memory.getType(), memory);
+		return makeMemoryMultimapFor(Interest.SHORT_TERM).put(memory.getType(), new MemoryWrapper(memory, time));
 	}
 
 	@Override
-	public boolean remember(Interest memoryType, IThoughtMemory memory) {
-		return makeMemoryMultimapFor(memoryType).put(memory.getType(), memory);
+	public boolean remember(Interest memoryType, IThoughtMemory memory, long time) {
+		return makeMemoryMultimapFor(memoryType).put(memory.getType(), new MemoryWrapper(memory, time));
+	}
+
+	@Override
+	public <T extends IMeme> void learnRelationAndAddSource(IMeme one, IMeme other, IConceptRelationType type,
+			IThoughtMemory source) {
+		IEdge<IConceptRelationType, Collection<IMeme>, IMeme> edge = this.relations.addSourceToEdge(one, other, type,
+				source, new TreeSet<>((a, b) -> a.getUniqueName().compareTo(b.getUniqueName())));
+	}
+
+	@Override
+	public <T extends IMeme> Collection<T> tryForgetRelationUsingSource(IMeme one, IMeme other, IConceptRelationType type,
+			IThoughtMemory source) {
+		IEdge<IConceptRelationType, Collection<IMeme>, IMeme> edge = relations.attemptRemoveEdge(one, other, type,
+				source);
+		if (edge == null)
+			return null;
+		return (Collection<T>) edge.getArgs();
 	}
 
 	@Override
@@ -121,14 +341,14 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 	}
 
 	@Override
-	public Collection<IThoughtMemory> getMemories(Interest section) {
+	public Collection<MemoryWrapper> getMemories(Interest section) {
 		if (this.memories.get(section) == null)
 			return Collections.emptySet();
 		return this.memories.get(section).values();
 	}
 
 	@Override
-	public Collection<IThoughtMemory> getMemoriesOfType(Interest section, MemoryCategory type) {
+	public Collection<MemoryWrapper> getMemoriesOfType(Interest section, MemoryCategory type) {
 
 		return this.memories.get(section) == null ? Collections.emptySet() : this.memories.get(section).get(type);
 	}
@@ -217,8 +437,10 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 		builder.append("cultures: " + this.cultures + "\n");
 		if (!knownConcepts.isEmpty())
 			builder.append("\tknownConcepts: " + this.knownConcepts.values() + "\n");
-		if (!relations.isEmpty())
-			builder.append("\trelations: " + this.relations + "\n");
+		if (!relations.isEmpty()) {
+			builder.append("\trelations: V=" + this.relations.getAllNodes() + "\n");
+			builder.append("\t\t: E=" + this.relations.getAllEdges() + "\n");
+		}
 		if (!relationships.isEmpty())
 			builder.append("\tknownRelationships: " + this.relationships + "\n");
 		if (!identifiers.isEmpty())

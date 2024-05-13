@@ -2,6 +2,7 @@ package mind.thought_exp.info_thoughts;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
@@ -14,7 +15,10 @@ import mind.goals.ITaskGoal;
 import mind.memory.IPropertyData;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
+import mind.thought_exp.IThoughtMemory;
+import mind.thought_exp.IThoughtMemory.Interest;
 import mind.thought_exp.ThoughtType;
+import mind.thought_exp.memory.type.ImportantWorldObjectsMemory;
 import mind.thought_exp.type.AbstractInformationThought;
 
 public class CheckSensedActorsThought extends AbstractInformationThought<Collection<Actor>> {
@@ -23,22 +27,25 @@ public class CheckSensedActorsThought extends AbstractInformationThought<Collect
 	private Property property;
 	private String failure;
 	private Predicate<Actor> predicate;
+	private ITaskGoal rememberFor;
 
-	public CheckSensedActorsThought(IProfile profile) {
+	public CheckSensedActorsThought(IProfile profile, ITaskGoal rememberFor) {
 		this.profile = profile;
+		this.rememberFor = rememberFor;
 	}
 
-	public CheckSensedActorsThought(Property property, Predicate<Actor> predicate) {
+	public CheckSensedActorsThought(Property property, Predicate<Actor> predicate, ITaskGoal rememberFor) {
 		this.property = property;
 		this.predicate = predicate;
+		this.rememberFor = rememberFor;
 	}
 
-	public CheckSensedActorsThought(Property property) {
-		this(property, (a) -> true);
+	public CheckSensedActorsThought(Property property, ITaskGoal rememberFor) {
+		this(property, (a) -> true, rememberFor);
 	}
 
-	public CheckSensedActorsThought(Predicate<Actor> actor) {
-		this(Property.ANY, actor);
+	public CheckSensedActorsThought(Predicate<Actor> actor, ITaskGoal rememberFor) {
+		this(Property.ANY, actor, rememberFor);
 	}
 
 	@Override
@@ -54,6 +61,17 @@ public class CheckSensedActorsThought extends AbstractInformationThought<Collect
 	@Override
 	public boolean isLightweight() {
 		return true;
+	}
+
+	@Override
+	public Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
+		if (rememberFor != null) {
+			if (!information.isEmpty()) {
+				return Map.of(new ImportantWorldObjectsMemory(information, rememberFor)
+						.setProperty(property == null ? Property.ANY : property), Interest.SHORT_TERM);
+			}
+		}
+		return super.produceMemories(mind, finishingTicks, worldTicks);
 	}
 
 	@Override
@@ -117,7 +135,7 @@ public class CheckSensedActorsThought extends AbstractInformationThought<Collect
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink memory, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

@@ -71,7 +71,7 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 		}
 	}
 
-	public UUID getUUID() { // TODO Auto-generated method stub
+	public UUID getUUID() {
 		return this.selfProfile.getUUID();
 	}
 
@@ -115,8 +115,9 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 
 	/**
 	 * Apply the effects of trends which role an appropriate probability check on an
-	 * individual (assumed to be) in this Culture Return successful trends. TODO
-	 * people can obviously resist trends, so figure out how to account for that
+	 * individual (assumed to be) in this Culture Return successful trends. <br>
+	 * TODO people can obviously resist trends, so figure out how to account for
+	 * that
 	 * 
 	 * @return
 	 */
@@ -139,8 +140,10 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 		builder.append("\tselfProfile: " + this.selfProfile + "\n");
 		if (!knownConcepts.isEmpty())
 			builder.append("\tknownConcepts: " + this.knownConcepts.values() + "\n");
-		if (!relations.isEmpty())
-			builder.append("\trelations: " + this.relations + "\n");
+		if (!relations.isEmpty()) {
+			builder.append("\trelations: V=" + this.relations.getAllNodes() + "\n");
+			builder.append("\t\t: E=" + this.relations.getAllEdges() + "\n");
+		}
 		if (!relationships.isEmpty())
 			builder.append("\tknownRelationships: " + this.relationships + "\n");
 		if (!identifiers.isEmpty())
@@ -271,6 +274,14 @@ public class UpgradedCulture extends UpgradedAbstractKnowledgeBase {
 			throw new CultureIsStaticException(this);
 		}
 		return super.forgetAllRelations(one, other);
+	}
+
+	@Override
+	public boolean forgetAllRelationsOfType(IMeme fromOne, IConceptRelationType type) {
+		if (isStatic) {
+			throw new CultureIsStaticException(this);
+		}
+		return super.forgetAllRelationsOfType(fromOne, type);
 	}
 
 	@Override

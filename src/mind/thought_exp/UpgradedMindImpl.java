@@ -56,6 +56,7 @@ import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import mind.thought_exp.memory.UpgradedBrain;
 import mind.thought_exp.memory.UpgradedTraitsMemory;
+import mind.thought_exp.memory.type.MemoryWrapper;
 import mind.thought_exp.memory.type.RecentThoughtMemory;
 import mind.thought_exp.type.ApplyPropertiesThought;
 import mind.thought_exp.type.InspirePropertyIdentifierThought;
@@ -70,6 +71,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	private boolean asleep = false;
 	private boolean conscious = true;
 	private int consciousTicks = 0;
+	private int unconsciousTicks = -1;
 	private UpgradedSentientActor owner;
 	private Multimap<IThoughtType, IThought> pausedThoughts;
 	private Multimap<IThoughtType, IThought> activeThoughts;
@@ -103,6 +105,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	 * TODO better model of sensing ability
 	 */
 	private int senseDistance = 50;
+	private int maxActions = 12;
 
 	public UpgradedMindImpl(UpgradedSentientActor actor) {
 		this(actor.getUUID(), actor.getName(), actor.getUnitString());
@@ -435,17 +438,42 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		}
 
 		// TODO move this to unconscious at some point
-		if (worldTicks % 200 == 0) {
-			for (MemoryCategory category : MemoryCategory.values()) {
-				Iterator<IThoughtMemory> miter = this.getMemory().getShortTermMemoriesOfType(category).iterator();
-				while (miter.hasNext()) {
-					IThoughtMemory memory = miter.next();
-					memory.uponForgetting(this);
+		if (this.consciousTicks % 200 == 0) {
+			this.pruneShortTerm(worldTicks, false);
+		}
+		this.consciousTicks++;
+	}
+
+	@Override
+	public void tickUnconscious(long worldTicks) {
+		// TODO unconscious ticks
+		if (this.unconsciousTicks % 20 == 0) {
+			this.pruneShortTerm(worldTicks, true);
+		}
+		this.unconsciousTicks++;
+	}
+
+	private void pruneShortTerm(long worldTicks, boolean sleep) {
+		// TODO dreams using memories
+		int passes = this.rand().nextInt(10) + 13;
+		for (MemoryCategory category : MemoryCategory.values()) {
+			if (passes <= 0)
+				break;
+			Iterator<MemoryWrapper> miter = this.getMemory().getShortTermMemoriesOfType(category).iterator();
+			while (miter.hasNext()) {
+				if (passes <= 0)
+					break;
+				IThoughtMemory memory = miter.next().getMemory();
+				if (sleep || memory.getImportance().ordinal() < Priority.SERIOUS.ordinal()
+						&& this.rand().nextInt(Priority.values().length) < Priority.values().length
+								- memory.getImportance().ordinal()) {
+
+					memory.forgetMemoryEffects(this);
 					miter.remove();
+					passes--;
 				}
 			}
 		}
-		this.consciousTicks++;
 	}
 
 	@Override
@@ -453,12 +481,6 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		for (IThought thought : this.getActiveThoughtsOfType(ThoughtType.ACTION)) {
 			thought.actionTick(this, this.tickMap.getOrDefault(thought, 0), worldTicks);
 		}
-	}
-
-	@Override
-	public void tickUnconscious(long worldTicks) {
-		// TODO unconscious ticks
-
 	}
 
 	/**
@@ -560,7 +582,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 					if (!(g instanceof ITaskGoal))
 						continue;
 					ITaskGoal goal = g.asTask();
-					IntentionThought thought = new IntentionThought(goal, true);
+					IntentionThought thought = new IntentionThought(goal);
 					boolean unnecessary = false;
 					for (IThought comparison : this.getThoughtsByType(ThoughtType.INTENTION)) {
 						if (comparison.equivalent(thought)) {
@@ -707,32 +729,33 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 			if (toInterrupt.isEmpty())
 				toInterrupt = null;
 		}
-		if (thought.parentThought() != null) {
-			thought.parentThought().getInfoFromChild(thought, interrupted, ticks);
+		// write to memory
+		Map<IThoughtMemory, Interest> mems = thought.produceMemories(this, ticks, worldTicks);
+		Interest interest = thought.shouldProduceRecentThoughtMemory(this, ticks, worldTicks);
+		if (interest != Interest.FORGET) {
+			getMemory().remember(interest, new RecentThoughtMemory(thought), worldTicks);
 		}
+		for (IThoughtMemory memor : mems.keySet()) {
+			Interest i = mems.get(memor);
+			if (memor.applyMemoryEffects(getMemory()) && i != Interest.FORGET) {
+				getMemory().remember(i, memor, worldTicks);
+			}
+		}
+		// notify parent
+		if (thought.parentThought() != null) {
+			thought.parentThought().getInfoFromChild(this, thought, interrupted, ticks);
+		}
+		// forget thought
 		this.forgetThought(thought);
-
+		// create next thought
 		IThought subsequentThought = thought.getSubsequentThought(interrupted);
 		if (subsequentThought != null) {
 			WillingnessMatrix matrix = this.calculateForce(subsequentThought);
 			this.insertThought(subsequentThought, matrix.getResult());
 		}
+		// apply feelings
 		Pair<IFeeling, Integer> feeling = thought.finalFeeling();
 		this.emotions().add(feeling.getFirst(), feeling.getSecond(), thought);
-		Map<IThoughtMemory, Interest> mems = thought.getMemory(this, ticks, worldTicks);
-		Interest interest = thought.shouldBecomeMemory(this, ticks, worldTicks);
-		if (interest != Interest.FORGET) {
-			getMemory().remember(interest, new RecentThoughtMemory(thought));
-		}
-		for (IThoughtMemory memor : mems.keySet()) {
-			Interest i = mems.get(memor);
-			if (memor.apply(getMemory()) && i != Interest.FORGET) {
-				getMemory().remember(i, memor);
-				if (this.owner.getName().equals("bobzy")) {
-					System.out.print("");
-				}
-			}
-		}
 	}
 
 	private void tickThought(IThought thought, int ticks, long worldTicks) {
@@ -811,7 +834,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public Collection<IPartAbility> getRequiredAbilitySlots(IActionThought action) {
-		if (!action.getType().requiresMultipartBody())
+		if (!action.getActionType().requiresMultipartBody())
 			return Set.of();
 		Set<IPartAbility> blockedAbilities = null;
 		for (IPartAbility ability : action.usesAbilities()) {
@@ -943,6 +966,7 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	public void sleep() {
 		this.conscious = false;
 		this.asleep = true;
+		this.unconsciousTicks = 0;
 	}
 
 	@Override
@@ -956,11 +980,17 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		this.conscious = true;
 		this.asleep = false;
 		this.consciousTicks = 0;
+		this.unconsciousTicks = -1;
 	}
 
 	@Override
 	public int ticksSinceLastRest() {
 		return consciousTicks;
+	}
+
+	@Override
+	public int ticksSinceFallingAsleep() {
+		return unconsciousTicks;
 	}
 
 	@Override
@@ -1022,6 +1052,11 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	@Override
 	public int getMaxFocusObjects() {
 		return maxFocusObjects;
+	}
+
+	@Override
+	public int getMaxActions() {
+		return maxActions;
 	}
 
 	@Override

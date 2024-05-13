@@ -15,13 +15,13 @@ public class LearnProfileMemory extends AbstractMemory {
 	}
 
 	@Override
-	public boolean apply(IBrainMemory toMind) {
+	public boolean applyMemoryEffects(IBrainMemory toMind) {
 		toMind.learnProfile(profile);
 		return true;
 	}
 
 	@Override
-	public void uponForgetting(IUpgradedMind toMind) {
+	public void forgetMemoryEffects(IUpgradedMind toMind) {
 		if (Math.random() > uniqueness && !toMind.hasRelationshipsWith(profile)) {
 			toMind.getKnowledgeBase().forgetProfile(profile);
 			toMind.getKnowledgeBase().deepForgetProfile(profile);
@@ -35,6 +35,8 @@ public class LearnProfileMemory extends AbstractMemory {
 
 	@Override
 	public boolean equals(Object obj) {
+		if (obj instanceof LearnProfileMemory lpm)
+			return this.profile.equals(lpm.profile);
 		return super.equals(obj);
 	}
 

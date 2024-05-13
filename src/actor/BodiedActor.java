@@ -8,7 +8,6 @@ public class BodiedActor extends MultipartActor {
 
 	public BodiedActor(World world, String name, ISpeciesTemplate template, int startX, int startY, int radius) {
 		super(world, name, template, startX, startY, radius);
-		// TODO Auto-generated constructor stub
 	}
 
 	protected void initBody() {

@@ -21,12 +21,12 @@ public class RecentThoughtMemory extends AbstractMemory {
 	}
 
 	@Override
-	public boolean apply(IBrainMemory toMind) {
+	public boolean applyMemoryEffects(IBrainMemory toMind) {
 		return true;
 	}
 
 	@Override
-	public void uponForgetting(IUpgradedMind toMind) {
+	public void forgetMemoryEffects(IUpgradedMind toMind) {
 
 	}
 

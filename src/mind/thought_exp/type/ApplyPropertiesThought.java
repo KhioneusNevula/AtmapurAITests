@@ -68,7 +68,7 @@ public class ApplyPropertiesThought extends AbstractThought {
 	}
 
 	@Override
-	public IThoughtMemory.Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public IThoughtMemory.Interest shouldProduceRecentThoughtMemory(ICanThink mind, int finishingTicks, long worldTicks) {
 		return IThoughtMemory.Interest.FORGET;
 	}
 
@@ -135,12 +135,12 @@ public class ApplyPropertiesThought extends AbstractThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 
 	@Override
-	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
 		return memories == null ? Map.of() : memories;
 	}
 

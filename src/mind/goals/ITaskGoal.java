@@ -56,6 +56,7 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		@Override
+
 		public boolean individualGoal() {
 			return false;
 		}
@@ -236,13 +237,24 @@ public interface ITaskGoal extends IGoal {
 	public IThought checkCompletion(IUpgradedHasKnowledge mind);
 
 	/**
+	 * Return a thought that will check if the goal is complete, and *remember* the
+	 * result. This is not used for normal goal-checking
+	 * 
+	 * @param mind
+	 * @return
+	 */
+	public default IThought checkCompletionAndRemember(IUpgradedHasKnowledge mind) {
+		return null;
+	}
+
+	/**
 	 * check the result of the completion-checking thought
 	 * 
 	 * @param thought
 	 * @return
 	 */
-	public default boolean checkResult(IThought thought, Object result) {
-		return result == Boolean.TRUE;
+	public default boolean checkResult(IThought thought) {
+		return thought.getInformation() == Boolean.TRUE;
 	}
 
 	/**
@@ -277,6 +289,15 @@ public interface ITaskGoal extends IGoal {
 		}
 
 		return dat;
+	}
+
+	/**
+	 * Gets the target of this goal if the target is a meme
+	 * 
+	 * @return
+	 */
+	default IMeme getTargetMeme() {
+		return null;
 	}
 
 }

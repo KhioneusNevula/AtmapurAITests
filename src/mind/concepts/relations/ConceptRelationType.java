@@ -58,9 +58,18 @@ public enum ConceptRelationType implements IConceptRelationType {
 
 	/**
 	 * Indicates that an action (this end) is used to complete the task-hint (the
-	 * other end)
+	 * other end), or that a task-hint (this end) is needed for the condition of an
+	 * action (other end)
 	 */
 	USED_FOR(false, false),
+
+	/**
+	 * Used for actions to indicate that, albeit with steps in between, they can be
+	 * used for the given end goal. For example, cooking can be used for eating,
+	 * albeit with steps between. Can take a distance as a parameter indicating how
+	 * many steps in between
+	 */
+	HEURISTIC_GOAL(false, false),
 	/**
 	 * the most default form of relationship indicating someone (this end) utilizes
 	 * something (the other end) for a general purpose defined by the action

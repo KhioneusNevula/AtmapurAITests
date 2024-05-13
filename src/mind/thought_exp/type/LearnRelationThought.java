@@ -59,7 +59,7 @@ public class LearnRelationThought extends AbstractThought {
 	}
 
 	@Override
-	public Interest shouldBecomeMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public Interest shouldProduceRecentThoughtMemory(ICanThink mind, int finishingTicks, long worldTicks) {
 		return Interest.FORGET;
 	}
 
@@ -127,7 +127,7 @@ public class LearnRelationThought extends AbstractThought {
 	}
 
 	@Override
-	public Map<IThoughtMemory, Interest> getMemory(ICanThink mind, int finishingTicks, long worldTicks) {
+	public Map<IThoughtMemory, Interest> produceMemories(ICanThink mind, int finishingTicks, long worldTicks) {
 
 		return memoryResult;
 	}
@@ -149,7 +149,7 @@ public class LearnRelationThought extends AbstractThought {
 	}
 
 	@Override
-	public void getInfoFromChild(IThought childThought, boolean interrupted, int ticks) {
+	public void getInfoFromChild(ICanThink mind, IThought childThought, boolean interrupted, int ticks) {
 
 	}
 

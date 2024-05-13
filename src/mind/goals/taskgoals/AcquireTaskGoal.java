@@ -66,13 +66,20 @@ public class AcquireTaskGoal implements ITaskGoal {
 
 	@Override
 	public IThought checkCompletion(IUpgradedHasKnowledge mind) {
-		return item instanceof Profile ? new CheckHeldItemsThought((Profile) item)
-				: new CheckHeldItemsThought((Property) item);
+		return item instanceof Profile ? new CheckHeldItemsThought((Profile) item, null)
+				: new CheckHeldItemsThought((Property) item, null);
 	}
 
 	@Override
-	public boolean checkResult(IThought thought, Object result) {
-		return !((Collection<Actor>) result).isEmpty();
+	public IThought checkCompletionAndRemember(IUpgradedHasKnowledge mind) {
+		return item instanceof Profile ? new CheckHeldItemsThought((Profile) item, this)
+				: new CheckHeldItemsThought((Property) item, this);
+	}
+
+	@Override
+	public boolean checkResult(IThought thought) {
+		Collection<Actor> result = ((CheckHeldItemsThought) thought).getInformation();
+		return !result.isEmpty();
 	}
 
 	@Override

@@ -2,6 +2,7 @@ package mind.thought_exp;
 
 import mind.concepts.type.IMeme;
 import mind.feeling.IFeeling;
+import mind.goals.IGoal.Priority;
 import mind.thought_exp.memory.IBrainMemory;
 
 /**
@@ -13,7 +14,12 @@ import mind.thought_exp.memory.IBrainMemory;
 public interface IThoughtMemory {
 
 	public static enum MemoryCategory {
-		REMEMBER_PROFILE(20), RECENT_ACTION(10), EVENT(20), RECENT_THOUGHT(10), AFFECT_PROPERTY(3), AFFECT_RELATION(3);
+		REMEMBER_PROFILE(20), RECENT_ACTION(10), EVENT(20), RECENT_THOUGHT(10), AFFECT_PROPERTY(3), AFFECT_RELATION(3),
+		RECENT_INTENTION(3),
+		/** remember something to use later */
+		REMEMBER_FOR_PURPOSE(10),
+		/** this is for memories that are for specific thoughts */
+		REMEMBER_FOR_SPECIFIC_THOUGHT(-1), GOAL(10);
 
 		/** the default max for short-term memories of this kind, or -1 if no cap */
 		public final int usualCap;
@@ -45,20 +51,21 @@ public interface IThoughtMemory {
 	 * 
 	 * @param toMind
 	 */
-	public boolean apply(IBrainMemory toMind);
+	public boolean applyMemoryEffects(IBrainMemory toMind);
 
 	/**
-	 * What to do when this memory is about to be deleted. For example, a
-	 * learnProfile memory might roll a check to determine whether an individual
-	 * should be forgotten about when this memory is deleted
+	 * What to do when this memory is about to be deleted from short-term. For
+	 * example, a learnProfile memory might roll a check to determine whether an
+	 * individual should be forgotten about when this memory is deleted.
 	 * 
 	 * @param toMind
 	 * @return
 	 */
-	public void uponForgetting(IUpgradedMind toMind);
+	public void forgetMemoryEffects(IUpgradedMind toMind);
 
 	/**
-	 * gets the feeling of this memory
+	 * gets the feeling of this memory <br>
+	 * TODO add and remove feelings
 	 * 
 	 * @return
 	 */
@@ -83,5 +90,12 @@ public interface IThoughtMemory {
 	 * what category of memory this is
 	 */
 	public MemoryCategory getType();
+
+	/**
+	 * Importance of this memory; determines how easily it gets forgotten
+	 * 
+	 * @return
+	 */
+	public Priority getImportance();
 
 }

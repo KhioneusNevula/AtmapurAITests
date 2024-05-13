@@ -71,7 +71,21 @@ public class Question implements IMeme {
 		}
 	}
 
-	public boolean isAnsweredAccordingToThought(IThought thought, Object result) {
+	/**
+	 * Gets an answering thought for this question -- one which will remain in
+	 * memory
+	 * 
+	 * @param ihk
+	 * @return
+	 */
+	public IThought getAnsweringThoughtAndRemember(IUpgradedHasKnowledge ihk) {
+		switch (type) {
+		default:
+			return null; // TODO implement answerer thoughts
+		}
+	}
+
+	public boolean isAnsweredAccordingToThought(IThought thought) {
 		switch (type) {
 		default:
 			return false;
