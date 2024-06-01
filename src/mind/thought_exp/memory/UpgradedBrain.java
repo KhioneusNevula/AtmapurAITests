@@ -19,8 +19,9 @@ import java.util.function.Function;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.MultimapBuilder.SortedSetMultimapBuilder;
+import com.google.common.collect.SortedSetMultimap;
 
-import mind.concepts.relations.AbstractRelationalGraph.IEdge;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
@@ -36,6 +37,7 @@ import mind.thought_exp.IThoughtMemory.MemoryCategory;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.culture.UpgradedGroup;
 import mind.thought_exp.memory.type.MemoryWrapper;
+import sim.relationalclasses.AbstractRelationalGraph.IEdge;
 
 public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBrainMemory {
 
@@ -45,7 +47,7 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 	 * Note that the multimap stores using a tree-set that is in latest-to-oldest
 	 * order
 	 */
-	private Map<IThoughtMemory.Interest, Multimap<IThoughtMemory.MemoryCategory, MemoryWrapper>> memories = new EnumMap<>(
+	private Map<IThoughtMemory.Interest, SortedSetMultimap<IThoughtMemory.MemoryCategory, MemoryWrapper>> memories = new EnumMap<>(
 			IThoughtMemory.Interest.class);
 
 	private Multimap<IProfile, Relationship> agreements = MultimapBuilder.treeKeys().linkedListValues().build();
@@ -243,7 +245,12 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 				if (!curIter.hasNext()) {
 					curIter = null;
 					while (curIter == null && colIter.hasNext()) {
-						curIter = colIter.next().iterator();
+						Collection<? extends T> nextColIter = colIter.next();
+						if (rand != null && nextColIter instanceof Deque<? extends T>ls) {
+							curIter = rand.nextBoolean() ? ls.descendingIterator() : ls.iterator();
+						} else {
+							curIter = nextColIter.iterator();
+						}
 						if (!curIter.hasNext())
 							curIter = null;
 					}
@@ -279,10 +286,16 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 		return super.learnConcept(concept);
 	}
 
+	/**
+	 * If the memory multimap is not present, generate a new one
+	 * 
+	 * @param memorySection
+	 * @return
+	 */
 	private Multimap<IThoughtMemory.MemoryCategory, MemoryWrapper> makeMemoryMultimapFor(Interest memorySection) {
 		if (memorySection == Interest.FORGET)
 			throw new IllegalArgumentException();
-		return memories.computeIfAbsent(memorySection, (a) -> MultimapBuilder
+		return memories.computeIfAbsent(memorySection, (a) -> SortedSetMultimapBuilder
 				.enumKeys(IThoughtMemory.MemoryCategory.class).<MemoryWrapper>treeSetValues((ag, bg) -> {
 					int diff = (int) (bg.getTime() - ag.getTime());
 					if (diff != 0)
@@ -324,8 +337,8 @@ public class UpgradedBrain extends UpgradedAbstractKnowledgeBase implements IBra
 	}
 
 	@Override
-	public <T extends IMeme> Collection<T> tryForgetRelationUsingSource(IMeme one, IMeme other, IConceptRelationType type,
-			IThoughtMemory source) {
+	public <T extends IMeme> Collection<T> tryForgetRelationUsingSource(IMeme one, IMeme other,
+			IConceptRelationType type, IThoughtMemory source) {
 		IEdge<IConceptRelationType, Collection<IMeme>, IMeme> edge = relations.attemptRemoveEdge(one, other, type,
 				source);
 		if (edge == null)

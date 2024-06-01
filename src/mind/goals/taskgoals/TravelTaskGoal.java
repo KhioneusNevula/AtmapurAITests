@@ -114,4 +114,12 @@ public class TravelTaskGoal implements ITaskGoal {
 				&& ((TravelTaskGoal) other).location.equals(this.location);
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TravelTaskGoal other) {
+			return this.location.equals(other.location) && this.reachDistance == other.reachDistance;
+		}
+		return super.equals(obj);
+	}
+
 }

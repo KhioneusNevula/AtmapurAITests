@@ -98,6 +98,11 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 	private Map<SenseProperty<?>, ?> environmentallySensed;
 	private Map<IProfile, IPhenomenon> sensedPhenomena;
 	/**
+	 * Used for actions; the focus goal is the goal which will first be addressed
+	 * when generating goal motives and whatnot
+	 */
+	private ITaskGoal focusGoal;
+	/**
 	 * For thoughts that encapsulate actions which may utilize certain parts
 	 */
 	private Map<IPartAbility, IThought> utilizedParts;
@@ -139,6 +144,26 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	public UpgradedSentientActor getOwner() {
 		return owner;
+	}
+
+	/**
+	 * Get goal that will be addressed first
+	 * 
+	 * @return
+	 */
+	@Override
+	public ITaskGoal getFocusGoal() {
+		return focusGoal;
+	}
+
+	/**
+	 * Set the goal of highest priority. Note that another thought can override this
+	 * 
+	 * @param focusGoal
+	 */
+	@Override
+	public void setFocusGoal(ITaskGoal focusGoal) {
+		this.focusGoal = focusGoal;
 	}
 
 	@Override
@@ -492,11 +517,13 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 		this.produceThoughtsFromObservation(worldTicks);
 		if (rand().nextInt(6) <= worldTicks % 6)
 			this.produceGoalsFromNeeds(worldTicks);
-		if (rand().nextInt(5) <= worldTicks % 5)
+		if (focusGoal != null || rand().nextInt(5) <= worldTicks % 5)
 			this.produceMotivesFromGoals(worldTicks);
 		if (rand().nextInt(6) <= worldTicks % 6)
 			evaluateProperties(worldTicks);
-
+		if (rand().nextInt(20) <= worldTicks % 20) {
+			// TODO dwell on memories
+		}
 	}
 
 	/**
@@ -570,10 +597,20 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	private void produceMotivesFromGoals(long worldTicks) {
 		Iterator<IGoal> goals = this.memory.getGoals().iterator();
-		if (goals.hasNext()) {
+
+		if (goals.hasNext() || this.focusGoal != null) {
 			int max = (int) (this.getMaxThoughtsFor(ThoughtType.INTENTION) / 2.0 + 0.5);
-			while (goals.hasNext()) {
-				IGoal g = goals.next();
+			IGoal fgtemp = focusGoal;
+			while (focusGoal != null || goals.hasNext()) {
+				IGoal g = focusGoal;
+				if (focusGoal != null) {
+					focusGoal = null;
+				} else {
+					g = goals.next();
+					if (fgtemp != null && g.equals(fgtemp)) {
+						continue;
+					}
+				}
 				if (g.isComplete(this)) {
 					goals.remove();
 					continue;
@@ -872,9 +909,9 @@ public class UpgradedMindImpl implements IUpgradedMind, IHasActor {
 
 	@Override
 	public String report() {
-		return "mind of " + this.owner + "\n\twith thoughts: " + this.activeThoughts + "\n\tpaused: "
-				+ this.pausedThoughts + "\n\tpersonality: " + this.personality.report() + "\n\t and memory: "
-				+ this.memory.report();
+		return "mind of " + this.owner + (focusGoal != null ? " focus: " + focusGoal : "") + "\n\twith thoughts: "
+				+ this.activeThoughts + "\n\tpaused: " + this.pausedThoughts + "\n\tpersonality: "
+				+ this.personality.report() + "\n\t and memory: " + this.memory.report();
 	}
 
 	@Override

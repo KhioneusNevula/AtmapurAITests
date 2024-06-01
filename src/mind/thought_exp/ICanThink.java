@@ -8,6 +8,7 @@ import actor.IPartAbility;
 import biology.systems.types.ISensor;
 import mind.concepts.type.IProfile;
 import mind.concepts.type.SenseProperty;
+import mind.goals.ITaskGoal;
 import mind.personality.Personality;
 import mind.relationships.IParty;
 import mind.thought_exp.IThought.IThoughtType;
@@ -267,5 +268,19 @@ public interface ICanThink extends IUpgradedHasKnowledge, IParty {
 	boolean hasThought(IThought thought);
 
 	public void kill();
+
+	/**
+	 * Get goal that will be addressed first
+	 * 
+	 * @return
+	 */
+	ITaskGoal getFocusGoal();
+
+	/**
+	 * Set the goal of highest priority. Note that another thought can override this
+	 * 
+	 * @param focusGoal
+	 */
+	void setFocusGoal(ITaskGoal focusGoal);
 
 }

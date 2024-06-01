@@ -1,4 +1,4 @@
-package mind.concepts.relations;
+package sim.relationalclasses;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,9 +11,9 @@ import java.util.UUID;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
 
-import mind.concepts.relations.AbstractRelationalGraph.Edge.InverseView;
 import mind.concepts.type.IMeme;
 import mind.thought_exp.IThoughtMemory;
+import sim.relationalclasses.AbstractRelationalGraph.Edge.InverseView;
 
 /**
  * 

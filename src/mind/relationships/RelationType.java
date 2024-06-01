@@ -2,8 +2,8 @@ package mind.relationships;
 
 import java.util.EnumSet;
 
-import mind.concepts.relations.IInvertibleRelationType;
 import mind.goals.IGoal;
+import sim.relationalclasses.IInvertibleRelationType;
 
 public enum RelationType implements IInvertibleRelationType<RelationType> {
 

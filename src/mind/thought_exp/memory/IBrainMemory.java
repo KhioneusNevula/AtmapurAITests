@@ -29,7 +29,8 @@ public interface IBrainMemory extends IUpgradedKnowledgeBase {
 
 	/**
 	 * Returns a conglomerate collection for the cultures of this mind, made of
-	 * collections derived from each culture using the given function
+	 * collections derived from each culture using the given function; i.e. getting
+	 * an iterator of all of a certain concept across cultures
 	 * 
 	 * @param <T>
 	 * @param function

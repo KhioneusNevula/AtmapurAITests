@@ -19,7 +19,6 @@ import actor.ITemplate;
 import mind.action.IActionType;
 import mind.concepts.CompositeIdentifier;
 import mind.concepts.identifiers.IPropertyIdentifier;
-import mind.concepts.relations.AbstractRelationalGraph.IEdge;
 import mind.concepts.relations.ConceptRelationType;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.relations.RelationsGraph;
@@ -39,6 +38,7 @@ import mind.need.INeed.INeedType;
 import mind.relationships.PartyRelationshipsGraph;
 import mind.relationships.RelationType;
 import mind.relationships.Relationship;
+import sim.relationalclasses.AbstractRelationalGraph.IEdge;
 
 public abstract class UpgradedAbstractKnowledgeBase implements IUpgradedKnowledgeBase {
 	protected IProfile selfProfile;

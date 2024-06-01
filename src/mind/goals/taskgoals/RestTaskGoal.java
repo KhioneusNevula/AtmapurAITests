@@ -76,7 +76,7 @@ public enum RestTaskGoal implements ITaskGoal {
 
 	@Override
 	public boolean equivalent(IGoal other) {
-		return other == this;
+		return other instanceof RestTaskGoal && other.getPriority().ordinal() <= this.getPriority().ordinal();
 	}
 
 }

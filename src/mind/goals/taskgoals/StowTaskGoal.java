@@ -102,4 +102,9 @@ public class StowTaskGoal implements ITaskGoal {
 		return ITaskGoal.super.equivalent(other) && other instanceof StowTaskGoal;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj) || obj instanceof StowTaskGoal;
+	}
+
 }

@@ -1,46 +1,27 @@
 package mind.thought_exp.memory.type;
 
-import java.util.Stack;
-
-import main.Pair;
-import mind.action.IActionType;
 import mind.goals.ITaskGoal;
 import mind.thought_exp.IUpgradedMind;
 import mind.thought_exp.memory.IBrainMemory;
 
+/**
+ * Stores an intermediary goal used to complete another primary goal
+ * 
+ * @author borah
+ *
+ */
 public class RecentIntentionMemory extends AbstractMemory {
 
 	private ITaskGoal primaryGoal;
-	private Stack<Pair<IActionType<?>, ITaskGoal>> goals;
-	/** amount of actions this goal has undergone */
-	private int times;
+	private ITaskGoal intention;
 
-	public RecentIntentionMemory(ITaskGoal primaryGoal, Stack<Pair<IActionType<?>, ITaskGoal>> goals, int times) {
+	public RecentIntentionMemory(ITaskGoal intention, ITaskGoal primaryGoal) {
 		this.primaryGoal = primaryGoal;
-		this.goals = goals;
-		this.times = times;
+		this.intention = intention;
 	}
 
 	/**
-	 * if the goal has remaining actions
-	 * 
-	 * @return
-	 */
-	public boolean hasRemainingActions() {
-		return !goals.isEmpty();
-	}
-
-	/**
-	 * amount of actions this goal has undergone
-	 * 
-	 * @return
-	 */
-	public int getTimes() {
-		return times;
-	}
-
-	/**
-	 * Returns the initial goal of this memory
+	 * Returns the primary goal of this intention
 	 * 
 	 * @return
 	 */
@@ -49,45 +30,24 @@ public class RecentIntentionMemory extends AbstractMemory {
 	}
 
 	/**
-	 * amount of actions being considered
+	 * Returns the intention stord in this memory, intended to satisfy the primary
+	 * goal
 	 * 
 	 * @return
 	 */
-	public int getActionCount() {
-		return this.goals.size();
-	}
-
-	/**
-	 * Removes the last action-goal pair
-	 */
-	public Pair<IActionType<?>, ITaskGoal> popLast() {
-		return this.goals.pop();
-	}
-
-	/**
-	 * Gets the most recent goal for this memory, (primary goal if there are no
-	 * actions)
-	 */
-	public ITaskGoal getLastGoal() {
-		return this.goals.empty() ? this.primaryGoal : this.goals.peek().getSecond();
-	}
-
-	/**
-	 * get the goal stack of this memory
-	 * 
-	 * @return
-	 */
-	public Stack<Pair<IActionType<?>, ITaskGoal>> goalStack() {
-		return this.goals;
+	public ITaskGoal getIntentionGoal() {
+		return intention;
 	}
 
 	@Override
 	public boolean applyMemoryEffects(IBrainMemory toMind) {
+		toMind.learnGoal(getIntentionGoal());
 		return true;
 	}
 
 	@Override
 	public void forgetMemoryEffects(IUpgradedMind toMind) {
+		toMind.getKnowledgeBase().forgetGoal(getIntentionGoal());
 
 	}
 
@@ -98,6 +58,6 @@ public class RecentIntentionMemory extends AbstractMemory {
 
 	@Override
 	public int hashCode() {
-		return this.goals.hashCode() + this.primaryGoal.hashCode();
+		return this.intention.hashCode() + this.primaryGoal.hashCode();
 	}
 }

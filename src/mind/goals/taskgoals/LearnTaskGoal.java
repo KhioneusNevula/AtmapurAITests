@@ -126,4 +126,12 @@ public class LearnTaskGoal implements ITaskGoal {
 				|| ((LearnTaskGoal) other).question.getTopic().equals(this.question.getTopic()));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof LearnTaskGoal ltg) {
+			return this.question == ltg.question || this.question.equals(ltg.question);
+		}
+		return super.equals(obj);
+	}
+
 }

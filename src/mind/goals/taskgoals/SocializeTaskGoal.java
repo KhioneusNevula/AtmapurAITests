@@ -98,4 +98,12 @@ public class SocializeTaskGoal implements ITaskGoal {
 				|| ((SocializeTaskGoal) other).socialTarget().equals(this.socialTarget()));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof SocializeTaskGoal stg) {
+			return this.socialTarget() == stg.socialTarget() || this.socialTarget().equals(stg.socialTarget());
+		}
+		return super.equals(obj);
+	}
+
 }

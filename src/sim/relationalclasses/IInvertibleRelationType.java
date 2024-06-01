@@ -1,4 +1,4 @@
-package mind.concepts.relations;
+package sim.relationalclasses;
 
 public interface IInvertibleRelationType<T extends IInvertibleRelationType<T>> {
 

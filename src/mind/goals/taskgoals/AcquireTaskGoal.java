@@ -136,7 +136,15 @@ public class AcquireTaskGoal implements ITaskGoal {
 	@Override
 	public boolean equivalent(IGoal other) {
 		return ITaskGoal.super.equivalent(other) && other instanceof AcquireTaskGoal
-				&& ((AcquireTaskGoal) other).item.equals(this.item);
+				&& ((AcquireTaskGoal) other).productSet.equals(this.productSet);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof AcquireTaskGoal atg) {
+			return this.productSet.equals(atg.productSet);
+		}
+		return this == obj;
 	}
 
 }

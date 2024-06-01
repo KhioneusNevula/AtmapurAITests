@@ -1,5 +1,7 @@
 package mind.concepts.relations;
 
+import sim.relationalclasses.IInvertibleRelationType;
+
 public interface IConceptRelationType extends IInvertibleRelationType<IConceptRelationType> {
 
 	/**

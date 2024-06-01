@@ -47,7 +47,7 @@ public interface IThoughtMemory {
 
 	/**
 	 * Applies appropriate memory changes to this mind; return true if the memory
-	 * object should be stored in long-term memory
+	 * object should be stored as an object in memory as well
 	 * 
 	 * @param toMind
 	 */

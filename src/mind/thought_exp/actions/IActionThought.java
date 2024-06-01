@@ -9,37 +9,32 @@ import mind.goals.ITaskGoal;
 import mind.relationships.IParty;
 import mind.thought_exp.ICanThink;
 import mind.thought_exp.IThought;
-import mind.thought_exp.IUpgradedHasKnowledge;
-import mind.thought_exp.culture.UpgradedGroup;
 
 /**
- * An instance of an action in memory. Actions are of two different types -- the
- * Thinking and the Executing. Both types function as different action-thoughts,
- * with the Thinking thought being generated to produce conditions, and the
- * Executing variant being generated to actually execute the action
+ * An instance of an action in memory.
+ * 
+ * How do actions work? Goal: I hungry (focus goal) Action: I eat
+ * 
+ * Okay, I don't have food. Therefore, Goal: Obtain food Action: Grab food
+ * 
+ * Okay, no food in grabbing distance. Therefore: Goal: Know location of food
+ * Action: Search for food
+ * 
+ * Okay, I found food. Now, I remember I wanted to grab food? (Check memory:
+ * recent action goal) Goal: Obtain food Action: Grab food
+ * 
+ * Okay, I obtained food. Now, I remember I wanted to eat food? (Check memory:
+ * recent action goal) Goal: Hungry Action: Eat food
+ * 
+ * So we do a system of goal -> action. > If action is impossible, generate new
+ * goal, make it (focus goal). Then store action and previous goal in memory, in
+ * some ordered (e.g. stacked) fashion so we know our most recent. Once we
+ * complete next action, check our memory.
  * 
  * @author borah
  *
  */
 public interface IActionThought extends IThought {
-
-	/**
-	 * whether this action can be done by a group
-	 * 
-	 * @return
-	 */
-	default boolean performableByGroup() {
-		return false;
-	}
-
-	/**
-	 * whether this action can be done by an individual
-	 * 
-	 * @return
-	 */
-	default boolean performableByIndividual() {
-		return true;
-	}
 
 	/**
 	 * For action thoughts, this is where you do the pre-checks to ensure the mind
@@ -59,22 +54,11 @@ public interface IActionThought extends IThought {
 	public boolean canExecuteIndividual(ICanThink user, int thoughtTicks, long worldTicks);
 
 	/**
-	 * {@link IAction#canExecuteIndividual}, but for a group
-	 * 
-	 * @param group
-	 * @return
-	 */
-	default boolean canExecuteGroup(UpgradedGroup group, long worldTicks) {
-		return false;
-	}
-
-	/**
 	 * Begins executing the action, if in an individual
 	 * 
 	 * @param forUser
 	 */
-	// public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks,
-	// long worldTicks);
+	public void beginExecutingIndividual(ICanThink forUser, int thoughtTicks, long worldTicks);
 
 	/**
 	 * {@link IAction#beginExecutingIndividual} but for a group
@@ -87,36 +71,21 @@ public interface IActionThought extends IThought {
 	 * }
 	 */
 
-	/**
-	 * whether the action can execute continuously; checked every tick
-	 * 
-	 * @param individual
-	 * @return
-	 */
-	/*
-	 * default boolean canContinueExecutingIndividual(ICanThink individual, int
-	 * actionTick, int thoughtTick) { return false; }
-	 */
-
 	/*
 	 * default boolean canContinueExecutingGroup(UpgradedGroup group, int
 	 * actionTick) { return false; }
 	 */
 
 	/**
-	 * a tick of execution for an individual; the "tick" parameter indicates how
-	 * many ticks have passed since begining (0 ticks)
+	 * a tick of execution for an individual; the "actionTick" parameter indicates
+	 * how many ticks have passed since begining of action (0 ticks)
 	 * 
 	 * @param individual
 	 * @param tick
 	 * @return
 	 */
-	/*
-	 * default void executionTickIndividual(ICanThink individual, int actionTick,
-	 * int thoughtTick) {
-	 * 
-	 * }
-	 */
+
+	void executionTickIndividual(ICanThink individual, int actionTick, int thoughtTick, long worldTick);
 
 	/*
 	 * default void executionTickGroup(UpgradedGroup group, int tick) {
@@ -131,34 +100,13 @@ public interface IActionThought extends IThought {
 	 * @param individual
 	 * @param tick
 	 */
-	/*
-	 * public default boolean finishActionIndividual(ICanThink individual, int
-	 * actionTick, int thoughtTick, boolean interruption) { return
-	 * !failedPreemptively(); }
-	 */
+
+	public boolean finishActionIndividual(ICanThink individual, int actionTick, int thoughtTick, boolean interruption);
 
 	/*
 	 * default boolean finishActionGroup(UpgradedGroup group, int tick) { return
 	 * false; }
 	 */
-
-	/**
-	 * retrieves the goal representing the condition the action needs in order to
-	 * successfully execute. Return null if some error occurred
-	 * 
-	 * @return
-	 */
-	public ITaskGoal getPendingCondition(IUpgradedHasKnowledge user);
-
-	/**
-	 * Return true if this action has pending conditions to be fulfilled before
-	 * executing; if the action cannot execute, and has not generated pending
-	 * conditions, the action is a failure
-	 * 
-	 * @param user
-	 * @return
-	 */
-	public boolean hasPendingCondition(IUpgradedHasKnowledge user);
 
 	/**
 	 * Gets the type of action -- eating, moving, etc
@@ -212,17 +160,17 @@ public interface IActionThought extends IThought {
 	boolean succeeded();
 
 	/**
-	 * If this action has failed before it even started; should be called during a
-	 * think-tick
+	 * If this action has failed before it even started without being able to
+	 * generate conditions; should be called during a think-tick
 	 * 
 	 * @return
 	 */
 	boolean failedPreemptively();
 
 	/**
-	 * Cancel this action
+	 * Cancel this action, whether before it began or while it is in progress.
 	 */
-	void cancel();
+	void cancel(ICanThink memory, int ticks, long worldTicks);
 
 	/**
 	 * If this action is in Executing state; if this is false, the action is in the
@@ -236,6 +184,44 @@ public interface IActionThought extends IThought {
 	 * Mark this action as executing; assumes that preconditions of the action are
 	 * met.
 	 */
+	@Deprecated()
 	public void start();
+
+	/**
+	 * Whether this action thought failed because it didn't properly check its parts
+	 * 
+	 * @return
+	 */
+	boolean failedPartsCheck();
+
+	/**
+	 * Gets this action's intended goal
+	 * 
+	 * @return
+	 */
+	ITaskGoal getIntendedGoal();
+
+	/**
+	 * Sets this action thought's intended goal
+	 * 
+	 * @param goal
+	 * @return
+	 */
+	AbstractActionThought setIntendedGoal(ITaskGoal goal);
+
+	/**
+	 * Get the ultimate goal this action is part of completing
+	 * 
+	 * @return
+	 */
+	ITaskGoal getPrimaryGoal();
+
+	/**
+	 * Get the ultimate goal this action is part of completing
+	 * 
+	 * @param primaryGoal
+	 * @return
+	 */
+	AbstractActionThought setPrimaryGoal(ITaskGoal primaryGoal);
 
 }

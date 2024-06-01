@@ -28,7 +28,7 @@ public class TalkTaskGoal implements ITaskGoal {
 	public TalkTaskGoal(IUtterance commu, Profile with) {
 		this.target = with;
 		this.communication = commu;
-		targets = Set.of();
+		targets = Set.of(with);
 	}
 
 	public TalkTaskGoal setPriority(Priority priority) {
@@ -104,6 +104,14 @@ public class TalkTaskGoal implements ITaskGoal {
 	public boolean equivalent(IGoal other) {
 		return ITaskGoal.super.equivalent(other) && other instanceof TalkTaskGoal
 				&& ((TalkTaskGoal) other).communication.equals(this.communication);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof TalkTaskGoal other) {
+			return this.targets.equals(other.targets) && this.communication.equals(other.communication);
+		}
+		return super.equals(obj);
 	}
 
 	@Override

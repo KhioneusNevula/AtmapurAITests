@@ -11,7 +11,6 @@ import java.util.PrimitiveIterator.OfInt;
 import java.util.stream.IntStream;
 
 import main.Pair;
-import mind.concepts.relations.AbstractRelationalGraph.IEdge;
 import mind.concepts.relations.IConceptRelationType;
 import mind.concepts.relations.RelationsGraph;
 import mind.concepts.type.IMeme;
@@ -20,6 +19,7 @@ import mind.thought_exp.IUpgradedMind;
 import mind.thought_exp.culture.UpgradedCulture;
 import mind.thought_exp.memory.IUpgradedKnowledgeBase;
 import sim.interfaces.IRenderable;
+import sim.relationalclasses.AbstractRelationalGraph.IEdge;
 
 public class UpgradedMindDisplay implements IRenderable {
 

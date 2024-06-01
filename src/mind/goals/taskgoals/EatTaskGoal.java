@@ -128,4 +128,12 @@ public class EatTaskGoal implements ITaskGoal {
 				|| (((EatTaskGoal) other).foodType == BasicProperties.FOOD && this.foodType != BasicProperties.FOOD));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof EatTaskGoal etg) {
+			return this.foodSet.equals(etg.foodSet) && this.percent == etg.percent;
+		}
+		return this == obj;
+	}
+
 }

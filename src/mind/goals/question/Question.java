@@ -159,6 +159,14 @@ public class Question implements IMeme {
 		return "Question-" + this.type + "-of-" + this.topic + ":" + this.arguments + "?";
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Question qu) {
+			return this.type.equals(qu.type) && this.topic.equals(qu.topic) && this.arguments.equals(qu.arguments);
+		}
+		return super.equals(obj);
+	}
+
 	public static enum QuestionType {
 		/**
 		 * Asking about the location of a Concept (topic); no arguments needed

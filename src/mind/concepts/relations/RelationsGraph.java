@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import mind.concepts.type.IMeme;
+import sim.relationalclasses.AbstractRelationalGraph;
 
 public class RelationsGraph extends AbstractRelationalGraph<IConceptRelationType, Collection<IMeme>, IMeme> {
 

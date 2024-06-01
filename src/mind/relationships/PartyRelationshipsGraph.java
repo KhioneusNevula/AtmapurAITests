@@ -7,8 +7,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import mind.concepts.relations.AbstractRelationalGraph;
 import mind.concepts.type.IProfile;
+import sim.relationalclasses.AbstractRelationalGraph;
 
 public class PartyRelationshipsGraph extends AbstractRelationalGraph<RelationType, Collection<Relationship>, IProfile> {
 
